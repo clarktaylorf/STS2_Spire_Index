@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpireIndex — Slay the Spire 2 Card Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0c18;
+  --bg2:#13101e;
+  --bg3:#0f0d16;
+  --border:#1e1a2c;
+  --border2:#2e2545;
+  --text:#c4b89a;
+  --text2:#7a6a8a;
+  --text3:#4a3a6a;
+  --gold:#d4a84b;
+  --purple:#8060c0;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+/* HEADER */
+.header{
+  position:relative;overflow:hidden;
+  padding:32px 32px 0;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+}
+.header::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 50% -10%,rgba(120,80,200,0.18) 0%,transparent 70%),
+             radial-gradient(ellipse 40% 50% at 20% 50%,rgba(180,100,60,0.08) 0%,transparent 60%);
+  pointer-events:none;
+}
+.header-inner{position:relative;text-align:center;padding-bottom:24px;}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;}
+.logo-icon{width:40px;height:40px;flex-shrink:0;}
+.logo-icon svg{width:100%;height:100%;}
+.site-name{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#efe0c0;letter-spacing:0.5px;}
+.site-name em{font-style:italic;color:#a07be0;font-weight:400;}
+.site-tagline{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#6a5a88;font-weight:500;margin-bottom:20px;}
+.search-wrap{display:flex;justify-content:center;}
+.search-box{
+  background:#1c1826;border:1px solid var(--border2);border-radius:8px;
+  color:#ddd0b8;font-family:'DM Sans',sans-serif;font-size:14px;
+  padding:10px 16px 10px 42px;width:360px;max-width:100%;outline:none;
+  transition:border-color 0.15s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23665580' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:14px center;
+}
+.search-box::placeholder{color:#554870;}
+.search-box:focus{border-color:#8060c0;}
+
+/* CLASS TABS */
+.class-tabs{
+  display:flex;justify-content:center;gap:4px;flex-wrap:wrap;
+  padding:14px 32px 0;background:#0f0d16;border-bottom:1px solid var(--border);
+}
+.class-tab{
+  display:flex;align-items:center;gap:7px;
+  padding:9px 16px;border-radius:8px 8px 0 0;
+  border:1px solid transparent;border-bottom:none;
+  cursor:pointer;font-size:13px;font-weight:500;color:var(--text3);
+  transition:all 0.15s;background:transparent;font-family:'DM Sans',sans-serif;
+}
+.class-tab:hover{color:var(--text);background:#1a1628;}
+.class-tab.active{background:#1a1628;border-color:var(--border2);color:#efe0c0;}
+.pip{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* FILTERS */
+.filters{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 32px;background:var(--bg3);
+  border-bottom:1px solid var(--border);flex-wrap:wrap;
+}
+.flabel{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-right:2px;}
+.fbtn{
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;
+  padding:5px 13px;border-radius:20px;border:1px solid var(--border2);
+  background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;
+}
+.fbtn:hover{border-color:#6040a0;color:var(--text);}
+.fbtn.active{background:#2a1f48;border-color:#7050b0;color:#c4a8f0;}
+.fdiv{width:1px;height:20px;background:var(--border2);margin:0 4px;}
+.kw-select{
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;
+  padding:5px 28px 5px 12px;border-radius:20px;
+  border:1px solid var(--border2);background:var(--bg3);
+  color:var(--text2);cursor:pointer;outline:none;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23554870' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  transition:border-color 0.15s;
+}
+.kw-select:hover,.kw-select:focus{border-color:#6040a0;color:var(--text);}
+.kw-select.on{border-color:#7050b0;color:#c4a8f0;background-color:#2a1f48;}
+
+/* STATS */
+.stats{
+  display:flex;align-items:center;gap:20px;
+  padding:8px 32px;background:#0d0b14;
+  border-bottom:1px solid #1a1626;flex-wrap:wrap;
+}
+.stat{font-size:12px;color:var(--text3);}
+.stat strong{color:#a890c0;font-weight:500;}
+.sep{color:var(--border2);}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(172px,1fr));
+  gap:12px;padding:24px 32px 40px;
+}
+
+/* CARD */
+.card{
+  background:var(--bg2);border:1px solid #221d33;
+  border-radius:12px;overflow:hidden;cursor:pointer;
+  transition:transform 0.15s,border-color 0.15s,background 0.15s;
+}
+.card:hover{border-color:var(--cc,#7050b0);background:#1c1730;transform:translateY(-3px);}
+.card-bar{height:3px;background:var(--cc,#7050b0);opacity:0.75;}
+
+.card-art{
+  height:120px;overflow:hidden;
+  background:#0e0b1a;
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid #1e1a2e;position:relative;
+}
+.card-art img{
+  width:100%;height:100%;object-fit:contain;
+  padding:8px;
+  transition:transform 0.2s;
+}
+.card:hover .card-art img{transform:scale(1.05);}
+.card-art-fallback{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;opacity:0.15;
+}
+.char-watermark{
+  position:absolute;bottom:5px;right:8px;
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  font-weight:600;color:var(--cc,#7050b0);opacity:0.4;
+  font-family:'DM Sans',sans-serif;
+}
+
+.card-body{padding:10px 12px 13px;}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:7px;}
+.card-name{font-family:'Playfair Display',serif;font-size:13px;font-weight:500;color:#e8d8b8;line-height:1.25;}
+.cost{
+  min-width:23px;height:23px;border-radius:12px;
+  background:#1e1830;border:1px solid #3a2d5a;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:var(--gold);flex-shrink:0;padding:0 5px;
+}
+.badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px;}
+.badge{font-size:9px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 7px;border-radius:10px;}
+.b-attack{background:#3a1212;color:#e08080;border:1px solid #5a1e1e;}
+.b-skill{background:#122035;color:#80b0e8;border:1px solid #1e3a5a;}
+.b-power{background:#182812;color:#88cc70;border:1px solid #285a1e;}
+.b-status{background:#352a12;color:#e8b870;border:1px solid #5a421e;}
+.b-curse{background:#281235;color:#b880d8;border:1px solid #4a1e5a;}
+.b-uncommon{background:#201a30;color:#9a88c8;border:1px solid #302548;}
+.b-rare{background:#302010;color:#d4a848;border:1px solid #503215;}
+.card-desc{font-size:11.5px;line-height:1.55;color:var(--text2);font-style:italic;}
+.kws{display:flex;gap:3px;flex-wrap:wrap;margin-top:7px;}
+.kw{font-size:9.5px;padding:1px 6px;border-radius:3px;background:#1a1628;color:#6a5a88;border:1px solid #252038;}
+
+.no-results{grid-column:1/-1;text-align:center;padding:80px 0;color:var(--text3);font-size:15px;font-style:italic;}
+
+/* FOOTER */
+.footer{text-align:center;padding:24px;font-size:12px;color:var(--text3);border-top:1px solid var(--border);}
+.footer a{color:#6a5a88;text-decoration:none;}
+.footer a:hover{color:var(--text2);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="20,2 25,15 39,15 28,23 32,37 20,29 8,37 12,23 1,15 15,15" fill="none" stroke="#a07be0" stroke-width="1.5" stroke-linejoin="round"/>
+          <polygon points="20,8 23,17 32,17 25,22 27,31 20,26 13,31 15,22 8,17 17,17" fill="rgba(160,123,224,0.12)"/>
+          <line x1="20" y1="2" x2="20" y2="38" stroke="#d4a84b" stroke-width="0.75" stroke-dasharray="2,3" opacity="0.4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="site-name">Spire<em>Index</em></div>
+      </div>
+    </div>
+    <div class="site-tagline">Slay the Spire 2 · Card Database · Early Access</div>
+    <div class="search-wrap">
+      <input class="search-box" type="text" id="search" placeholder="Search cards, effects, keywords…" />
+    </div>
+  </div>
+</div>
+
+<div class="class-tabs" id="classTabs">
+  <div class="class-tab active" data-char="all" onclick="setChar(this)">All Classes</div>
+  <div class="class-tab" data-char="ironclad" onclick="setChar(this)"><span class="pip" style="background:#e06050"></span>Ironclad</div>
+  <div class="class-tab" data-char="silent" onclick="setChar(this)"><span class="pip" style="background:#50c090"></span>Silent</div>
+  <div class="class-tab" data-char="defect" onclick="setChar(this)"><span class="pip" style="background:#60a0e0"></span>Defect</div>
+  <div class="class-tab" data-char="regent" onclick="setChar(this)"><span class="pip" style="background:#c070e0"></span>Regent</div>
+  <div class="class-tab" data-char="necrobinder" onclick="setChar(this)"><span class="pip" style="background:#70b060"></span>Necrobinder</div>
+  <div class="class-tab" data-char="colorless" onclick="setChar(this)"><span class="pip" style="background:#a09898"></span>Colorless</div>
+</div>
+
+<div class="filters">
+  <span class="flabel">Type</span>
+  <button class="fbtn active" data-type="all" onclick="setType(this)">All</button>
+  <button class="fbtn" data-type="Attack" onclick="setType(this)">Attack</button>
+  <button class="fbtn" data-type="Skill" onclick="setType(this)">Skill</button>
+  <button class="fbtn" data-type="Power" onclick="setType(this)">Power</button>
+  <button class="fbtn" data-type="Status" onclick="setType(this)">Status</button>
+  <button class="fbtn" data-type="Curse" onclick="setType(this)">Curse</button>
+  <div class="fdiv"></div>
+  <span class="flabel">Keyword</span>
+  <select class="kw-select" id="kwSelect" onchange="setKw(this)">
+    <option value="">Any</option>
+  </select>
+  <div class="fdiv"></div>
+  <span class="flabel">Rarity</span>
+  <button class="fbtn active" data-rarity="all" onclick="setRarity(this)">All</button>
+  <button class="fbtn" data-rarity="Starter" onclick="setRarity(this)">Starter</button>
+  <button class="fbtn" data-rarity="Common" onclick="setRarity(this)">Common</button>
+  <button class="fbtn" data-rarity="Uncommon" onclick="setRarity(this)">Uncommon</button>
+  <button class="fbtn" data-rarity="Rare" onclick="setRarity(this)">Rare</button>
+</div>
+
+<div class="stats">
+  <span class="stat">Showing <strong id="cnt">0</strong> cards</span>
+  <span class="sep">·</span>
+  <span class="stat">Attacks <strong id="cntA">0</strong></span>
+  <span class="sep">·</span>
+  <span class="stat">Skills <strong id="cntS">0</strong></span>
+  <span class="sep">·</span>
+  <span class="stat">Powers <strong id="cntP">0</strong></span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">
+  SpireIndex is a fan-made database and is not affiliated with Mega Crit Games. · <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Play Slay the Spire 2 on Steam</a>
+</div>
+
+<script>
+const CHARS = {
+  ironclad: {hex:'#e06050', label:'Ironclad'},
+  silent:   {hex:'#50c090', label:'Silent'},
+  defect:   {hex:'#60a0e0', label:'Defect'},
+  regent:   {hex:'#c070e0', label:'Regent'},
+  necrobinder:{hex:'#70b060',label:'Necrobinder'},
+  colorless:{hex:'#a09898', label:'Colorless'},
+};
+
+const IMG_BASE = 'images/packed/card_portraits';
+
+function imgPath(char, filename) {
+  return `${IMG_BASE}/${char}/${filename}.png`;
+}
+
+const cards = [
+  // IRONCLAD
+  {name:'Strike',char:'ironclad',type:'Attack',cost:1,rarity:'Starter',desc:'Deal 6 damage.',keywords:['Damage'],img:'strike_ironclad'},
+  {name:'Defend',char:'ironclad',type:'Skill',cost:1,rarity:'Starter',desc:'Gain 5 Block.',keywords:['Block'],img:'defend_ironclad'},
+  {name:'Bash',char:'ironclad',type:'Attack',cost:2,rarity:'Starter',desc:'Deal 8 damage. Apply 2 Vulnerable.',keywords:['Vulnerable'],img:'bash'},
+  {name:'Anger',char:'ironclad',type:'Attack',cost:0,rarity:'Common',desc:'Deal 6 damage. Add a copy to your discard pile.',keywords:['Discard'],img:'anger'},
+  {name:'Armaments',char:'ironclad',type:'Skill',cost:1,rarity:'Common',desc:'Gain 5 Block. Upgrade a card in your hand.',keywords:['Block','Upgrade'],img:'armaments'},
+  {name:'Body Slam',char:'ironclad',type:'Attack',cost:1,rarity:'Common',desc:'Deal damage equal to your Block.',keywords:['Block'],img:'body_slam'},
+  {name:'Bloodletting',char:'ironclad',type:'Skill',cost:0,rarity:'Common',desc:'Lose 3 HP. Gain 2 Energy.',keywords:['Energy'],img:'bloodletting'},
+  {name:'Cleave',char:'ironclad',type:'Attack',cost:1,rarity:'Common',desc:'Deal 8 damage to ALL enemies.',keywords:['AoE'],img:'aggression'},
+  {name:'Flex',char:'ironclad',type:'Skill',cost:0,rarity:'Common',desc:'Gain 2 Strength. At end of turn, lose 2 Strength.',keywords:['Strength'],img:'fight_me'},
+  {name:'Havoc',char:'ironclad',type:'Skill',cost:1,rarity:'Common',desc:'Play the top card of your draw pile and Exhaust it.',keywords:['Exhaust'],img:'havoc'},
+  {name:'Headbutt',char:'ironclad',type:'Attack',cost:1,rarity:'Common',desc:'Deal 9 damage. Put a card from your discard pile on top of your draw pile.',keywords:['Draw'],img:'headbutt'},
+  {name:'Iron Wave',char:'ironclad',type:'Attack',cost:1,rarity:'Common',desc:'Gain 5 Block. Deal 5 damage.',keywords:['Block','Damage'],img:'iron_wave'},
+  {name:'Pommel Strike',char:'ironclad',type:'Attack',cost:1,rarity:'Common',desc:'Deal 9 damage. Draw 1 card.',keywords:['Draw'],img:'pommel_strike'},
+  {name:'Shrug It Off',char:'ironclad',type:'Skill',cost:1,rarity:'Common',desc:'Gain 8 Block. Draw 1 card.',keywords:['Block','Draw'],img:'shrug_it_off'},
+  {name:'Thunderclap',char:'ironclad',type:'Attack',cost:1,rarity:'Common',desc:'Deal 4 damage to ALL enemies. Apply 1 Vulnerable.',keywords:['AoE','Vulnerable'],img:'thunderclap'},
+  {name:'Twin Strike',char:'ironclad',type:'Attack',cost:1,rarity:'Common',desc:'Deal 5 damage twice.',keywords:['Damage'],img:'twin_strike'},
+  {name:'Rupture',char:'ironclad',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever you lose HP from a card, gain 1 Strength.',keywords:['Strength','Power'],img:'rupture'},
+  {name:'Colossus',char:'ironclad',type:'Skill',cost:2,rarity:'Uncommon',desc:'Gain 12 Block twice.',keywords:['Block'],img:'colossus'},
+  {name:'Hellraiser',char:'ironclad',type:'Power',cost:2,rarity:'Uncommon',desc:'Whenever you draw a Strike, it is automatically played against a random enemy.',keywords:['Strike','Power'],img:'hellraiser'},
+  {name:'Inflame',char:'ironclad',type:'Power',cost:1,rarity:'Uncommon',desc:'Gain 2 Strength.',keywords:['Strength','Power'],img:'inflame'},
+  {name:'Feel No Pain',char:'ironclad',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever a card is Exhausted, gain 3 Block.',keywords:['Block','Exhaust','Power'],img:'feel_no_pain'},
+  {name:'Dark Embrace',char:'ironclad',type:'Power',cost:2,rarity:'Uncommon',desc:'Whenever a card is Exhausted, draw 1 card.',keywords:['Exhaust','Draw','Power'],img:'dark_embrace'},
+  {name:'Offering',char:'ironclad',type:'Skill',cost:0,rarity:'Rare',desc:'Lose 6 HP. Gain 2 Energy. Draw 3 cards.',keywords:['Energy','Draw'],img:'offering'},
+  {name:'Barricade',char:'ironclad',type:'Power',cost:3,rarity:'Rare',desc:'Block is no longer removed at the start of your turn.',keywords:['Block','Power'],img:'barricade'},
+  {name:'Impervious',char:'ironclad',type:'Skill',cost:2,rarity:'Rare',desc:'Gain 30 Block. Exhaust.',keywords:['Block','Exhaust'],img:'impervious'},
+  {name:'Limit Break',char:'ironclad',type:'Skill',cost:1,rarity:'Rare',desc:'Double your Strength. Exhaust.',keywords:['Strength','Exhaust'],img:'limit_break'},
+  {name:'Reaper',char:'ironclad',type:'Attack',cost:2,rarity:'Rare',desc:'Deal 4 damage to ALL enemies. Heal HP equal to unblocked damage.',keywords:['AoE','Lifesteal'],img:'feed'},
+  {name:'Demon Form',char:'ironclad',type:'Power',cost:3,rarity:'Rare',desc:'At the start of each turn, gain 2 Strength.',keywords:['Strength','Power'],img:'demon_form'},
+  {name:'Corruption',char:'ironclad',type:'Power',cost:3,rarity:'Rare',desc:'Skills cost 0. Whenever you play a Skill, Exhaust it.',keywords:['Exhaust','Power'],img:'corruption'},
+  {name:'Fiend Fire',char:'ironclad',type:'Attack',cost:2,rarity:'Rare',desc:'Exhaust your hand. Deal 7 damage for each card Exhausted.',keywords:['Exhaust','Damage'],img:'fiend_fire'},
+
+  // SILENT
+  {name:'Strike',char:'silent',type:'Attack',cost:1,rarity:'Starter',desc:'Deal 6 damage.',keywords:['Damage'],img:'strike_silent'},
+  {name:'Defend',char:'silent',type:'Skill',cost:1,rarity:'Starter',desc:'Gain 5 Block.',keywords:['Block'],img:'defend_silent'},
+  {name:'Survivor',char:'silent',type:'Skill',cost:1,rarity:'Starter',desc:'Gain 8 Block. Discard a card.',keywords:['Block','Discard'],img:'survivor'},
+  {name:'Neutralize',char:'silent',type:'Attack',cost:0,rarity:'Starter',desc:'Deal 3 damage. Apply 1 Weak.',keywords:['Weak'],img:'neutralize'},
+  {name:'Acrobatics',char:'silent',type:'Skill',cost:1,rarity:'Common',desc:'Draw 3 cards. Discard 1 card.',keywords:['Draw','Discard'],img:'acrobatics'},
+  {name:'Backflip',char:'silent',type:'Skill',cost:1,rarity:'Common',desc:'Gain 5 Block. Draw 2 cards.',keywords:['Block','Draw'],img:'backflip'},
+  {name:'Blade Dance',char:'silent',type:'Skill',cost:1,rarity:'Common',desc:'Add 3 Shivs to your hand.',keywords:['Shiv'],img:'blade_dance'},
+  {name:'Cloak and Dagger',char:'silent',type:'Skill',cost:1,rarity:'Common',desc:'Gain 6 Block. Add 1 Shiv to your hand.',keywords:['Block','Shiv'],img:'cloak_and_dagger'},
+  {name:'Deadly Poison',char:'silent',type:'Skill',cost:1,rarity:'Common',desc:'Apply 5 Poison.',keywords:['Poison'],img:'deadly_poison'},
+  {name:'Deflect',char:'silent',type:'Skill',cost:0,rarity:'Common',desc:'Gain 4 Block.',keywords:['Block'],img:'deflect'},
+  {name:'Infinite Blades',char:'silent',type:'Power',cost:1,rarity:'Uncommon',desc:'At the start of your turn, add a Shiv to your hand.',keywords:['Shiv','Power'],img:'infinite_blades'},
+  {name:'Noxious Fumes',char:'silent',type:'Power',cost:1,rarity:'Uncommon',desc:'At the start of your turn, apply 2 Poison to ALL enemies.',keywords:['Poison','Power'],img:'noxious_fumes'},
+  {name:'Adrenaline',char:'silent',type:'Skill',cost:0,rarity:'Rare',desc:'Gain 1 Energy. Draw 2 cards. Exhaust.',keywords:['Energy','Draw','Exhaust'],img:'adrenaline'},
+  {name:'After Image',char:'silent',type:'Power',cost:1,rarity:'Rare',desc:'Whenever you play a card, gain 1 Block.',keywords:['Block','Power'],img:'after_image'},
+  {name:'Wraith Form',char:'silent',type:'Power',cost:3,rarity:'Rare',desc:'Gain 3 Intangible. At the start of each turn, lose 1 Intangible.',keywords:['Intangible','Power'],img:'wraith_form'},
+  {name:'Grand Finale',char:'silent',type:'Attack',cost:0,rarity:'Rare',desc:'Can only be played if draw pile is empty. Deal 50 damage to ALL enemies.',keywords:['AoE'],img:'grand_finale'},
+
+  // DEFECT
+  {name:'Strike',char:'defect',type:'Attack',cost:1,rarity:'Starter',desc:'Deal 6 damage.',keywords:['Damage'],img:'strike_defect'},
+  {name:'Defend',char:'defect',type:'Skill',cost:1,rarity:'Starter',desc:'Gain 5 Block.',keywords:['Block'],img:'defend_defect'},
+  {name:'Zap',char:'defect',type:'Skill',cost:1,rarity:'Starter',desc:'Channel 1 Lightning.',keywords:['Lightning','Orb'],img:'zap'},
+  {name:'Dualcast',char:'defect',type:'Skill',cost:1,rarity:'Starter',desc:'Evoke your rightmost Orb twice.',keywords:['Evoke','Orb'],img:'dualcast'},
+  {name:'Ball Lightning',char:'defect',type:'Attack',cost:1,rarity:'Common',desc:'Deal 7 damage. Channel 1 Lightning.',keywords:['Lightning','Orb'],img:'ball_lightning'},
+  {name:'Charge Battery',char:'defect',type:'Skill',cost:1,rarity:'Common',desc:'Gain 7 Block. Next turn gain 1 Energy.',keywords:['Block','Energy'],img:'charge_battery'},
+  {name:'Claw',char:'defect',type:'Attack',cost:0,rarity:'Common',desc:'Deal 3 damage. All Claws deal +2 damage this combat.',keywords:['Scaling'],img:'claw'},
+  {name:'Cold Snap',char:'defect',type:'Attack',cost:1,rarity:'Common',desc:'Deal 6 damage. Channel 1 Frost.',keywords:['Frost','Orb'],img:'cold_snap'},
+  {name:'Darkness',char:'defect',type:'Skill',cost:1,rarity:'Uncommon',desc:'Channel 1 Dark Orb.',keywords:['Dark','Orb'],img:'darkness'},
+  {name:'Blizzard',char:'defect',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal damage equal to Frost channeled this combat.',keywords:['Frost','Scaling'],img:'blizzard'},
+  {name:'Echo Form',char:'defect',type:'Power',cost:3,rarity:'Rare',desc:'The first card you play each turn is played twice.',keywords:['Power','Double'],img:'echo_form'},
+  {name:'Meteor Strike',char:'defect',type:'Attack',cost:5,rarity:'Rare',desc:'Deal 24 damage. Channel 3 Plasma.',keywords:['Plasma','Orb'],img:'meteor_strike'},
+  {name:'Rainbow',char:'defect',type:'Skill',cost:2,rarity:'Rare',desc:'Channel 1 Lightning, 1 Frost, and 1 Dark Orb. Exhaust.',keywords:['Orb','Exhaust'],img:'rainbow'},
+  {name:'Thunder Strike',char:'defect',type:'Attack',cost:3,rarity:'Rare',desc:'Deal 7 damage for each Lightning channeled this combat.',keywords:['Lightning','Scaling'],img:'thunder_strike'},
+
+  // REGENT
+  {name:'Strike',char:'regent',type:'Attack',cost:1,rarity:'Starter',desc:'Deal 6 damage.',keywords:['Damage'],img:'strike_regent'},
+  {name:'Defend',char:'regent',type:'Skill',cost:1,rarity:'Starter',desc:'Gain 5 Block.',keywords:['Block'],img:'defend_regent'},
+  {name:'Consecrate',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 5 damage to ALL enemies. Invoke the Sun.',keywords:['Star','Sun','AoE'],img:'consecrate'},
+  {name:'Starfall',char:'regent',type:'Skill',cost:1,rarity:'Common',desc:'Gain 1 Star. Draw a card.',keywords:['Star','Draw'],img:'starfall'},
+  {name:'Celestial Ward',char:'regent',type:'Skill',cost:1,rarity:'Common',desc:'Gain 8 Block. Gain 1 Moon.',keywords:['Block','Star','Moon'],img:'celestial_ward'},
+  {name:'Nova Burst',char:'regent',type:'Attack',cost:2,rarity:'Uncommon',desc:'Deal 12 damage. Invoke all Stars.',keywords:['Star','Invoke'],img:'nova_burst'},
+  {name:'Cosmic Decree',char:'regent',type:'Power',cost:2,rarity:'Rare',desc:'At the start of each turn, gain 1 of each Star type.',keywords:['Star','Power'],img:'cosmic_decree'},
+  {name:'Eclipse',char:'regent',type:'Attack',cost:3,rarity:'Rare',desc:'Deal 20 damage to ALL enemies. Exhaust all Stars.',keywords:['Star','AoE','Exhaust'],img:'eclipse'},
+
+  // NECROBINDER
+  {name:'Strike',char:'necrobinder',type:'Attack',cost:1,rarity:'Starter',desc:'Deal 6 damage.',keywords:['Damage'],img:'strike_necrobinder'},
+  {name:'Defend',char:'necrobinder',type:'Skill',cost:1,rarity:'Starter',desc:'Gain 5 Block.',keywords:['Block'],img:'defend_necrobinder'},
+  {name:'Soul Harvest',char:'necrobinder',type:'Skill',cost:1,rarity:'Common',desc:'Gain 6 Block. Add a Soul to your hand.',keywords:['Soul','Block'],img:'soul_harvest'},
+  {name:'Reanimate',char:'necrobinder',type:'Skill',cost:2,rarity:'Uncommon',desc:'Resummon your last exhausted card.',keywords:['Exhaust','Resummon'],img:'reanimate'},
+  {name:'Death Pact',char:'necrobinder',type:'Power',cost:2,rarity:'Rare',desc:'When a minion dies, deal 6 damage to all enemies.',keywords:['Minion','Power'],img:'death_pact'},
+  {name:'Bone Wall',char:'necrobinder',type:'Skill',cost:1,rarity:'Common',desc:'Gain Block equal to cards Exhausted this combat.',keywords:['Block','Exhaust'],img:'bone_wall'},
+  {name:'Grave Dust',char:'necrobinder',type:'Skill',cost:0,rarity:'Common',desc:'Apply 3 Poison to ALL enemies.',keywords:['Poison','AoE'],img:'grave_dust'},
+
+  // COLORLESS
+  {name:'Shiv',char:'colorless',type:'Attack',cost:0,rarity:'Common',desc:'Deal 4 damage. Exhaust.',keywords:['Exhaust'],img:'shiv'},
+  {name:'Bandage Up',char:'colorless',type:'Skill',cost:0,rarity:'Common',desc:'Heal 4 HP. Exhaust.',keywords:['Heal','Exhaust'],img:'bandage_up'},
+  {name:'Blind',char:'colorless',type:'Skill',cost:0,rarity:'Common',desc:'Apply 2 Weak to ALL enemies.',keywords:['Weak','AoE'],img:'blind'},
+  {name:'Flash of Steel',char:'colorless',type:'Attack',cost:0,rarity:'Common',desc:'Deal 3 damage. Draw 1 card.',keywords:['Draw'],img:'flash_of_steel'},
+  {name:'Swift Strike',char:'colorless',type:'Attack',cost:0,rarity:'Common',desc:'Deal 7 damage.',keywords:['Damage'],img:'swift_strike'},
+  {name:'Trip',char:'colorless',type:'Skill',cost:0,rarity:'Common',desc:'Apply 2 Vulnerable to ALL enemies.',keywords:['Vulnerable','AoE'],img:'trip'},
+  {name:'Good Instincts',char:'colorless',type:'Skill',cost:0,rarity:'Common',desc:'Gain 6 Block.',keywords:['Block'],img:'good_instincts'},
+  {name:'Dark Shackles',char:'colorless',type:'Skill',cost:0,rarity:'Uncommon',desc:'Enemy loses 9 Strength for the rest of this turn. Exhaust.',keywords:['Strength','Exhaust'],img:'dark_shackles'},
+
+  // STATUS
+  {name:'Wound',char:'colorless',type:'Status',cost:null,rarity:'Status',desc:'Unplayable. Whenever drawn, lose 1 HP.',keywords:['Status','Unplayable'],img:'wound'},
+  {name:'Slimed',char:'colorless',type:'Status',cost:1,rarity:'Status',desc:'Exhaust.',keywords:['Status','Exhaust'],img:'slimed'},
+  {name:'Burn',char:'colorless',type:'Status',cost:null,rarity:'Status',desc:'Unplayable. At end of turn, take 2 damage.',keywords:['Status','Unplayable'],img:'burn'},
+  {name:'Dazed',char:'colorless',type:'Status',cost:null,rarity:'Status',desc:'Unplayable. Ethereal.',keywords:['Status','Ethereal','Unplayable'],img:'dazed'},
+  {name:'Void',char:'colorless',type:'Status',cost:null,rarity:'Status',desc:'Unplayable. Whenever drawn, lose 1 Energy.',keywords:['Status','Unplayable'],img:'void'},
+
+  // CURSES
+  {name:'Curse of the Bell',char:'colorless',type:'Curse',cost:null,rarity:'Curse',desc:'Unplayable. You cannot gain Gold.',keywords:['Curse','Unplayable'],img:'curse_of_the_bell'},
+  {name:'Normality',char:'colorless',type:'Curse',cost:null,rarity:'Curse',desc:'Unplayable. You cannot play more than 3 cards per turn.',keywords:['Curse','Unplayable'],img:'normality'},
+  {name:'Pain',char:'colorless',type:'Curse',cost:null,rarity:'Curse',desc:'Unplayable. Whenever a card is played, lose 1 HP.',keywords:['Curse','Unplayable'],img:'pain'},
+  {name:'Parasite',char:'colorless',type:'Curse',cost:null,rarity:'Curse',desc:'Unplayable. If removed from your deck, lose 3 Max HP.',keywords:['Curse','Unplayable'],img:'parasite'},
+  {name:'Regret',char:'colorless',type:'Curse',cost:null,rarity:'Curse',desc:'Unplayable. At end of turn, lose 1 HP per card in hand.',keywords:['Curse','Unplayable'],img:'regret'},
+];
+
+// populate keyword dropdown
+const allKws = [...new Set(cards.flatMap(c=>c.keywords))].sort();
+const kwSel = document.getElementById('kwSelect');
+allKws.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;kwSel.appendChild(o);});
+
+let activeChar='all', activeType='all', activeRarity='all', activeKw='';
+
+function setChar(el){activeChar=el.dataset.char;document.querySelectorAll('.class-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');render();}
+function setType(el){activeType=el.dataset.type;document.querySelectorAll('.fbtn[data-type]').forEach(b=>b.classList.remove('active'));el.classList.add('active');render();}
+function setRarity(el){activeRarity=el.dataset.rarity;document.querySelectorAll('.fbtn[data-rarity]').forEach(b=>b.classList.remove('active'));el.classList.add('active');render();}
+function setKw(el){activeKw=el.value;el.classList.toggle('on',!!el.value);render();}
+document.getElementById('search').addEventListener('input',render);
+
+function typeBadge(t){return{Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse'}[t]||'b-attack';}
+
+function render(){
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const filtered = cards.filter(c=>{
+    if(activeChar!=='all' && c.char!==activeChar) return false;
+    if(activeType!=='all' && c.type!==activeType) return false;
+    if(activeRarity!=='all' && c.rarity!==activeRarity) return false;
+    if(activeKw && !c.keywords.includes(activeKw)) return false;
+    if(q && !c.name.toLowerCase().includes(q) && !c.desc.toLowerCase().includes(q) && !c.keywords.some(k=>k.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  document.getElementById('cnt').textContent = filtered.length;
+  document.getElementById('cntA').textContent = filtered.filter(c=>c.type==='Attack').length;
+  document.getElementById('cntS').textContent = filtered.filter(c=>c.type==='Skill').length;
+  document.getElementById('cntP').textContent = filtered.filter(c=>c.type==='Power').length;
+
+  const grid = document.getElementById('grid');
+  if(!filtered.length){grid.innerHTML='<div class="no-results">No cards match your filters.</div>';return;}
+
+  const col = c => CHARS[c.char] || {hex:'#7050b0',label:'Unknown'};
+
+  grid.innerHTML = filtered.map(c=>{
+    const cc = col(c);
+    const imgSrc = imgPath(c.char, c.img);
+    const cost = c.cost===null ? '—' : c.cost==='X' ? 'X' : c.cost;
+    const rareBadge = (c.rarity==='Uncommon'||c.rarity==='Rare') ? `<span class="badge b-${c.rarity.toLowerCase()}">${c.rarity}</span>` : '';
+    const kws = c.keywords.map(k=>`<span class="kw">${k}</span>`).join('');
+    return `<div class="card" style="--cc:${cc.hex}">
+      <div class="card-bar"></div>
+      <div class="card-art">
+        <img src="${imgSrc}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="card-art-fallback" style="display:none">?</div>
+        <div class="char-watermark">${cc.label}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-name">${c.name}</div>
+          <div class="cost">${cost}</div>
+        </div>
+        <div class="badges">
+          <span class="badge ${typeBadge(c.type)}">${c.type}</span>
+          ${rareBadge}
+        </div>
+        <div class="card-desc">${c.desc}</div>
+        <div class="kws">${kws}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+render();
+</script>
+</body>
+</html>
