@@ -79,6 +79,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM
 .b-power{background:#182812;color:#88cc70;border:1px solid #285a1e;}
 .b-status{background:#352a12;color:#e8b870;border:1px solid #5a421e;}
 .b-curse{background:#281235;color:#b880d8;border:1px solid #4a1e5a;}
+.b-token{background:#302510;color:#e0c060;border:1px solid #504010;}
 .b-uncommon{background:#201a30;color:#9a88c8;border:1px solid #302548;}
 .b-rare{background:#302010;color:#d4a848;border:1px solid #503215;}
 .b-ancient{background:#2a1f10;color:#e0b060;border:1px solid #5a3a10;}
@@ -123,6 +124,8 @@ footer a:hover{color:var(--text);}
   <div class="class-tab" data-char="regent" onclick="setChar(this)"><span class="pip" style="background:#c070e0"></span>Regent</div>
   <div class="class-tab" data-char="necrobinder" onclick="setChar(this)"><span class="pip" style="background:#70b060"></span>Necrobinder</div>
   <div class="class-tab" data-char="colorless" onclick="setChar(this)"><span class="pip" style="background:#a09898"></span>Colorless</div>
+  <div class="class-tab" data-char="event" onclick="setChar(this)"><span class="pip" style="background:#d4a84b"></span>Event</div>
+  <div class="class-tab" data-char="token" onclick="setChar(this)"><span class="pip" style="background:#e0c060"></span>Token</div>
 </div>
 
 <div class="filters">
@@ -133,6 +136,7 @@ footer a:hover{color:var(--text);}
   <button class="fbtn" data-type="Power" onclick="setType(this)">Power</button>
   <button class="fbtn" data-type="Status" onclick="setType(this)">Status</button>
   <button class="fbtn" data-type="Curse" onclick="setType(this)">Curse</button>
+  <button class="fbtn" data-type="Token" onclick="setType(this)">Token</button>
   <div class="fdiv"></div>
   <span class="flabel">Keyword</span>
   <select class="kw-select" id="kwSelect" onchange="setKw(this)"><option value="">Any</option></select>
@@ -171,6 +175,8 @@ const CHARS={
   regent:{hex:'#c070e0',label:'Regent'},
   necrobinder:{hex:'#70b060',label:'Necrobinder'},
   colorless:{hex:'#a09898',label:'Colorless'},
+  event:{hex:'#d4a84b',label:'Event'},
+  token:{hex:'#e0c060',label:'Token'},
 };
 const IMG='images/packed/card_portraits';
 const ip=(char,img)=>`${IMG}/${char}/${img}.png`;
@@ -743,6 +749,45 @@ const cards=[
 {name:'Toxic',char:'colorless',type:'Status',cost:null,rarity:'Status',desc:'Unplayable. At the end of your turn, apply 5 Poison to yourself.',kw:['Status','Unplayable','Poison'],img:'toxic'},
 {name:'Void',char:'colorless',type:'Status',cost:null,rarity:'Status',desc:'Unplayable. Whenever drawn, lose 1 Energy.',kw:['Status','Unplayable'],img:'void'},
 {name:'Wound',char:'colorless',type:'Status',cost:null,rarity:'Status',desc:'Unplayable.',kw:['Status','Unplayable'],img:'wound'},
+// ── TOKEN CARDS ──────────────────────────────────────────────
+{name:'Shiv',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Deal 4 damage. Exhaust.',kw:['Exhaust','Token'],img:'shiv'},
+{name:'Soul',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Draw 2 cards. Exhaust.',kw:['Draw','Exhaust','Token'],img:'soul'},
+{name:'Minion Strike',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Deal 7 damage. Draw 1 card. Exhaust.',kw:['Draw','Exhaust','Token','Minion'],img:'minion_strike'},
+{name:'Minion Dive Bomb',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Deal 14 damage. Exhaust.',kw:['Exhaust','Token','Minion'],img:'minion_dive_bomb'},
+{name:'Minion Sacrifice',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Gain 9 Block. Exhaust.',kw:['Block','Exhaust','Token','Minion'],img:'minion_sacrifice'},
+{name:'Sovereign Blade',char:'token',type:'Token',cost:2,rarity:'Common',desc:'Retain. Deal 10 damage.',kw:['Retain','Token','Forge','Regent'],img:'sovereign_blade'},
+{name:'Starlight Sword',char:'token',type:'Token',cost:1,rarity:'Common',desc:'Deal 8 damage. Gain 1 Star.',kw:['Stars','Token','Regent'],img:'starlight_sword'},
+{name:'Luminesce',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Gain 9 Block. Return this card to your Hand.',kw:['Block','Token','Regent'],img:'luminesce'},
+{name:'Giant Rock',char:'token',type:'Token',cost:1,rarity:'Common',desc:'Deal 14 damage to ALL enemies. Exhaust.',kw:['AoE','Exhaust','Token'],img:'giant_rock'},
+{name:'Disintegration',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Deal 2 damage 3 times. Exhaust.',kw:['Exhaust','Token'],img:'disintegration'},
+{name:'Fuel',char:'token',type:'Token',cost:0,rarity:'Common',desc:'Gain 6 Block. Transform all Status cards in your Hand into Fuel.',kw:['Block','Status','Token'],img:'fuel'},
+{name:'Mind Rot',char:'token',type:'Token',cost:null,rarity:'Status',desc:'Unplayable. At the end of your turn, if this is in your Hand, lose 10 Gold.',kw:['Status','Unplayable','Token'],img:'mind_rot'},
+{name:'Sloth',char:'token',type:'Token',cost:null,rarity:'Status',desc:'Unplayable. You cannot play more than 3 cards this turn.',kw:['Status','Unplayable','Token'],img:'sloth'},
+{name:'Sweeping Gaze',char:'token',type:'Token',cost:0,rarity:'Common',desc:'At the start of your turn, add 1 Sweeping Gaze into your Hand.',kw:['Token'],img:'sweeping_gaze'},
+{name:'Waste Away',char:'token',type:'Token',cost:null,rarity:'Status',desc:'Unplayable. At the end of your turn, if this is in your Hand, take 2 damage.',kw:['Status','Unplayable','Token'],img:'waste_away'},
+
+// ── EVENT CARDS ──────────────────────────────────────────────
+{name:"Neow's Fury",char:'event',type:'Attack',cost:1,rarity:'Ancient',desc:'Deal 10 damage. Put 2 random cards from your Discard Pile into your Hand. Exhaust.',kw:['Ancient','Exhaust','Draw','Event'],img:'neows_fury'},
+{name:'Apotheosis',char:'event',type:'Skill',cost:2,rarity:'Ancient',desc:'Innate. Upgrade ALL your cards. Exhaust.',kw:['Ancient','Innate','Upgrade','Exhaust','Event'],img:'apotheosis'},
+{name:'Enlightenment',char:'event',type:'Skill',cost:0,rarity:'Common',desc:'Reduce the cost of ALL cards in your Hand to 1 this turn.',kw:['Energy','Event'],img:'enlightenment'},
+{name:'Metamorphosis',char:'event',type:'Skill',cost:2,rarity:'Rare',desc:'Add 3 random Attacks into your Draw Pile. They are free to play this combat. Exhaust.',kw:['Exhaust','Event'],img:'metamorphosis'},
+{name:'Wish',char:'event',type:'Skill',cost:3,rarity:'Rare',desc:'Choose: Gain 3 Plated Armor, Gain 4 Strength, or Gain 30 Gold. Exhaust.',kw:['Exhaust','Event'],img:'wish'},
+{name:'Maul',char:'event',type:'Attack',cost:0,rarity:'Common',desc:'Deal 5 damage twice. Increase the damage of ALL Maul cards by 1 this combat.',kw:['Scaling','Event'],img:'maul'},
+{name:'Exterminate',char:'event',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 9 damage. ALL enemies lose 9 Strength this turn. Exhaust. Ethereal.',kw:['Exhaust','Ethereal','Event'],img:'exterminate'},
+{name:'Caltrops',char:'event',type:'Power',cost:0,rarity:'Uncommon',desc:'Whenever you are attacked, deal 3 damage back.',kw:['Thorns','Power','Event'],img:'caltrops'},
+{name:'Rip and Tear',char:'event',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 7 damage to ALL enemies. All enemies lose 1 Strength this turn.',kw:['AoE','Event'],img:'rip_and_tear'},
+{name:'Feeding Frenzy',char:'event',type:'Skill',cost:1,rarity:'Uncommon',desc:'Draw 3 cards. Choose a Skill in your Hand and play it 3 times. Exhaust.',kw:['Draw','Exhaust','Event'],img:'feeding_frenzy'},
+{name:'Hello World',char:'event',type:'Skill',cost:0,rarity:'Common',desc:'Add 3 random Colorless cards to your Hand.',kw:['Draw','Event'],img:'hello_world'},
+{name:'Peck',char:'event',type:'Attack',cost:0,rarity:'Common',desc:'Deal 1 damage 6 times.',kw:['Damage','Event'],img:'peck'},
+{name:'Relax',char:'event',type:'Skill',cost:1,rarity:'Common',desc:'Gain 11 Block. Deal 14 damage.',kw:['Block','Event'],img:'relax'},
+{name:'Squash',char:'event',type:'Attack',cost:1,rarity:'Common',desc:'Deal 3 damage 4 times to ALL enemies.',kw:['AoE','Event'],img:'squash'},
+{name:'Toric Toughness',char:'event',type:'Skill',cost:1,rarity:'Uncommon',desc:'Gain 17 Block. Blocked attack damage is reflected to your attacker this turn.',kw:['Block','Thorns','Event'],img:'toric_toughness'},
+{name:'Byrd Swoop',char:'event',type:'Attack',cost:0,rarity:'Common',desc:'Deal 2 damage. Deal 2 damage again for each time this has been played this combat.',kw:['Scaling','Event'],img:'byrd_swoop'},
+{name:'Brightest Flame',char:'event',type:'Skill',cost:1,rarity:'Uncommon',desc:'Deal 14 damage to ALL enemies. Apply 2 Weak and 2 Vulnerable to ALL enemies.',kw:['AoE','Weak','Vulnerable','Event'],img:'brightest_flame'},
+{name:'Mad Science Attack',char:'event',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 33 damage. Apply 3 Weak. Apply 3 Vulnerable.',kw:['Weak','Vulnerable','Event'],img:'mad_science_attack'},
+{name:'Mad Science Skill',char:'event',type:'Skill',cost:1,rarity:'Uncommon',desc:'Gain 9 Block. Gain 2 Vigor.',kw:['Block','Event'],img:'mad_science_skill'},
+{name:'Mad Science Power',char:'event',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever you play a card, gain 1 Energy.',kw:['Energy','Power','Event'],img:'mad_science_power'},
+{name:'Whistle',char:'event',type:'Skill',cost:0,rarity:'Common',desc:'Gain 6 Block.',kw:['Block','Event'],img:'whistle'},
 ];
 
 // build keyword dropdown
@@ -758,12 +803,14 @@ function setRarity(el){activeRarity=el.dataset.rarity;document.querySelectorAll(
 function setKw(el){activeKw=el.value;el.classList.toggle('on',!!el.value);render();}
 document.getElementById('search').addEventListener('input',render);
 
-function typeBadge(t){return{Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse'}[t]||'b-attack';}
+function typeBadge(t){return{Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse',Token:'b-token'}[t]||'b-attack';}
 function rarityBadge(r){if(r==='Ancient')return`<span class="badge b-ancient">Ancient</span>`;if(r==='Rare')return`<span class="badge b-rare">Rare</span>`;if(r==='Uncommon')return`<span class="badge b-uncommon">Uncommon</span>`;return '';}
 
 function getImgPath(c){
   if(c.type==='Curse')return ip('curse',c.img);
   if(c.type==='Status')return ip('status',c.img);
+  if(c.char==='token')return ip('token',c.img);
+  if(c.char==='event')return ip('event',c.img);
   return ip(c.char,c.img);
 }
 
