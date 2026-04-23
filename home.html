@@ -3,637 +3,266 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STS Companion — Slay the Spire 2 Companion App</title>
+<title>SpireIndex — Slay the Spire 2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-
 :root{
-  --bg:#0a0810;
-  --bg2:#110e1c;
-  --bg3:#0d0b18;
-  --border:#1e1830;
-  --border2:#2e2548;
-  --text:#c8b89a;
-  --text2:#7a6a8a;
-  --text3:#3e3058;
-  --gold:#d4a84b;
-  --gold2:#f0c870;
-  --purple:#9070d0;
-  --red:#c04040;
+  --ink:#07050f;
+  --deep:#0d0b18;
+  --mid:#13101f;
+  --gold:#c9933a;
+  --gold2:#e8b86d;
+  --pale:#e8dccc;
+  --muted:#6a5a4a;
+  --purple:#6040a0;
 }
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--pale);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;}
 
-html,body{
-  min-height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:'DM Sans',sans-serif;
-  overflow-x:hidden;
-}
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:linear-gradient(to bottom,rgba(7,5,15,0.96) 0%,transparent 100%);}
+.nav-logo{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--gold2);letter-spacing:3px;text-decoration:none;display:flex;align-items:center;gap:10px;}
+.nav-links{display:flex;gap:36px;}
+.nav-links a{font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-links a:hover{color:var(--pale);}
+.nav-links a.live{color:var(--gold);}
 
-/* ── NAV ── */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 40px;height:56px;
-  background:rgba(10,8,16,0.85);
-  border-bottom:1px solid rgba(46,37,72,0.5);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-}
-.nav-logo{
-  font-family:'Cormorant Garamond',serif;
-  font-size:20px;font-weight:600;
-  color:#e8d8b0;letter-spacing:0.5px;
-  text-decoration:none;
-}
-.nav-logo em{font-style:italic;color:var(--purple);font-weight:400;}
-.nav-links{display:flex;gap:28px;align-items:center;}
-.nav-links a{
-  font-size:13px;font-weight:500;
-  color:var(--text2);text-decoration:none;
-  letter-spacing:0.3px;transition:color 0.15s;
-}
-.nav-links a:hover{color:var(--text);}
-.nav-cta{
-  font-size:12px;font-weight:500;
-  padding:7px 16px;border-radius:6px;
-  background:transparent;
-  border:1px solid var(--border2);
-  color:var(--text);cursor:pointer;
-  font-family:'DM Sans',sans-serif;
-  text-decoration:none;
-  transition:all 0.15s;
-}
-.nav-cta:hover{background:var(--border2);color:#e8d8b0;}
+/* HERO */
+.hero{position:relative;height:100vh;min-height:700px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
 
-/* ── HERO ── */
-.hero{
-  min-height:100vh;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  text-align:center;
-  padding:70px 40px 14px;
-  position:relative;
-  overflow:hidden;
-}
+.hero-bg{position:absolute;inset:0;background:url('images/rooms/architect_victory/architect_victory_bg.png') center 30% / cover no-repeat;opacity:0.15;filter:saturate(0.5);}
+.hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse 70% 70% at 50% 50%,transparent 10%,rgba(7,5,15,0.65) 65%,var(--ink) 100%),linear-gradient(to bottom,rgba(7,5,15,0.5) 0%,transparent 25%,transparent 65%,var(--ink) 100%);}
+.hero-glow{position:absolute;inset:0;background:radial-gradient(ellipse 35% 30% at 50% 44%,rgba(201,147,58,0.06) 0%,transparent 70%);}
 
-.hero-bg{
-  position:absolute;inset:0;
-  pointer-events:none;
-  overflow:hidden;
-}
+/* Ancient portraits */
+.anc{position:absolute;pointer-events:none;user-select:none;}
+.anc img{display:block;}
 
-/* spire tower silhouette */
-.spire-shape{
-  position:absolute;
-  bottom:0;left:50%;
-  transform:translateX(-50%);
-  width:0;height:0;
-  border-left:180px solid transparent;
-  border-right:180px solid transparent;
-  border-bottom:500px solid #0d0b18;
-  opacity:0.6;
-}
-.spire-shape2{
-  position:absolute;
-  bottom:0;left:50%;
-  transform:translateX(-50%);
-  width:0;height:0;
-  border-left:80px solid transparent;
-  border-right:80px solid transparent;
-  border-bottom:700px solid #0a0810;
-  opacity:0.8;
-}
-.spire-tip{
-  position:absolute;
-  bottom:680px;left:50%;
-  transform:translateX(-50%);
-  width:4px;height:120px;
-  background:linear-gradient(to top, #2e2548, transparent);
-}
+.anc-tl{top:-80px;left:-140px;width:700px;}
+.anc-tl img{filter:saturate(0.4) brightness(0.38);mask-image:radial-gradient(ellipse 70% 80% at 30% 35%, rgba(0,0,0,0.7) 0%, transparent 70%);-webkit-mask-image:radial-gradient(ellipse 70% 80% at 30% 35%, rgba(0,0,0,0.7) 0%, transparent 70%);}
 
-.hero-glow{
-  position:absolute;
-  top:20%;left:50%;
-  transform:translate(-50%,-50%);
-  width:600px;height:400px;
-  background:radial-gradient(ellipse, rgba(144,112,208,0.12) 0%, transparent 70%);
-}
-.hero-glow2{
-  position:absolute;
-  top:60%;left:30%;
-  width:300px;height:300px;
-  background:radial-gradient(ellipse, rgba(192,64,64,0.06) 0%, transparent 70%);
-}
-.hero-glow3{
-  position:absolute;
-  top:50%;left:70%;
-  width:300px;height:300px;
-  background:radial-gradient(ellipse, rgba(212,168,75,0.05) 0%, transparent 70%);
-}
+.anc-tr{top:-60px;right:-120px;width:660px;}
+.anc-tr img{filter:saturate(0.4) brightness(0.35);mask-image:radial-gradient(ellipse 70% 75% at 70% 32%, rgba(0,0,0,0.65) 0%, transparent 70%);-webkit-mask-image:radial-gradient(ellipse 70% 75% at 70% 32%, rgba(0,0,0,0.65) 0%, transparent 70%);}
 
-/* floating particles */
-.particles{position:absolute;inset:0;}
-.p{
-  position:absolute;
-  width:2px;height:2px;
-  border-radius:50%;
-  background:var(--gold);
-  opacity:0;
-  animation:float var(--dur, 8s) var(--delay, 0s) infinite ease-in-out;
-}
-@keyframes float{
-  0%{opacity:0;transform:translateY(0) translateX(0);}
-  20%{opacity:var(--op,0.4);}
-  80%{opacity:var(--op,0.4);}
-  100%{opacity:0;transform:translateY(-120px) translateX(var(--dx,20px));}
-}
+.anc-bl{bottom:-40px;left:-80px;width:480px;}
+.anc-bl img{filter:saturate(0.35) brightness(0.32);mask-image:radial-gradient(ellipse 65% 70% at 30% 65%, rgba(0,0,0,0.55) 0%, transparent 70%);-webkit-mask-image:radial-gradient(ellipse 65% 70% at 30% 65%, rgba(0,0,0,0.55) 0%, transparent 70%);}
 
-.hero-eyebrow{
-  font-size:11px;letter-spacing:4px;text-transform:uppercase;
-  color:var(--text3);font-weight:500;
-  margin-bottom:20px;
-  animation:fadeUp 0.8s ease both;
-}
-.hero-title{
-  font-family:'Cormorant Garamond',serif;
-  font-size:clamp(48px, 8vw, 88px);
-  font-weight:700;
-  line-height:0.95;
-  color:#f0e4c8;
-  margin-bottom:8px;
-  animation:fadeUp 0.8s 0.1s ease both;
-}
-.hero-title em{
-  font-style:italic;
-  color:var(--purple);
-  font-weight:400;
-}
-.hero-title .line2{
-  display:block;
-  font-size:clamp(32px,5vw,56px);
-  color:var(--gold);
-  font-weight:400;
-  font-style:italic;
-  margin-top:4px;
-}
-.hero-sub{
-  font-size:16px;
-  color:var(--text2);
-  line-height:1.7;
-  max-width:480px;
-  margin:16px auto 28px;
-  font-weight:300;
-  animation:fadeUp 0.8s 0.2s ease both;
-}
-.hero-actions{
-  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
-  animation:fadeUp 0.8s 0.3s ease both;
-}
-.btn-primary{
-  font-family:'DM Sans',sans-serif;
-  font-size:14px;font-weight:500;
-  padding:12px 28px;border-radius:8px;
-  background:var(--purple);
-  border:none;color:#f0e4c8;
-  cursor:pointer;text-decoration:none;
-  transition:all 0.15s;letter-spacing:0.3px;
-}
-.btn-primary:hover{background:#a080e0;transform:translateY(-1px);}
-.btn-secondary{
-  font-family:'DM Sans',sans-serif;
-  font-size:14px;font-weight:500;
-  padding:12px 28px;border-radius:8px;
-  background:transparent;
-  border:1px solid var(--border2);
-  color:var(--text);cursor:pointer;
-  text-decoration:none;transition:all 0.15s;
-}
-.btn-secondary:hover{border-color:var(--purple);color:#f0e4c8;transform:translateY(-1px);}
+.anc-br{bottom:-20px;right:-60px;width:500px;}
+.anc-br img{filter:saturate(0.35) brightness(0.3);mask-image:radial-gradient(ellipse 65% 65% at 70% 68%, rgba(0,0,0,0.5) 0%, transparent 70%);-webkit-mask-image:radial-gradient(ellipse 65% 65% at 70% 68%, rgba(0,0,0,0.5) 0%, transparent 70%);}
 
-.hero-scroll{
-  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
-  font-size:11px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--text3);
-  animation:fadeUp 0.8s 0.6s ease both;
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-}
-.scroll-line{
-  width:1px;height:32px;
-  background:linear-gradient(to bottom, var(--border2), transparent);
-  animation:scrollPulse 2s infinite;
-}
-@keyframes scrollPulse{0%,100%{opacity:0.3;}50%{opacity:1;}}
+.anc-ml{top:50%;left:-20px;transform:translateY(-50%);width:320px;}
+.anc-ml img{filter:saturate(0.3) brightness(0.28);mask-image:radial-gradient(ellipse 60% 55% at 25% 50%, rgba(0,0,0,0.45) 0%, transparent 65%);-webkit-mask-image:radial-gradient(ellipse 60% 55% at 25% 50%, rgba(0,0,0,0.45) 0%, transparent 65%);}
 
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(20px);}
-  to{opacity:1;transform:translateY(0);}
-}
+.anc-mr{top:50%;right:-20px;transform:translateY(-50%);width:320px;}
+.anc-mr img{filter:saturate(0.3) brightness(0.28);mask-image:radial-gradient(ellipse 60% 55% at 75% 50%, rgba(0,0,0,0.45) 0%, transparent 65%);-webkit-mask-image:radial-gradient(ellipse 60% 55% at 75% 50%, rgba(0,0,0,0.45) 0%, transparent 65%);}
 
-/* ── FEATURE CARDS ── */
-.features{
-  padding:80px 40px 100px;
-  max-width:1200px;
-  margin:0 auto;
-}
-.features-label{
-  font-size:11px;letter-spacing:4px;text-transform:uppercase;
-  color:var(--text3);font-weight:500;
-  text-align:center;margin-bottom:48px;
-}
-.cards-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-  gap:16px;
-}
+/* Hero content */
+.hero-content{position:relative;z-index:10;text-align:center;padding:0 24px;animation:fadeUp 1.6s cubic-bezier(0.16,1,0.3,1) both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
 
-/* game-card inspired feature tiles */
-.feat-card{
-  position:relative;
-  background:var(--bg2);
-  border-radius:12px;
-  overflow:hidden;
-  border:1px solid var(--border);
-  cursor:pointer;
-  text-decoration:none;
-  display:block;
-  transition:transform 0.2s, border-color 0.2s;
-  animation:fadeUp 0.6s var(--ad,0s) ease both;
-}
-.feat-card:hover{transform:translateY(-4px);border-color:var(--card-color,var(--purple));}
+.hero-eyebrow{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:rgba(201,147,58,0.7);font-weight:500;margin-bottom:22px;}
+.hero-title{font-family:'Cinzel',serif;font-size:clamp(56px,9vw,108px);font-weight:900;line-height:0.9;letter-spacing:-1px;color:var(--pale);}
+.hero-title-sub{font-family:'Cinzel',serif;font-size:clamp(20px,3vw,34px);font-weight:400;font-style:italic;color:var(--gold2);letter-spacing:6px;display:block;margin-top:6px;}
+.hero-rule{width:1px;height:48px;background:linear-gradient(to bottom,transparent,var(--gold),transparent);margin:28px auto;}
+.hero-sub{font-size:13px;font-weight:300;letter-spacing:2px;color:var(--muted);line-height:2;text-transform:uppercase;margin-bottom:40px;}
+.hero-btn{display:inline-flex;align-items:center;gap:12px;border:1px solid rgba(201,147,58,0.4);color:var(--gold2);font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;padding:15px 36px;text-decoration:none;transition:all 0.3s;position:relative;overflow:hidden;}
+.hero-btn::after{content:'';position:absolute;inset:0;background:rgba(201,147,58,0.06);opacity:0;transition:opacity 0.3s;}
+.hero-btn:hover{border-color:var(--gold2);color:#fff;}
+.hero-btn:hover::after{opacity:1;}
+.hero-btn span{transition:transform 0.3s;}
+.hero-btn:hover span{transform:translateX(5px);}
 
-.feat-card-top{
-  height:4px;
-  background:var(--card-color,var(--purple));
-  opacity:0.7;
-}
-.feat-card-art{
-  height:140px;
-  position:relative;
-  overflow:hidden;
-  display:flex;align-items:center;justify-content:center;
-  border-bottom:1px solid var(--border);
-}
-.feat-art-bg{
-  position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 60%, var(--card-dim,rgba(144,112,208,0.15)) 0%, transparent 70%);
-}
-.feat-art-icon{
-  position:relative;z-index:1;
-  font-size:56px;line-height:1;
-  opacity:0.15;
-  user-select:none;
-}
-.feat-art-glyph{
-  position:absolute;bottom:10px;right:14px;
-  font-size:10px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--card-color,var(--purple));
-  opacity:0.45;font-weight:600;
-  font-family:'DM Sans',sans-serif;
-}
-.feat-card-body{padding:18px 20px 20px;}
-.feat-card-head{
-  display:flex;align-items:flex-start;
-  justify-content:space-between;gap:10px;
-  margin-bottom:8px;
-}
-.feat-card-name{
-  font-family:'Cormorant Garamond',serif;
-  font-size:22px;font-weight:600;
-  color:#e8d8b0;line-height:1.1;
-}
-.feat-badge{
-  font-size:9px;font-weight:600;letter-spacing:1px;
-  text-transform:uppercase;padding:4px 8px;
-  border-radius:4px;flex-shrink:0;margin-top:3px;
-}
-.badge-live{background:#1a2e1a;color:#70c870;border:1px solid #2a4a2a;}
-.badge-soon{background:#2a2030;color:#9a88c8;border:1px solid #3a2e50;}
-.badge-ai{background:#2e1a1a;color:#d07070;border:1px solid #4a2828;}
+.scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.3;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(7px);}}
+.scroll-hint-line{width:1px;height:36px;background:linear-gradient(to bottom,transparent,var(--gold));}
+.scroll-hint-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);}
 
-.feat-card-desc{
-  font-size:13.5px;line-height:1.65;
-  color:var(--text2);font-weight:300;
-  font-style:italic;
-  margin-bottom:16px;
-}
-.feat-card-footer{
-  display:flex;align-items:center;justify-content:space-between;
-  padding-top:14px;
-  border-top:1px solid var(--border);
-}
-.feat-card-cta{
-  font-size:12px;font-weight:500;
-  color:var(--card-color,var(--purple));
-  letter-spacing:0.3px;
-  display:flex;align-items:center;gap:6px;
-}
-.feat-card-cta-arrow{
-  width:16px;height:16px;
-  border-radius:50%;
-  border:1px solid var(--card-color,var(--purple));
-  display:flex;align-items:center;justify-content:center;
-  font-size:9px;
-  transition:transform 0.15s;
-}
-.feat-card:hover .feat-card-cta-arrow{transform:translateX(2px);}
-.feat-tags{display:flex;gap:6px;flex-wrap:wrap;}
-.feat-tag{
-  font-size:9px;padding:2px 8px;border-radius:10px;
-  background:#1a1628;color:#5a4a78;border:1px solid #252038;
-  font-weight:500;letter-spacing:0.3px;
-}
+/* STATS */
+.stats{background:rgba(10,8,20,0.95);border-top:1px solid rgba(201,147,58,0.12);border-bottom:1px solid rgba(201,147,58,0.12);padding:22px 48px;display:flex;justify-content:center;gap:72px;}
+.stat{text-align:center;}
+.stat-n{font-family:'Cinzel',serif;font-size:30px;font-weight:700;color:var(--gold2);display:block;line-height:1;margin-bottom:5px;}
+.stat-l{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
 
-/* ── STATS BAR ── */
-.stats-bar{
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  padding:20px 40px;
-  display:flex;justify-content:center;gap:60px;
-  background:var(--bg3);flex-wrap:wrap;
-}
-.stat-item{text-align:center;}
-.stat-num{
-  font-family:'Cormorant Garamond',serif;
-  font-size:36px;font-weight:600;
-  color:var(--gold);line-height:1;
-  margin-bottom:4px;
-}
-.stat-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-weight:500;}
+/* FEATURES */
+.features{padding:100px 48px;max-width:1200px;margin:0 auto;}
+.sec-label{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:rgba(201,147,58,0.6);text-align:center;margin-bottom:12px;}
+.sec-title{font-family:'Cinzel',serif;font-size:26px;font-weight:600;color:var(--pale);text-align:center;letter-spacing:1px;margin-bottom:60px;}
 
-/* ── FOOTER ── */
-footer{
-  text-align:center;padding:32px 40px;
-  border-top:1px solid var(--border);
-  font-size:12px;color:var(--text3);
-}
-footer a{color:var(--text2);text-decoration:none;}
-footer a:hover{color:var(--text);}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,147,58,0.08);border:1px solid rgba(201,147,58,0.08);}
+.card{background:var(--deep);padding:38px 34px;text-decoration:none;color:inherit;display:block;position:relative;overflow:hidden;transition:background 0.25s;}
+.card:hover{background:#14112a;}
+.card.wide{grid-column:span 2;padding:50px 46px;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
+.card-icon{font-size:26px;line-height:1;}
+.card.wide .card-icon{font-size:36px;}
+.pill{font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:3px 9px;border-radius:2px;font-weight:600;}
+.pill-live{background:rgba(80,190,120,0.12);color:#5dc888;border:1px solid rgba(80,190,120,0.25);}
+.pill-soon{background:rgba(201,147,58,0.08);color:var(--muted);border:1px solid rgba(201,147,58,0.12);}
+.pill-ai{background:rgba(110,60,200,0.12);color:#9070d8;border:1px solid rgba(110,60,200,0.2);}
+.card-title{font-family:'Cinzel',serif;font-size:15px;font-weight:600;color:var(--pale);margin-bottom:10px;letter-spacing:0.5px;}
+.card.wide .card-title{font-size:20px;}
+.card-desc{font-size:13px;font-weight:300;line-height:1.75;color:var(--muted);}
+.card-cta{margin-top:22px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);opacity:0;transition:opacity 0.2s,transform 0.2s;display:inline-flex;align-items:center;gap:7px;}
+.card:hover .card-cta{opacity:1;transform:translateX(4px);}
+.card-ghost{font-family:'Cinzel',serif;font-size:56px;font-weight:900;color:rgba(201,147,58,0.05);position:absolute;bottom:12px;right:20px;line-height:1;user-select:none;pointer-events:none;}
+
+/* ANCIENTS STRIP */
+.strip{padding:80px 0;background:linear-gradient(to bottom,var(--ink),#0e0b1c 40%,var(--ink));position:relative;overflow:hidden;}
+.strip::before,.strip::after{content:'';position:absolute;top:0;bottom:0;width:180px;z-index:2;}
+.strip::before{left:0;background:linear-gradient(to right,var(--ink),transparent);}
+.strip::after{right:0;background:linear-gradient(to left,var(--ink),transparent);}
+.strip-label{text-align:center;margin-bottom:36px;position:relative;z-index:3;}
+.strip-label span{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:var(--muted);}
+.strip-row{display:flex;justify-content:center;align-items:flex-end;position:relative;z-index:1;padding:0 80px;}
+.anc-thumb{flex:1;max-width:200px;position:relative;overflow:hidden;cursor:default;}
+.anc-thumb img{width:100%;display:block;filter:saturate(0.5) brightness(0.45);transition:filter 0.4s,transform 0.4s;mask-image:linear-gradient(to top,transparent 0%,rgba(0,0,0,0.9) 22%,rgba(0,0,0,0.9) 82%,transparent 100%);-webkit-mask-image:linear-gradient(to top,transparent 0%,rgba(0,0,0,0.9) 22%,rgba(0,0,0,0.9) 82%,transparent 100%);}
+.anc-thumb:hover img{filter:saturate(0.75) brightness(0.65);transform:scale(1.04) translateY(-5px);}
+.anc-thumb-name{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(232,220,204,0.4);transition:color 0.3s;}
+.anc-thumb:hover .anc-thumb-name{color:var(--gold2);}
+
+/* FOOTER */
+footer{position:relative;overflow:hidden;padding:56px 48px 36px;text-align:center;}
+.foot-dock{position:absolute;bottom:0;left:0;right:0;height:100px;background:url('images/rooms/underdocks/underdocks_04_a.png') center bottom / cover no-repeat;opacity:0.1;mask-image:linear-gradient(to bottom,transparent,rgba(0,0,0,0.7));-webkit-mask-image:linear-gradient(to bottom,transparent,rgba(0,0,0,0.7));}
+.foot-pipes{position:absolute;bottom:0;left:0;right:0;height:80px;background:url('images/rooms/underdocks/underdocks_02_b.png') center bottom / 120% no-repeat;opacity:0.07;}
+.foot-inner{position:relative;z-index:2;}
+.foot-logo{font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:4px;margin-bottom:6px;}
+.foot-tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:24px;}
+.foot-links{display:flex;justify-content:center;gap:32px;margin-bottom:24px;}
+.foot-links a{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.foot-links a:hover{color:var(--pale);}
+.foot-copy{font-size:10px;color:rgba(106,90,74,0.35);border-top:1px solid rgba(201,147,58,0.07);padding-top:18px;}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <a href="home.html" class="nav-logo">STS<em>Companion</em></a>
+  <a class="nav-logo" href="home.html">
+    <svg width="18" height="18" viewBox="0 0 22 22" fill="none"><polygon points="11,1 14,8 21,8 15.5,13 17.5,20 11,16 4.5,20 6.5,13 1,8 8,8" fill="none" stroke="#c9933a" stroke-width="1.3" stroke-linejoin="round"/></svg>
+    SpireIndex
+  </a>
   <div class="nav-links">
-    <a href="index.html">Card Library</a>
+    <a href="index.html" class="live">Card Library</a>
     <a href="#">Relics</a>
     <a href="#">Deck Builder</a>
-    <a href="#">AI Advisor</a>
+    <a href="#">Run Advisor</a>
   </div>
-  <a href="index.html" class="nav-cta">Browse Cards →</a>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
-  <div class="hero-bg">
-    <div class="hero-glow"></div>
-    <div class="hero-glow2"></div>
-    <div class="hero-glow3"></div>
-    <div class="spire-shape"></div>
-    <div class="spire-shape2"></div>
-    <div class="spire-tip"></div>
-    <div class="particles" id="particles"></div>
+  <div class="hero-bg"></div>
+  <div class="hero-vignette"></div>
+  <div class="hero-glow"></div>
+
+  <div class="anc anc-tl"><img src="images/ancients/nonupeipe_placeholder.png" alt=""></div>
+  <div class="anc anc-tr"><img src="images/ancients/darv_placeholder.png" alt=""></div>
+  <div class="anc anc-bl"><img src="images/ancients/vakuu_placeholder.png" alt=""></div>
+  <div class="anc anc-br"><img src="images/ancients/tanx_placeholder.png" alt=""></div>
+  <div class="anc anc-ml"><img src="images/ancients/pael_placeholder.png" alt=""></div>
+  <div class="anc anc-mr"><img src="images/ancients/orobas_placeholder.png" alt=""></div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow">Slay the Spire 2 · Early Access 2026</p>
+    <h1 class="hero-title">
+      SpireIndex
+      <span class="hero-title-sub">The Compendium</span>
+    </h1>
+    <div class="hero-rule"></div>
+    <p class="hero-sub">Every card. Every relic.<br>Every run, decoded.</p>
+    <a href="index.html" class="hero-btn">Browse Cards <span>→</span></a>
   </div>
 
-  <div class="hero-eyebrow">Slay the Spire 2 · Early Access Companion</div>
-  <h1 class="hero-title">
-    Master<em> the</em>
-    <span class="line2">Spire.</span>
-  </h1>
-  <p class="hero-sub">Every card, every relic, every synergy — indexed, searchable, and ready when you need it most.</p>
-  <div class="hero-actions">
-    <a href="index.html" class="btn-primary">Browse Card Library</a>
-    <a href="#features" class="btn-secondary">Explore Tools</a>
-  </div>
-
-  <div class="hero-scroll">
-    <div class="scroll-line"></div>
-    Scroll
+  <div class="scroll-hint">
+    <div class="scroll-hint-line"></div>
+    <div class="scroll-hint-dot"></div>
   </div>
 </section>
 
-<!-- STATS -->
-<div class="stats-bar">
-  <div class="stat-item">
-    <div class="stat-num">400+</div>
-    <div class="stat-label">Cards Indexed</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-num">5</div>
-    <div class="stat-label">Playable Classes</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-num">300+</div>
-    <div class="stat-label">Relics</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-num">EA</div>
-    <div class="stat-label">Always Updated</div>
-  </div>
+<div class="stats">
+  <div class="stat"><span class="stat-n">400+</span><span class="stat-l">Cards</span></div>
+  <div class="stat"><span class="stat-n">5</span><span class="stat-l">Classes</span></div>
+  <div class="stat"><span class="stat-n">300+</span><span class="stat-l">Relics</span></div>
+  <div class="stat"><span class="stat-n">6</span><span class="stat-l">Ancients</span></div>
 </div>
 
-<!-- FEATURE CARDS -->
-<section class="features" id="features">
-  <div class="features-label">Everything you need</div>
-  <div class="cards-grid">
+<section class="features">
+  <p class="sec-label">Tools for Slayers</p>
+  <h2 class="sec-title">Everything You Need to Climb</h2>
+  <div class="grid">
 
-    <!-- Card Library -->
-    <a href="index.html" class="feat-card" style="--card-color:#9070d0;--card-dim:rgba(144,112,208,0.15);--ad:0.1s">
-      <div class="feat-card-top"></div>
-      <div class="feat-card-art">
-        <div class="feat-art-bg"></div>
-        <div class="feat-art-icon">🃏</div>
-        <div class="feat-art-glyph">Database</div>
-      </div>
-      <div class="feat-card-body">
-        <div class="feat-card-head">
-          <div class="feat-card-name">Card Library</div>
-          <span class="feat-badge badge-live">Live</span>
-        </div>
-        <div class="feat-card-desc">Browse every card in Slay the Spire 2. Filter by class, type, rarity, and keyword. Search by effect.</div>
-        <div class="feat-card-footer">
-          <div class="feat-tags">
-            <span class="feat-tag">All Classes</span>
-            <span class="feat-tag">Filterable</span>
-            <span class="feat-tag">Searchable</span>
-          </div>
-          <div class="feat-card-cta">
-            Open
-            <div class="feat-card-cta-arrow">→</div>
-          </div>
-        </div>
-      </div>
+    <a href="index.html" class="card wide">
+      <div class="card-top"><span class="card-icon">🃏</span><span class="pill pill-live">Live</span></div>
+      <div class="card-title">Card Library</div>
+      <div class="card-desc">Browse every card in Early Access — 400+ cards across all five classes, plus tokens, events, statuses, and curses. Filter by class, type, rarity, and keyword. Toggle upgraded stats to see exactly what changes.</div>
+      <div class="card-cta">Explore cards →</div>
+      <div class="card-ghost">400+</div>
     </a>
 
-    <!-- Relics -->
-    <a href="#" class="feat-card" style="--card-color:#d4a84b;--card-dim:rgba(212,168,75,0.15);--ad:0.2s">
-      <div class="feat-card-top"></div>
-      <div class="feat-card-art">
-        <div class="feat-art-bg"></div>
-        <div class="feat-art-icon">🏺</div>
-        <div class="feat-art-glyph">Collection</div>
-      </div>
-      <div class="feat-card-body">
-        <div class="feat-card-head">
-          <div class="feat-card-name">Relic Index</div>
-          <span class="feat-badge badge-soon">Soon</span>
-        </div>
-        <div class="feat-card-desc">Every relic catalogued with effects, synergies, and class interactions. Know what to pick before you pick it.</div>
-        <div class="feat-card-footer">
-          <div class="feat-tags">
-            <span class="feat-tag">Boss Relics</span>
-            <span class="feat-tag">Shop</span>
-            <span class="feat-tag">Common</span>
-          </div>
-          <div class="feat-card-cta" style="color:#554030;">
-            Coming Soon
-            <div class="feat-card-cta-arrow" style="border-color:#554030;">→</div>
-          </div>
-        </div>
-      </div>
+    <a href="#" class="card">
+      <div class="card-top"><span class="card-icon">🔮</span><span class="pill pill-soon">Soon</span></div>
+      <div class="card-title">Relic Index</div>
+      <div class="card-desc">Every relic with descriptions, synergies, and pick priority. All 300+ relics filterable by class and tier.</div>
+      <div class="card-cta">Coming soon</div>
     </a>
 
-    <!-- Deck Builder -->
-    <a href="#" class="feat-card" style="--card-color:#50c090;--card-dim:rgba(80,192,144,0.15);--ad:0.3s">
-      <div class="feat-card-top"></div>
-      <div class="feat-card-art">
-        <div class="feat-art-bg"></div>
-        <div class="feat-art-icon">⚗</div>
-        <div class="feat-art-glyph">Builder</div>
-      </div>
-      <div class="feat-card-body">
-        <div class="feat-card-head">
-          <div class="feat-card-name">Deck Builder</div>
-          <span class="feat-badge badge-soon">Soon</span>
-        </div>
-        <div class="feat-card-desc">Craft and share decks. Visualize your card distribution, average cost, and attack/skill/power ratios.</div>
-        <div class="feat-card-footer">
-          <div class="feat-tags">
-            <span class="feat-tag">Shareable</span>
-            <span class="feat-tag">Stats</span>
-            <span class="feat-tag">Export</span>
-          </div>
-          <div class="feat-card-cta" style="color:#1a4030;">
-            Coming Soon
-            <div class="feat-card-cta-arrow" style="border-color:#1a4030;">→</div>
-          </div>
-        </div>
-      </div>
+    <a href="#" class="card">
+      <div class="card-top"><span class="card-icon">⚔️</span><span class="pill pill-soon">Soon</span></div>
+      <div class="card-title">Deck Builder</div>
+      <div class="card-desc">Construct any deck, see avg cost and card ratios, and share a build with one link.</div>
+      <div class="card-cta">Coming soon</div>
     </a>
 
-    <!-- AI Run Advisor -->
-    <a href="#" class="feat-card" style="--card-color:#c04040;--card-dim:rgba(192,64,64,0.15);--ad:0.4s">
-      <div class="feat-card-top"></div>
-      <div class="feat-card-art">
-        <div class="feat-art-bg"></div>
-        <div class="feat-art-icon">🔮</div>
-        <div class="feat-art-glyph">AI Powered</div>
-      </div>
-      <div class="feat-card-body">
-        <div class="feat-card-head">
-          <div class="feat-card-name">AI Run Advisor</div>
-          <span class="feat-badge badge-ai">AI</span>
-        </div>
-        <div class="feat-card-desc">Tell the Advisor your relics, your path, your playstyle. Get intelligent deck suggestions tailored to your run.</div>
-        <div class="feat-card-footer">
-          <div class="feat-tags">
-            <span class="feat-tag">Relics</span>
-            <span class="feat-tag">Pathing</span>
-            <span class="feat-tag">Synergies</span>
-          </div>
-          <div class="feat-card-cta" style="color:#502020;">
-            Coming Soon
-            <div class="feat-card-cta-arrow" style="border-color:#502020;">→</div>
-          </div>
-        </div>
-      </div>
+    <a href="#" class="card">
+      <div class="card-top"><span class="card-icon">✦</span><span class="pill pill-ai">AI</span></div>
+      <div class="card-title">Run Advisor</div>
+      <div class="card-desc">Describe your current run. Get card picks, relic synergies, and boss strategy — powered by Claude.</div>
+      <div class="card-cta">Coming soon</div>
     </a>
 
-    <!-- Tier Lists -->
-    <a href="#" class="feat-card" style="--card-color:#60a0e0;--card-dim:rgba(96,160,224,0.15);--ad:0.5s">
-      <div class="feat-card-top"></div>
-      <div class="feat-card-art">
-        <div class="feat-art-bg"></div>
-        <div class="feat-art-icon">📊</div>
-        <div class="feat-art-glyph">Rankings</div>
-      </div>
-      <div class="feat-card-body">
-        <div class="feat-card-head">
-          <div class="feat-card-name">Tier Lists</div>
-          <span class="feat-badge badge-soon">Soon</span>
-        </div>
-        <div class="feat-card-desc">Community-voted and expert card tier lists by class. Updated with every Early Access patch.</div>
-        <div class="feat-card-footer">
-          <div class="feat-tags">
-            <span class="feat-tag">Per Class</span>
-            <span class="feat-tag">Community</span>
-            <span class="feat-tag">Patch Notes</span>
-          </div>
-          <div class="feat-card-cta" style="color:#1a3050;">
-            Coming Soon
-            <div class="feat-card-cta-arrow" style="border-color:#1a3050;">→</div>
-          </div>
-        </div>
-      </div>
+    <a href="#" class="card">
+      <div class="card-top"><span class="card-icon">📊</span><span class="pill pill-soon">Soon</span></div>
+      <div class="card-title">Tier Lists</div>
+      <div class="card-desc">Community-rated card and relic tiers per class. Updated as the meta develops.</div>
+      <div class="card-cta">Coming soon</div>
     </a>
 
-    <!-- Patch Notes -->
-    <a href="#" class="feat-card" style="--card-color:#a060c0;--card-dim:rgba(160,96,192,0.15);--ad:0.6s">
-      <div class="feat-card-top"></div>
-      <div class="feat-card-art">
-        <div class="feat-art-bg"></div>
-        <div class="feat-art-icon">📜</div>
-        <div class="feat-art-glyph">Updates</div>
-      </div>
-      <div class="feat-card-body">
-        <div class="feat-card-head">
-          <div class="feat-card-name">Patch Tracker</div>
-          <span class="feat-badge badge-soon">Soon</span>
-        </div>
-        <div class="feat-card-desc">Track every Early Access change. See which cards were buffed, nerfed, or added with each update.</div>
-        <div class="feat-card-footer">
-          <div class="feat-tags">
-            <span class="feat-tag">Buffs</span>
-            <span class="feat-tag">Nerfs</span>
-            <span class="feat-tag">New Cards</span>
-          </div>
-          <div class="feat-card-cta" style="color:#3a1850;">
-            Coming Soon
-            <div class="feat-card-cta-arrow" style="border-color:#3a1850;">→</div>
-          </div>
-        </div>
-      </div>
+    <a href="#" class="card">
+      <div class="card-top"><span class="card-icon">📋</span><span class="pill pill-soon">Soon</span></div>
+      <div class="card-title">Patch Tracker</div>
+      <div class="card-desc">Every balance change since launch. See what got buffed, nerfed, or reworked at a glance.</div>
+      <div class="card-cta">Coming soon</div>
     </a>
 
+  </div>
+</section>
+
+<section class="strip">
+  <div class="strip-label"><span>The Ancients — Keepers of the Spire</span></div>
+  <div class="strip-row">
+    <div class="anc-thumb"><img src="images/ancients/nonupeipe_placeholder.png" alt="Nonupeipe"><div class="anc-thumb-name">Nonupeipe</div></div>
+    <div class="anc-thumb"><img src="images/ancients/orobas_placeholder.png" alt="Orobas"><div class="anc-thumb-name">Orobas</div></div>
+    <div class="anc-thumb"><img src="images/ancients/pael_placeholder.png" alt="Pael"><div class="anc-thumb-name">Pael</div></div>
+    <div class="anc-thumb"><img src="images/ancients/darv_placeholder.png" alt="Darv"><div class="anc-thumb-name">Darv</div></div>
+    <div class="anc-thumb"><img src="images/ancients/tanx_placeholder.png" alt="Tanx"><div class="anc-thumb-name">Tanx</div></div>
+    <div class="anc-thumb"><img src="images/ancients/vakuu_placeholder.png" alt="Vakuu"><div class="anc-thumb-name">Vakuu</div></div>
   </div>
 </section>
 
 <footer>
-  STSCompanion is a fan-made tool and is not affiliated with Mega Crit Games. ·
-  <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Play Slay the Spire 2 on Steam</a>
+  <div class="foot-dock"></div>
+  <div class="foot-pipes"></div>
+  <div class="foot-inner">
+    <div class="foot-logo">SpireIndex</div>
+    <div class="foot-tag">A fan companion for Slay the Spire 2</div>
+    <div class="foot-links">
+      <a href="index.html">Card Library</a>
+      <a href="https://store.steampowered.com/app/2868840/" target="_blank">Play on Steam</a>
+      <a href="https://github.com/clarktaylorf/STS2_Spire_Index" target="_blank">GitHub</a>
+    </div>
+    <div class="foot-copy">SpireIndex is fan-made and not affiliated with Mega Crit Games.</div>
+  </div>
 </footer>
 
-<script>
-const container = document.getElementById('particles');
-for(let i=0;i<24;i++){
-  const p = document.createElement('div');
-  p.className = 'p';
-  const colors = ['var(--gold)','var(--purple)','#c04040','#50c090'];
-  p.style.cssText = `
-    left:${Math.random()*100}%;
-    bottom:${Math.random()*40}%;
-    --dur:${6+Math.random()*8}s;
-    --delay:${Math.random()*8}s;
-    --dx:${(Math.random()-0.5)*60}px;
-    --op:${0.2+Math.random()*0.4};
-    background:${colors[Math.floor(Math.random()*colors.length)]};
-  `;
-  container.appendChild(p);
-}
-</script>
 </body>
 </html>
