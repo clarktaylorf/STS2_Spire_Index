@@ -739,19 +739,31 @@ function renderMetrics() {
     : '';
 
   // ── 3. COMPATIBILITY ──
-  const { score: compatScore, orphans } = calcCompatibility(entries);
+  const { score: compatScore, orphans, archetypes, issues } = calcCompatibility(entries);
   const compatEl = document.getElementById('mCompat');
   const compatSub = document.getElementById('mCompatSub');
   const compatOrphans = document.getElementById('compatOrphans');
-  compatEl.textContent = compatScore === 100 ? '✓' : compatScore + '%';
-  compatEl.style.color = compatScore === 100 ? '#88cc70' : compatScore >= 70 ? '#d4a84b' : '#e06050';
-  if (orphans.length === 0) {
-    compatSub.textContent = 'All synergies satisfied';
+  compatEl.textContent = compatScore + '%';
+  compatEl.style.color = compatScore >= 80 ? '#88cc70' : compatScore >= 60 ? '#d4a84b' : '#e06050';
+
+  // Sub-label: show detected archetype names
+  if (archetypes.length > 0) {
+    const sorted = [...archetypes].sort((a,b) => (b.score/b.max)-(a.score/a.max));
+    compatSub.textContent = sorted.slice(0,2).map(a => a.name).join(' + ');
+  } else {
+    compatSub.textContent = total < 5 ? 'Add more cards' : 'No clear archetype';
+  }
+
+  // Orphans + issues list
+  const allProblems = [
+    ...orphans.map(o => `${o.name} — missing ${o.missing.join(', ')}`),
+    ...issues.slice(0, 3)
+  ];
+  if (allProblems.length === 0) {
     compatOrphans.innerHTML = '';
   } else {
-    compatSub.textContent = orphans.length + ' card' + (orphans.length > 1 ? 's' : '') + ' missing synergy';
-    compatOrphans.innerHTML = orphans.map(o =>
-      `<div class="orphan-row">${o.name} needs ${o.missing.join(', ')}</div>`
+    compatOrphans.innerHTML = allProblems.slice(0, 4).map(p =>
+      `<div class="orphan-row">${p}</div>`
     ).join('');
   }
 
@@ -798,66 +810,535 @@ function renderMetrics() {
   noteEl.textContent = note;
 }
 
-// ─── COMPATIBILITY ENGINE ─────────────────────────────────────────────────────
-// What synergies does this card CONSUME (require from other cards)?
-function getNeeds(card) {
-  const d = ((card.desc || '') + ' ' + (card.descUp || '')).toLowerCase();
-  const needs = new Set();
-  if (/whenever you exhaust|when you exhaust|each time you exhaust/.test(d)) needs.add('exhaust');
-  if (/whenever you lose hp|when you lose hp|whenever you take.*damage/.test(d)) needs.add('self-damage');
-  if (/whenever.*apply.*vuln|bonus.*vuln|extra.*vuln|when.*enemy.*vuln/.test(d)) needs.add('vulnerable');
-  if (/whenever.*apply.*poison|per poison stack|for each poison|scales with poison/.test(d)) needs.add('poison');
-  if (/whenever you discard|when you discard/.test(d)) needs.add('discard');
-  if (/whenever.*summon|when.*summon|per summon/.test(d) && card.char === 'necrobinder') needs.add('summon');
-  return [...needs];
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPATIBILITY ENGINE v2 — Multi-dimensional deck coherence scoring
+//
+// Score = weighted average of 4 sub-scores (0–100 each):
+//   Archetype  35% — is there a recognizable, sufficiently-dense game plan?
+//   Synergy    35% — are enablers and payoffs balanced with no orphans?
+//   Win Con    20% — does the deck have a clear way to close out fights?
+//   Efficiency 10% — deck size / anti-pattern check
+//
+// Designed so a random pile scores ~30–45%, decent synergy ~60–70%,
+// optimized build ~80–88%, near-perfect ~90–96%. 100% = theoretical only.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── LOW-LEVEL CARD CLASSIFIERS ──────────────────────────────────────────────
+
+function _d(card) {
+  return ((card.desc || '') + ' ' + (card.descUp || '')).toLowerCase();
+}
+function _kw(card) { return card.kw || []; }
+function _has(card, rx) { return rx.test(_d(card)); }
+
+// Cards that generate exhaust events (not Corruption — that's handled separately)
+function isExhaustSource(card) {
+  return _kw(card).includes('Exhaust') ||
+    _has(card, /exhaust (a |all |your |the |random )/);
+}
+// Cards that *benefit* from exhaust events
+function isExhaustPayoff(card) {
+  return _has(card, /whenever (a |you )?(card is )?exhaust|when (you |a card )exhaust|each time.*exhaust/);
+}
+// Skills (relevant for Corruption interaction)
+function isSkill(card) { return card.type === 'Skill'; }
+
+// Poison
+function isPoisonSource(card) {
+  return _kw(card).includes('Poison') ||
+    _has(card, /apply \d+ poison|noxious fumes|poison (to|all)|stack.*poison/);
+}
+function isPoisonPayoff(card) {
+  return _has(card, /catalyst|per poison|for each poison|scales with poison|double.*poison/);
 }
 
-// What synergies does this card PROVIDE to other cards?
-function getProvides(card) {
-  const d = ((card.desc || '') + ' ' + (card.descUp || '')).toLowerCase();
-  const kw = card.kw || [];
-  const provides = new Set();
-  if (kw.includes('Exhaust')) provides.add('exhaust');
-  // Self-damage: explicitly costs HP (not "whenever you lose hp" triggers)
-  if (/lose \d+ hp|deal \d+ damage to (yourself|you)/.test(d) && !/whenever you lose/.test(d)) provides.add('self-damage');
-  if (/apply \d+ vulnerable|vulnerable to all|gains? vulnerable|give.*vulnerable/.test(d)) provides.add('vulnerable');
-  if (/apply \d+ poison|poison to all|gain.*poison|gains? \d+ poison/.test(d)) provides.add('poison');
-  if (kw.includes('Discard') && /discard (a |your |cards?|the )/.test(d)) provides.add('discard');
-  if (kw.includes('Summon') || /\bsummon \d+\b/.test(d)) provides.add('summon');
-  return [...provides];
+// Strength scaling (Ironclad)
+function isStrengthSource(card) {
+  return _kw(card).includes('Strength') ||
+    _has(card, /gain \d+ strength|inflame|demon form|limit break|spot weakness/);
+}
+function isStrengthPayoff(card) {
+  // Attacks that scale with strength, or cards that reference STR gain explicitly
+  return (card.type === 'Attack' && isStrengthSource(card)) ||
+    _has(card, /rupture|combust|reaper/);
 }
 
-// Memoized set of what the current deck provides — called per render
-function _deckProvides() {
-  const provided = new Set();
-  Object.values(_deck).forEach(e => getProvides(e.card).forEach(p => provided.add(p)));
-  return provided;
+// Self-damage (Ironclad — Rupture, Combust)
+function isSelfDamageSource(card) {
+  return (_has(card, /lose \d+ hp|deal \d+ damage to (yourself|you)/) && !_has(card, /whenever you lose/));
+}
+function isSelfDamagePayoff(card) {
+  return _has(card, /rupture|whenever you lose hp|when you lose hp|whenever you take.*damage/);
 }
 
-function calcCompatibility(entries) {
-  if (!entries.length) return { score: 100, orphans: [] };
-  const provided = _deckProvides();
-  const orphans = [];
-  let consumers = 0, satisfied = 0;
+// Block stacking (Barricade build)
+function isBarricadePayoff(card) {
+  return _has(card, /body slam|juggernaut/);
+}
+function isBarricadeSource(card) {
+  return card.name === 'Barricade' || _has(card, /\bbarricade\b/);
+}
 
-  entries.forEach(({ card, count }) => {
-    const needs = getNeeds(card);
-    if (!needs.length) return;
-    consumers += count;
-    const missing = needs.filter(n => !provided.has(n));
-    if (!missing.length) {
-      satisfied += count;
-    } else {
-      // Only list each orphan card once (not per copy)
-      if (!orphans.find(o => o.name === card.name)) {
-        orphans.push({ name: card.name, missing });
+// Shiv (Silent)
+function isShivSource(card) {
+  return _kw(card).includes('Shiv') ||
+    _has(card, /blade dance|infinite blades|cloak and dagger|create.*shiv|add.*shiv/);
+}
+function isShivPayoff(card) {
+  return _has(card, /\baccuracy\b|after image|finisher|riddle with holes/);
+}
+
+// Discard engine (Silent)
+function isDiscardSource(card) {
+  return (_kw(card).includes('Discard') || _kw(card).includes('Sly')) &&
+    _has(card, /discard (a |your |the |cards?|an? )/);
+}
+function isDiscardPayoff(card) {
+  return _has(card, /\btactician\b|\breflex\b/) ||
+    (_has(card, /whenever you discard|when you discard/) );
+}
+
+// Orb (Defect)
+function isLightningSource(card) {
+  return _kw(card).includes('Lightning') || _has(card, /channel.*lightning|lightning orb/);
+}
+function isFrostSource(card) {
+  return _kw(card).includes('Frost') || _has(card, /channel.*frost|frost orb|cold snap/);
+}
+function isFocusSource(card) {
+  return _kw(card).includes('Focus') || _has(card, /gain \d+ focus|defragment/);
+}
+function isDarkSource(card) {
+  return _kw(card).includes('Dark') || _has(card, /channel.*dark|dark orb/);
+}
+
+// Stance dance (Watcher)
+function isCalmEntry(card) {
+  return _has(card, /enter calm|inner peace|tranquil|empty (body|mind)|vigilance|perseverance/);
+}
+function isWrathEntry(card) {
+  return _has(card, /enter wrath|eruption|scrawl|battle hymn/);
+}
+function isStanceDancePayoff(card) {
+  return _has(card, /rushdown|flurry of blows|mental fortress|talk to the hand/);
+}
+
+// Mantra/Divinity (Watcher)
+function isMantраSource(card) {
+  return _kw(card).includes('Mantra') ||
+    _has(card, /\bmantra\b|worship|devotion|prostrate|\bpray\b/);
+}
+
+// Necrobinder
+function isSummonCard(card) {
+  return _kw(card).includes('Summon') || _has(card, /\bsummon\b/);
+}
+function isDoomCard(card) {
+  return _kw(card).includes('Doom') || _has(card, /\bdoom\b/);
+}
+function isSoulCard(card) {
+  return _kw(card).includes('Soul') || _has(card, /\bsoul\b.*exhaust|create.*soul/);
+}
+
+// Regent
+function isForgeCard(card) {
+  return _kw(card).includes('Forge') || _has(card, /\bforge\b/);
+}
+function isStarsCard(card) {
+  return _kw(card).includes('Stars') || _has(card, /\bstars?\b|constellation|celestial/);
+}
+
+// ─── ARCHETYPE DETECTOR ───────────────────────────────────────────────────────
+// Returns array of { name, score, max, label, issues[] }
+function detectArchetypes(flat, entries) {
+  const results = [];
+
+  // Helper: count unique cards matching predicate (not copies)
+  const uCount = pred => entries.filter(e => pred(e.card)).length;
+  // Count total copies
+  const tCount = pred => flat.filter(pred).length;
+  const hasCard = name => entries.some(e => e.card.name === name);
+
+  // ── EXHAUST ENGINE (Ironclad primarily) ──────────────────────────────────
+  const hasCorruption = hasCard('Corruption');
+  const exhaustSources = uCount(isExhaustSource) +
+    (hasCorruption ? Math.min(6, uCount(isSkill)) : 0); // Corruption turns skills into exhaust sources
+  const exhaustPayoffs = uCount(isExhaustPayoff);
+
+  if (exhaustSources > 0 || exhaustPayoffs > 0) {
+    const issues = [];
+    let pts = 0;
+    // Payoffs are worth a lot — they're the engine
+    pts += Math.min(30, exhaustPayoffs * 12);
+    // Sources are required fuel
+    pts += Math.min(25, exhaustSources * 4);
+    // Corruption is a massive multiplier
+    if (hasCorruption) pts += 15;
+    // Penalties
+    if (exhaustPayoffs > 0 && exhaustSources < 3) {
+      const deficit = 3 - exhaustSources;
+      pts -= deficit * 10;
+      issues.push(`Need ${deficit} more exhaust source${deficit>1?'s':''} for payoffs`);
+    }
+    if (exhaustSources >= 4 && exhaustPayoffs === 0) {
+      pts -= 18;
+      issues.push('Exhaust sources with no payoff (Feel No Pain / Dark Embrace?)');
+    }
+    if (hasCorruption && uCount(isSkill) < 4) {
+      pts -= 10;
+      issues.push('Corruption needs more Skills to be effective');
+    }
+    results.push({ name: 'Exhaust Engine', score: Math.max(0, pts), max: 70, issues });
+  }
+
+  // ── POISON (Silent primarily) ─────────────────────────────────────────────
+  const poisonSources = uCount(isPoisonSource);
+  const poisonPayoffs = uCount(isPoisonPayoff);
+
+  if (poisonSources > 0 || poisonPayoffs > 0) {
+    const issues = [];
+    let pts = 0;
+    pts += Math.min(25, poisonSources * 7);
+    if (poisonPayoffs > 0) {
+      // Catalyst-style payoffs need density to work
+      const payoffValue = poisonSources >= 3 ? 20 : poisonSources >= 2 ? 10 : 0;
+      pts += payoffValue;
+      if (poisonSources < 2) {
+        pts -= 15;
+        issues.push('Catalyst needs 3+ poison sources to be useful');
       }
     }
+    const hasNoxiousFumes = hasCard('Noxious Fumes');
+    if (hasNoxiousFumes) pts += 8; // passive stacking every turn is huge
+    results.push({ name: 'Poison', score: Math.max(0, pts), max: 53, issues });
+  }
+
+  // ── STRENGTH SCALING (Ironclad) ───────────────────────────────────────────
+  const strSources = uCount(isStrengthSource);
+  const hasDemonForm = hasCard('Demon Form');
+  const limitBreakCopies = tCount(c => c.name === 'Limit Break');
+
+  if (strSources > 0) {
+    const issues = [];
+    let pts = 0;
+    pts += Math.min(20, strSources * 5);
+    if (hasDemonForm) pts += 15; // best passive STR scaler
+    pts += Math.min(12, limitBreakCopies * 6); // each Limit Break is meaningful
+    if (strSources === 1 && !hasDemonForm) {
+      issues.push('Single strength source — build needs more scaling');
+      pts -= 8;
+    }
+    results.push({ name: 'Strength Scaling', score: Math.max(0, pts), max: 47, issues });
+  }
+
+  // ── SELF-DAMAGE / RUPTURE (Ironclad) ─────────────────────────────────────
+  const selfDmgSources = uCount(isSelfDamageSource);
+  const selfDmgPayoffs = uCount(isSelfDamagePayoff);
+
+  if (selfDmgSources > 0 || selfDmgPayoffs > 0) {
+    const issues = [];
+    let pts = 0;
+    pts += Math.min(20, selfDmgSources * 6);
+    pts += Math.min(20, selfDmgPayoffs * 8);
+    if (selfDmgPayoffs > 0 && selfDmgSources < 2) {
+      pts -= 12;
+      issues.push('Rupture needs 2+ self-damage sources (Combust, Bloodletting)');
+    }
+    if (pts > 5) results.push({ name: 'Self-Damage', score: Math.max(0, pts), max: 40, issues });
+  }
+
+  // ── BARRICADE (Ironclad) ──────────────────────────────────────────────────
+  const hasBarricade = hasCard('Barricade');
+  const barricadePayoffs = uCount(isBarricadePayoff);
+
+  if (hasBarricade || barricadePayoffs > 0) {
+    const issues = [];
+    let pts = 0;
+    if (hasBarricade) pts += 20;
+    pts += Math.min(20, barricadePayoffs * 12);
+    if (barricadePayoffs > 0 && !hasBarricade) {
+      pts -= 18;
+      issues.push('Body Slam / Juggernaut need Barricade to function');
+    }
+    if (hasBarricade && barricadePayoffs === 0) {
+      issues.push('Barricade is here — add Body Slam or Juggernaut to capitalize');
+    }
+    results.push({ name: 'Barricade', score: Math.max(0, pts), max: 40, issues });
+  }
+
+  // ── SHIV BURST (Silent) ───────────────────────────────────────────────────
+  const shivSources = uCount(isShivSource);
+  const shivPayoffs = uCount(isShivPayoff);
+  const accuracyCopies = tCount(c => c.name === 'Accuracy');
+
+  if (shivSources > 0 || shivPayoffs > 0) {
+    const issues = [];
+    let pts = 0;
+    pts += Math.min(20, shivSources * 7);
+    pts += Math.min(18, accuracyCopies * 8); // each Accuracy stacks
+    if (shivPayoffs > 0 && shivSources < 2) {
+      pts -= 12;
+      issues.push('Accuracy needs 2+ Shiv generators (Blade Dance, Infinite Blades)');
+    }
+    if (shivSources > 0 && accuracyCopies === 0) {
+      issues.push('Shiv generators here — Accuracy would multiply their damage');
+    }
+    results.push({ name: 'Shiv Burst', score: Math.max(0, pts), max: 38, issues });
+  }
+
+  // ── DISCARD ENGINE (Silent) ───────────────────────────────────────────────
+  const discardSources = uCount(isDiscardSource);
+  const discardPayoffs = uCount(isDiscardPayoff);
+  const deckSize = flat.length;
+
+  if (discardSources > 0 || discardPayoffs > 0) {
+    const issues = [];
+    let pts = 0;
+    pts += Math.min(20, discardSources * 6);
+    pts += Math.min(20, discardPayoffs * 9);
+    // Discard engine requires thin decks
+    if (deckSize > 18) { pts -= Math.min(15, (deckSize - 18) * 3); issues.push('Discard engine needs a thinner deck (aim for ≤14 cards)'); }
+    if (discardPayoffs > 0 && discardSources < 2) {
+      pts -= 12;
+      issues.push('Tactician/Reflex need 2+ discard outlets to trigger reliably');
+    }
+    results.push({ name: 'Discard Engine', score: Math.max(0, pts), max: 40, issues });
+  }
+
+  // ── ORB BUILD (Defect) ────────────────────────────────────────────────────
+  const lightningCount = uCount(isLightningSource);
+  const frostCount = uCount(isFrostSource);
+  const focusCount = uCount(isFocusSource);
+  const darkCount = uCount(isDarkSource);
+  const totalOrbs = lightningCount + frostCount + darkCount;
+
+  if (totalOrbs > 0 || focusCount > 0) {
+    const issues = [];
+    let pts = 0;
+    pts += Math.min(15, lightningCount * 4);
+    pts += Math.min(12, frostCount * 4);
+    pts += Math.min(15, focusCount * 7); // Focus multiplies all orbs — extremely valuable
+    pts += Math.min(8, darkCount * 3);
+    // Mixed orb bonus
+    if (lightningCount >= 2 && frostCount >= 2) pts += 8;
+    if (lightningCount === 0 && frostCount > 0) issues.push('Defense-only orbs — add Lightning for damage');
+    if (frostCount === 0 && lightningCount > 0) issues.push('No Frost orbs — vulnerable without block generation');
+    if (focusCount === 0 && totalOrbs >= 3) issues.push('Defragment would multiply all your orb effects');
+    if (totalOrbs > 0 || focusCount > 0)
+      results.push({ name: 'Orb Build', score: Math.max(0, pts), max: 50, issues });
+  }
+
+  // ── STANCE DANCE (Watcher) ────────────────────────────────────────────────
+  const calmEntries = uCount(isCalmEntry);
+  const wrathEntries = uCount(isWrathEntry);
+  const stancePayoffs = uCount(isStanceDancePayoff);
+
+  if (calmEntries > 0 || wrathEntries > 0) {
+    const issues = [];
+    let pts = 0;
+    pts += Math.min(15, calmEntries * 6);
+    pts += Math.min(15, wrathEntries * 6);
+    pts += Math.min(15, stancePayoffs * 8);
+    if (calmEntries < 2) { pts -= 10; issues.push('Need 2+ Calm entry cards for reliable energy generation'); }
+    if (wrathEntries < 2) { pts -= 8; issues.push('Need 2+ Wrath entry cards to cycle stances'); }
+    results.push({ name: 'Stance Dance', score: Math.max(0, pts), max: 45, issues });
+  }
+
+  // ── MANTRA / DIVINITY (Watcher) ───────────────────────────────────────────
+  const mantraSources = uCount(isMantраSource);
+  if (mantraSources > 0) {
+    const issues = [];
+    let pts = Math.min(35, mantraSources * 10);
+    const hasOmniscience = hasCard('Omniscience');
+    if (hasOmniscience) pts += 10;
+    if (mantraSources < 2) { pts -= 10; issues.push('Need 2+ Mantra sources to reach Divinity reliably'); }
+    results.push({ name: 'Divinity', score: Math.max(0, pts), max: 45, issues });
+  }
+
+  // ── NECROBINDER ARCHETYPES ────────────────────────────────────────────────
+  const summonCount = uCount(isSummonCard);
+  const doomCount = uCount(isDoomCard);
+  const soulCount = uCount(isSoulCard);
+
+  if (summonCount >= 2) {
+    const issues = [];
+    let pts = Math.min(35, summonCount * 6);
+    if (summonCount < 3) { pts -= 8; issues.push('Osty archetype needs 3+ Summon cards to scale'); }
+    results.push({ name: 'Osty / Summon', score: Math.max(0, pts), max: 35, issues });
+  }
+  if (doomCount >= 2) {
+    const issues = [];
+    let pts = Math.min(35, doomCount * 7);
+    if (doomCount < 4) { pts -= 10; issues.push('Doom needs 4+ cards to execute enemies reliably'); }
+    results.push({ name: 'Doom', score: Math.max(0, pts), max: 35, issues });
+  }
+  if (soulCount >= 1) {
+    results.push({ name: 'Souls Cycle', score: Math.min(30, soulCount * 10), max: 30, issues: [] });
+  }
+
+  // ── REGENT ARCHETYPES ─────────────────────────────────────────────────────
+  const forgeCount = uCount(isForgeCard);
+  const starsCount = uCount(isStarsCard);
+
+  if (forgeCount > 0) {
+    const issues = [];
+    let pts = Math.min(35, forgeCount * 7);
+    if (forgeCount < 4) { pts -= 8; issues.push('Forge needs 4+ cards to build Sovereign Blade into a nuke'); }
+    results.push({ name: 'Forge', score: Math.max(0, pts), max: 35, issues });
+  }
+  if (starsCount > 0) {
+    const issues = [];
+    let pts = Math.min(30, starsCount * 7);
+    if (starsCount < 3) { pts -= 5; issues.push('Stars engine needs 3+ generators to fuel payoff cards'); }
+    results.push({ name: 'Stars', score: Math.max(0, pts), max: 30, issues });
+  }
+
+  return results;
+}
+
+// ─── ORPHAN DETECTOR ─────────────────────────────────────────────────────────
+// Returns cards that are clearly "dead weight" — payoffs with no enablers
+function detectOrphans(entries) {
+  const orphans = [];
+  const cardNames = new Set(entries.map(e => e.card.name));
+  const hasCard = name => cardNames.has(name);
+  const uCount = pred => entries.filter(e => pred(e.card)).length;
+
+  // Check each synergy-dependent card
+  entries.forEach(({ card }) => {
+    const missing = [];
+
+    // Exhaust payoffs without exhaust sources
+    if (isExhaustPayoff(card)) {
+      const hasSources = uCount(isExhaustSource) > 0 ||
+        (hasCard('Corruption') && uCount(isSkill) >= 2);
+      if (!hasSources) missing.push('exhaust sources');
+    }
+    // Poison payoffs without poison density
+    if (isPoisonPayoff(card) && uCount(isPoisonSource) < 2) {
+      missing.push('poison sources (need 2+)');
+    }
+    // Barricade payoffs without Barricade
+    if (isBarricadePayoff(card) && !hasCard('Barricade')) {
+      missing.push('Barricade');
+    }
+    // Shiv payoffs without Shiv generators
+    if (isShivPayoff(card) && uCount(isShivSource) < 1) {
+      missing.push('Shiv generators');
+    }
+    // Discard payoffs without discard outlets
+    if (isDiscardPayoff(card) && uCount(isDiscardSource) < 2) {
+      missing.push('discard outlets (need 2+)');
+    }
+    // Self-damage payoffs without self-damage
+    if (isSelfDamagePayoff(card) && uCount(isSelfDamageSource) < 1) {
+      missing.push('self-damage cards (Combust, Bloodletting)');
+    }
+    // Doom deck needs density
+    if (isDoomCard(card) && uCount(isDoomCard) < 3) {
+      missing.push('more Doom cards (need 4+)');
+    }
+
+    if (missing.length) orphans.push({ name: card.name, missing });
   });
 
-  const score = consumers === 0 ? 100 : Math.round(satisfied / consumers * 100);
-  return { score, orphans };
+  return orphans;
 }
+
+// ─── MAIN COMPATIBILITY CALCULATOR ───────────────────────────────────────────
+function calcCompatibility(entries) {
+  if (!entries.length) return { score: 0, orphans: [], archetypes: [], issues: [] };
+
+  const flat = entries.flatMap(e => Array(e.count).fill(e.card));
+  const total = flat.length;
+
+  // ── SUB-SCORE 1: ARCHETYPE (35% weight) ──────────────────────────────────
+  const archetypes = detectArchetypes(flat, entries);
+
+  let archetypeScore;
+  if (archetypes.length === 0) {
+    // No recognizable archetype — generic pile
+    archetypeScore = Math.max(5, 20 - Math.max(0, total - 15));
+  } else {
+    // Score the best archetype, penalize incoherence from too many
+    const sorted = [...archetypes].sort((a, b) => (b.score/b.max) - (a.score/a.max));
+    const primary = sorted[0];
+    const primaryNorm = Math.round((primary.score / primary.max) * 100);
+    // Secondary archetype: complementary gets a bonus, competing gets a penalty
+    const secondaryPenalty = archetypes.length >= 3 ? 15 : archetypes.length === 2 ? 0 : 0;
+    archetypeScore = Math.max(0, Math.min(100, primaryNorm - secondaryPenalty));
+  }
+
+  // ── SUB-SCORE 2: SYNERGY HEALTH (35% weight) ──────────────────────────────
+  const orphans = detectOrphans(entries);
+  const allIssues = archetypes.flatMap(a => a.issues);
+
+  // Start generous — penalize based on orphan count and missing payoffs
+  let synergyScore = 85;
+  synergyScore -= orphans.length * 18;       // -18 per orphaned card (harsh)
+  synergyScore -= allIssues.length * 5;      // -5 per density warning
+  // Bonus: exhaust sources without payoffs (or vice versa) was already penalized in archetype
+  synergyScore = Math.max(5, Math.min(100, synergyScore));
+
+  // ── SUB-SCORE 3: WIN CONDITION (20% weight) ───────────────────────────────
+  const scalingCards = entries.filter(e => cardIsScaling(e.card));
+  const scalingCount = scalingCards.reduce((s, e) => s + e.count, 0);
+
+  // Does the deck have any archetype with a clear win condition baked in?
+  const hasWinConArchetype = archetypes.some(a =>
+    ['Exhaust Engine','Poison','Strength Scaling','Barricade','Shiv Burst',
+     'Stance Dance','Divinity','Doom','Forge','Orb Build'].includes(a.name) &&
+    (a.score / a.max) >= 0.45
+  );
+
+  let winConScore;
+  if (scalingCount === 0 && !hasWinConArchetype) {
+    winConScore = 10; // No win condition at all
+  } else if (scalingCount === 0 && hasWinConArchetype) {
+    winConScore = 50; // Archetype implies win con
+  } else if (scalingCount === 1) {
+    winConScore = hasWinConArchetype ? 70 : 55;
+  } else if (scalingCount === 2) {
+    winConScore = hasWinConArchetype ? 85 : 70;
+  } else {
+    winConScore = Math.min(100, 85 + (scalingCount - 2) * 5);
+  }
+
+  // ── SUB-SCORE 4: EFFICIENCY (10% weight) ─────────────────────────────────
+  // Deck size relative to archetype demands
+  let efficiencyScore = 70;
+  const isComboArchetype = archetypes.some(a =>
+    ['Exhaust Engine','Discard Engine','Stance Dance','Shiv Burst'].includes(a.name));
+  const optimalMax = isComboArchetype ? 16 : 25;
+  if (total <= optimalMax) {
+    efficiencyScore = Math.min(100, 70 + (optimalMax - total) * 2);
+  } else {
+    efficiencyScore = Math.max(10, 70 - (total - optimalMax) * 3);
+  }
+
+  // ── FINAL WEIGHTED SCORE ──────────────────────────────────────────────────
+  const final = Math.round(
+    archetypeScore  * 0.35 +
+    synergyScore    * 0.35 +
+    winConScore     * 0.20 +
+    efficiencyScore * 0.10
+  );
+
+  return {
+    score: Math.max(1, Math.min(97, final)), // cap at 97 — 100 is unattainable
+    orphans,
+    archetypes,
+    issues: allIssues
+  };
+}
+
+// ─── LEGACY HELPERS (used by renderDeck orphan tags) ─────────────────────────
+function getNeeds(card) {
+  // Simplified — used only for the ⚠ tag on deck rows
+  const orphans = detectOrphans(Object.values(_deck));
+  return orphans.find(o => o.name === card.name) ? ['check'] : [];
+}
+function _deckProvides() { return new Set(['_unused']); }
 
 function calcConsistency(total, drawCount, zeroCost, innate, retain) {
   // Base from deck size: 20 cards = 60, smaller = better, larger = worse
