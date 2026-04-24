@@ -100,6 +100,34 @@ body>*{position:relative;z-index:1;}
 .card-desc{font-size:11px;line-height:1.55;color:var(--text2);font-style:italic;}
 .kws{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px;}
 .kw{font-size:9px;padding:1px 5px;border-radius:3px;background:#1a1628;color:#6a5a88;border:1px solid #252038;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(7,5,15,0.88);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal{background:#13101e;border:1px solid #2e2545;border-radius:14px;width:100%;max-width:660px;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#1e1a2c;border:1px solid #2e2545;color:#7a6a8a;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:#2a2440;color:#e8d8b8;}
+.modal-bar{height:4px;border-radius:14px 14px 0 0;}
+.modal-art{height:180px;background:#0e0b1a;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e1a2e;overflow:hidden;position:relative;}
+.modal-art img{height:160px;object-fit:contain;}
+.modal-art-bg{position:absolute;inset:0;}
+.modal-body{padding:18px 22px 22px;}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.modal-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#efe0c0;}
+.modal-cost-badge{min-width:30px;height:30px;border-radius:15px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#d4a84b;padding:0 6px;}
+.modal-badges2{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+.modal-versions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.modal-ver{background:#0e0b1a;border:1px solid #1e1a2e;border-radius:8px;padding:12px;}
+.modal-ver.up{border-color:#3a2d5a;}
+.modal-ver-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.modal-ver-label.base{color:#6a5a88;}
+.modal-ver-label.upgraded{color:#c4a8f0;}
+.modal-ver-cost{font-size:11px;color:#d4a84b;margin-bottom:6px;}
+.modal-ver-cost-change{color:#60c080;margin-left:6px;font-size:10px;}
+.modal-ver-desc{font-size:12px;line-height:1.6;color:#9a8aaa;font-style:italic;}
+.modal-ver-desc.up{color:#c4b8d8;}
+.modal-kw-section{margin-top:12px;}
+.modal-kw-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#4a3a6a;margin-bottom:6px;}
+.modal-kw-list{display:flex;gap:4px;flex-wrap:wrap;}
+
 .no-results{grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text3);font-size:15px;font-style:italic;}
 
 footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
@@ -188,6 +216,23 @@ footer a:hover{color:var(--text);}
 
 <div class="grid" id="grid"></div>
 
+
+<div id="modalOverlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    <div class="modal-bar" id="mBar"></div>
+    <div class="modal-art"><div class="modal-art-bg" id="mArtBg"></div><img id="mImg" src="" alt=""></div>
+    <div class="modal-body">
+      <div class="modal-head"><div class="modal-name" id="mName"></div><div class="modal-cost-badge" id="mCost"></div></div>
+      <div class="modal-badges2" id="mBadges"></div>
+      <div class="modal-versions">
+        <div class="modal-ver"><div class="modal-ver-label base">Base</div><div class="modal-ver-cost" id="mBaseCost"></div><div class="modal-ver-desc" id="mBaseDesc"></div></div>
+        <div class="modal-ver up" id="mUpVer"><div class="modal-ver-label upgraded">&#x2756; Upgraded</div><div class="modal-ver-cost" id="mUpCost"><span id="mUpCostVal"></span><span class="modal-ver-cost-change" id="mCostChange"></span></div><div class="modal-ver-desc up" id="mUpDesc"></div></div>
+      </div>
+      <div class="modal-kw-section"><div class="modal-kw-label">Keywords</div><div class="modal-kw-list" id="mKws"></div></div>
+    </div>
+  </div>
+</div>
 <footer>
   SpireIndex is a fan-made database and is not affiliated with Mega Crit Games. ·
   <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Play Slay the Spire 2 on Steam</a>
@@ -319,35 +364,72 @@ function render(){
   if(!filtered.length){grid.innerHTML='<div class="no-results">No cards match your filters.</div>';return;}
   
   const col=c=>CHARS[c.char]||{hex:'#7050b0',label:'Unknown'};
-  grid.innerHTML=filtered.map(c=>{
-    const cc=col(c);
-    const displayCost=showUpgraded&&c.costUp!==undefined?c.costUp:c.cost;
-    const displayDesc=showUpgraded&&c.descUp?c.descUp:c.desc;
-    const cost=displayCost===null?'—':displayCost==='X'?'X':displayCost;
-    const kws=(c.kw||[]).map(k=>`<span class="kw${activeKws.has(k)?' kw-active':''}">${k}</span>`).join('');
-    const imgPath=getImgPath(c);
-    const upgClass=showUpgraded&&c.descUp?'is-upgraded':'';
-    return `<div class="card ${upgClass}" style="--cc:${cc.hex}">
-      <div class="card-bar"></div>
-      <div class="card-art">
-        <img src="${imgPath}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="card-art-fallback" style="display:none">?</div>
-        <div class="char-wm">${cc.label}</div>
-      </div>
-      <div class="card-body">
-        <div class="card-head"><div class="card-name">${c.name}</div><div class="cost">${cost}</div></div>
-        <div class="badges"><span class="badge ${typeBadge(c.type)}">${c.type}</span>${rarityBadge(c.rarity)}${showUpgraded&&c.descUp?'<span class="upgraded-badge">UPGRADED</span>':''}</div>
-        <div class="card-desc">${displayDesc}</div>
-        <div class="kws">${kws}</div>
-      </div>
-    </div>`;
-  }).join('');
+  grid.innerHTML='';
+  filtered.forEach(function(card){
+    const cc=CHARS[card.char]||{hex:'#7050b0',label:'Unknown'};
+    const displayCost=showUpgraded&&card.costUp!==undefined?card.costUp:card.cost;
+    const displayDesc=showUpgraded&&card.descUp?card.descUp:card.desc;
+    const cost=displayCost===null?'--':displayCost==='X'?'X':displayCost;
+    const kws=(card.kw||[]).map(function(k){return '<span class="kw'+(activeKws.has(k)?' kw-active':'')+'">' +k+'</span>';}).join('');
+    const imgPath=getImgPath(card);
+    const upgClass=showUpgraded&&card.descUp?'is-upgraded':'';
+    const typeBadges={Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse',Token:'b-token'};
+    const rareBadge=card.rarity==='Ancient'?'<span class="badge b-ancient">Ancient</span>':card.rarity==='Rare'?'<span class="badge b-rare">Rare</span>':card.rarity==='Uncommon'?'<span class="badge b-uncommon">Uncommon</span>':'';
+    const upgBadge=showUpgraded&&card.descUp?'<span class="upgraded-badge">UPGRADED</span>':'';
+    const div=document.createElement('div');
+    div.className='card '+upgClass;
+    div.style.cssText='--cc:'+cc.hex;
+    div.innerHTML='<div class="card-bar"></div><div class="card-art"><img src="'+imgPath+'" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-art-fallback" style="display:none">?</div><div class="char-wm">'+cc.label+'</div></div><div class="card-body"><div class="card-head"><div class="card-name">'+card.name+'</div><div class="cost">'+cost+'</div></div><div class="badges"><span class="badge '+(typeBadges[card.type]||'b-attack')+'">'+card.type+'</span>'+rareBadge+upgBadge+'</div><div class="card-desc">'+displayDesc+'</div><div class="kws">'+kws+'</div></div>';
+    div.addEventListener('click',function(){openModal(card);});
+    grid.appendChild(div);
+  });
 }
 
 // highlight active keywords in the card keyword tags
 const style=document.createElement('style');
 style.textContent='.kw.kw-active{background:#2a1f48;color:#c4a8f0;border-color:#7050b0;}';
 document.head.appendChild(style);
+
+
+function openModal(card){
+  var CHARS2={ironclad:{hex:'#e06050',label:'Ironclad'},silent:{hex:'#50c090',label:'Silent'},defect:{hex:'#60a0e0',label:'Defect'},regent:{hex:'#c070e0',label:'Regent'},necrobinder:{hex:'#70b060',label:'Necrobinder'},colorless:{hex:'#a09898',label:'Colorless'},event:{hex:'#d4a84b',label:'Event'},token:{hex:'#e0c060',label:'Token'}};
+  var cc=CHARS2[card.char]||{hex:'#7050b0',label:'Unknown'};
+  document.getElementById('mBar').style.background=cc.hex;
+  document.getElementById('mArtBg').style.background='radial-gradient(ellipse 60% 80% at 50% 50%,'+cc.hex+'44 0%,transparent 70%)';
+  var img=document.getElementById('mImg');
+  img.src=getImgPath(card);
+  img.onerror=function(){this.style.opacity='0.1';};
+  document.getElementById('mName').textContent=card.name;
+  document.getElementById('mCost').textContent=card.cost===null?'--':card.cost==='X'?'X':card.cost;
+  document.getElementById('mBaseCost').textContent=card.cost===null?'Unplayable':card.cost==='X'?'X Energy':card.cost+' Energy';
+  document.getElementById('mBaseDesc').textContent=card.desc||'';
+  var upVer=document.getElementById('mUpVer');
+  if(card.descUp){
+    upVer.style.display='block';
+    var upCostNum=card.costUp!==undefined?card.costUp:card.cost;
+    document.getElementById('mUpCostVal').textContent=upCostNum===null?'Unplayable':upCostNum==='X'?'X Energy':upCostNum+' Energy';
+    var diff='';
+    if(card.costUp!==undefined&&card.costUp!==card.cost){diff=' ('+(card.costUp<card.cost?'↓':'↑')+Math.abs((card.costUp||0)-(card.cost||0))+')';}
+    document.getElementById('mCostChange').textContent=diff;
+    document.getElementById('mUpDesc').textContent=card.descUp;
+  } else {
+    upVer.style.display='none';
+  }
+  var tb={Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse',Token:'b-token'};
+  var rb={Ancient:'b-ancient',Rare:'b-rare',Uncommon:'b-uncommon'};
+  document.getElementById('mBadges').innerHTML=
+    '<span class="badge '+(tb[card.type]||'b-attack')+'">'+card.type+'</span>'+
+    (rb[card.rarity]?'<span class="badge '+rb[card.rarity]+'">'+card.rarity+'</span>':'')+
+    '<span class="badge" style="background:#1a1628;color:#6a5a88;border:1px solid #252038;">'+cc.label+'</span>';
+  document.getElementById('mKws').innerHTML=(card.kw||[]).map(function(k){return '<span class="kw" style="font-size:11px;padding:3px 8px;">'+k+'</span>';}).join('');
+  document.getElementById('modalOverlay').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  document.getElementById('modalOverlay').style.display='none';
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
 
 // ── BOOT ──────────────────────────────────────────────────────
 // STATIC_CARDS is defined below as fallback
