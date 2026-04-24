@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpireIndex — Deck Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0c18;--bg2:#13101e;--bg3:#0f0d16;--bg4:#111020;
+  --border:#1e1a2c;--border2:#2e2545;
+  --text:#c4b89a;--text2:#7a6a8a;--text3:#4a3a6a;
+  --gold:#d4a84b;--purple:#8060c0;
+  --attack:#e08080;--skill:#80b0e8;--power:#88cc70;--green:#88cc70;--orange:#e8a050;--red:#e06050;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glory/glory_03_a.png') center center / cover no-repeat;opacity:0.05;filter:saturate(0.6);pointer-events:none;z-index:0;}
+
+/* APP SHELL */
+#app{height:100vh;display:flex;flex-direction:column;position:relative;z-index:1;}
+
+/* TOP BAR */
+.topbar{flex-shrink:0;display:flex;align-items:center;gap:16px;padding:10px 16px;background:rgba(14,12,24,0.98);border-bottom:1px solid rgba(212,168,75,0.2);}
+.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0;}
+.topbar-logo img{width:30px;height:30px;image-rendering:pixelated;opacity:0.85;}
+.topbar-logo span{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#c9a04a;letter-spacing:2px;}
+.topbar-nav{display:flex;gap:18px;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a:hover{color:var(--text);}
+.topbar-nav a.active{color:var(--gold);}
+.topbar-search{flex:1;max-width:300px;margin-left:auto;}
+.topbar-search input{width:100%;background:#1c1826;border:1px solid var(--border2);border-radius:7px;color:#ddd0b8;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px 7px 34px;outline:none;transition:border-color 0.15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23665580' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center;}
+.topbar-search input::placeholder{color:#504870;}
+.topbar-search input:focus{border-color:var(--gold);}
+
+/* WORKSPACE: left browser + right deck panel */
+.workspace{flex:1;display:flex;overflow:hidden;}
+
+/* ── LEFT: CARD BROWSER ── */
+.browser{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.browser-controls{flex-shrink:0;background:var(--bg3);border-bottom:1px solid var(--border);}
+.class-tabs{display:flex;gap:3px;padding:10px 14px 0;flex-wrap:wrap;}
+.class-tab{display:flex;align-items:center;gap:5px;padding:6px 11px;border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:12px;font-weight:500;color:var(--text3);transition:all 0.15s;background:transparent;font-family:'DM Sans',sans-serif;}
+.class-tab:hover{color:var(--text);background:#1a1628;}
+.class-tab.active{background:#1a1628;border-color:rgba(212,168,75,0.35);color:#efe0c0;}
+.pip{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.filter-bar{display:flex;align-items:center;gap:5px;padding:7px 14px;flex-wrap:wrap;}
+.flabel{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-right:1px;flex-shrink:0;}
+.fbtn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.fbtn:hover{border-color:#6040a0;color:var(--text);}
+.fbtn.active{background:#1e1608;border-color:rgba(212,168,75,0.5);color:#d4a84b;}
+.fdiv{width:1px;height:18px;background:var(--border2);margin:0 3px;flex-shrink:0;}
+.browser-meta{flex-shrink:0;padding:5px 14px;background:#0d0b14;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);}
+.browser-meta strong{color:#a890c0;font-weight:500;}
+
+.card-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;padding:12px 14px 20px;align-content:start;}
+
+/* CARD TILE */
+.ctile{background:var(--bg2);border:1px solid #221d33;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform 0.12s,border-color 0.12s;position:relative;}
+.ctile:hover{border-color:rgba(212,168,75,0.5);transform:translateY(-2px);box-shadow:0 4px 16px rgba(212,168,75,0.08);}
+.ctile-bar{height:3px;background:var(--cc,#7050b0);opacity:0.7;}
+.ctile-art{height:88px;overflow:hidden;background:#0e0b1a;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e1a2e;}
+.ctile-art img{width:100%;height:100%;object-fit:contain;padding:5px;transition:transform 0.15s;}
+.ctile:hover .ctile-art img{transform:scale(1.06);}
+.ctile-art-fb{font-size:26px;opacity:0.1;}
+.ctile-body{padding:7px 9px 9px;}
+.ctile-head{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;margin-bottom:4px;}
+.ctile-name{font-family:'Playfair Display',serif;font-size:11.5px;font-weight:500;color:#e8d8b8;line-height:1.2;flex:1;}
+.ctile-cost{min-width:19px;height:19px;border-radius:10px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0;padding:0 3px;}
+.ctile-badges{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:4px;}
+.ctile-desc{font-size:10px;line-height:1.45;color:var(--text2);font-style:italic;}
+.badge{font-size:8px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 5px;border-radius:8px;}
+.b-attack{background:#3a1212;color:#e08080;border:1px solid #5a1e1e;}
+.b-skill{background:#122035;color:#80b0e8;border:1px solid #1e3a5a;}
+.b-power{background:#182812;color:#88cc70;border:1px solid #285a1e;}
+.b-status{background:#352a12;color:#e8b870;border:1px solid #5a421e;}
+.b-curse{background:#281235;color:#b880d8;border:1px solid #4a1e5a;}
+.b-uncommon{background:#201a30;color:#9a88c8;border:1px solid #302548;}
+.b-rare{background:#302010;color:#d4a848;border:1px solid #503215;}
+.b-ancient{background:#2a1f10;color:#e0b060;border:1px solid #5a3a10;}
+/* Add overlay */
+.ctile-add-overlay{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:7px;opacity:0;transition:opacity 0.15s;background:linear-gradient(to top,rgba(10,8,20,0.75) 0%,transparent 55%);}
+.ctile:hover .ctile-add-overlay{opacity:1;}
+.btn-add{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:5px 11px;border-radius:6px;border:1px solid rgba(212,168,75,0.5);background:rgba(212,168,75,0.12);color:#e8c870;cursor:pointer;transition:all 0.1s;letter-spacing:0.5px;}
+.btn-add:hover{background:rgba(212,168,75,0.28);}
+/* In-deck count badge */
+.ctile-in-deck{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:10px;background:var(--gold);color:#0e0c18;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0.6);transition:all 0.15s;pointer-events:none;}
+.ctile-in-deck.visible{opacity:1;transform:scale(1);}
+
+/* ── RIGHT: DECK PANEL ── */
+.deck-panel{width:316px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid var(--border2);background:var(--bg4);}
+
+/* Panel header */
+.deck-hd{flex-shrink:0;padding:12px 14px 10px;border-bottom:1px solid var(--border);}
+.deck-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.deck-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#efe0c0;letter-spacing:1px;display:flex;align-items:center;gap:6px;}
+.deck-actions{display:flex;gap:5px;}
+.deck-btn{font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.deck-btn:hover{border-color:var(--gold);color:var(--gold);}
+.deck-btn.clear:hover{border-color:var(--red);color:var(--red);}
+.deck-btn.share.copied{border-color:var(--green);color:var(--green);}
+.deck-meta{font-size:12px;color:var(--text3);}
+.deck-meta strong{color:#a080b8;font-weight:600;}
+
+/* Stats grid — 5 metrics */
+.metrics{flex-shrink:0;padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.metric-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;position:relative;overflow:hidden;}
+.metric.wide{grid-column:span 2;}
+.metric-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.metric-val{font-family:'Cinzel',serif;font-size:17px;font-weight:700;color:#efe0c0;line-height:1;}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+.metric-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:4px;}
+.tag-fast{background:#182812;color:#88cc70;border:1px solid #285a1e;}
+.tag-med{background:#1e1608;color:#d4a84b;border:1px solid #504010;}
+.tag-slow{background:#2a1010;color:#e08060;border:1px solid #5a2010;}
+/* Type ratio */
+.ratio-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.rp{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.rp-a{background:#3a1212;color:#e08080;}
+.rp-s{background:#122035;color:#80b0e8;}
+.rp-p{background:#182812;color:#88cc70;}
+/* Consistency bar */
+.cons-bar-bg{height:5px;background:#1a1628;border-radius:3px;overflow:hidden;margin:6px 0 3px;}
+.cons-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease,background 0.4s;}
+/* Scaling / exhaust tags */
+.win-con-list{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+.wc-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:#182820;color:#88cc70;border:1px solid #284a20;}
+
+/* Deck list */
+.deck-list{flex:1;overflow-y:auto;padding:6px 0 12px;}
+.deck-empty{text-align:center;padding:40px 20px;color:var(--text3);}
+.deck-empty-icon{font-size:30px;opacity:0.35;margin-bottom:10px;}
+.deck-empty p{font-size:12px;font-style:italic;line-height:1.6;}
+.deck-section{margin-bottom:4px;}
+.deck-section-hd{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:6px 14px 3px;display:flex;align-items:center;justify-content:space-between;}
+.deck-section-ct{font-weight:500;}
+.deck-row{display:flex;align-items:center;gap:7px;padding:3px 14px;transition:background 0.1s;}
+.deck-row:hover{background:rgba(255,255,255,0.025);}
+.dr-cost{min-width:21px;height:21px;border-radius:11px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0;}
+.dr-name{flex:1;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dr-tags{display:flex;gap:2px;flex-shrink:0;}
+.dr-tag{font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;}
+.dt-scale{background:#1a2a12;color:#78b858;border:1px solid #2a4a18;}
+.dt-exhaust{background:#1a1830;color:#8060c0;border:1px solid #302060;}
+.dt-draw{background:#101828;color:#5090c0;border:1px solid #1a3048;}
+.dr-ctrl{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.ctrl-btn{width:17px;height:17px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;line-height:1;font-weight:600;}
+.ctrl-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
+.ctrl-btn.minus:hover:not(:disabled){border-color:var(--red);color:var(--red);}
+.ctrl-btn:disabled{opacity:0.25;cursor:not-allowed;}
+.dr-ct{font-size:11px;font-weight:700;color:var(--text);min-width:12px;text-align:center;}
+
+/* Loading / empty */
+.loading-wrap{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--text3);}
+.spinner{width:26px;height:26px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.no-results{grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text3);font-style:italic;font-size:13px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <a href="index.html" class="topbar-logo">
+      <img src="images/icon_1024.png" alt="SpireIndex">
+      <span>SpireIndex</span>
+    </a>
+    <nav class="topbar-nav">
+      <a href="cards.html">Card Library</a>
+      <a href="relics.html">Relics</a>
+      <a href="deck.html" class="active">Deck Builder</a>
+      <a href="#">Run Advisor</a>
+    </nav>
+    <div class="topbar-search">
+      <input type="text" id="search" placeholder="Search cards…">
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+
+    <!-- LEFT: CARD BROWSER -->
+    <div class="browser">
+      <div class="browser-controls">
+        <div class="class-tabs">
+          <div class="class-tab active" data-char="all">All Classes</div>
+          <div class="class-tab" data-char="ironclad"><span class="pip" style="background:#e06050"></span>Ironclad</div>
+          <div class="class-tab" data-char="silent"><span class="pip" style="background:#50c090"></span>Silent</div>
+          <div class="class-tab" data-char="defect"><span class="pip" style="background:#60a0e0"></span>Defect</div>
+          <div class="class-tab" data-char="regent"><span class="pip" style="background:#c070e0"></span>Regent</div>
+          <div class="class-tab" data-char="necrobinder"><span class="pip" style="background:#70b060"></span>Necrobinder</div>
+          <div class="class-tab" data-char="colorless"><span class="pip" style="background:#a09898"></span>Colorless</div>
+        </div>
+        <div class="filter-bar">
+          <span class="flabel">Type</span>
+          <button class="fbtn active" data-type="all">All</button>
+          <button class="fbtn" data-type="Attack">Attack</button>
+          <button class="fbtn" data-type="Skill">Skill</button>
+          <button class="fbtn" data-type="Power">Power</button>
+          <div class="fdiv"></div>
+          <span class="flabel">Rarity</span>
+          <button class="fbtn" data-rar="Starter">Starter</button>
+          <button class="fbtn" data-rar="Common">Common</button>
+          <button class="fbtn" data-rar="Uncommon">Uncommon</button>
+          <button class="fbtn" data-rar="Rare">Rare</button>
+        </div>
+      </div>
+      <div class="browser-meta" id="browserMeta">Loading cards…</div>
+      <div class="card-grid" id="grid">
+        <div class="loading-wrap"><div class="spinner"></div>Loading cards from spire-codex…</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: DECK PANEL -->
+    <div class="deck-panel">
+      <div class="deck-hd">
+        <div class="deck-hd-row">
+          <div class="deck-title">⚔ My Deck</div>
+          <div class="deck-actions">
+            <button class="deck-btn share" id="shareBtn">Share</button>
+            <button class="deck-btn clear" id="clearBtn">Clear</button>
+          </div>
+        </div>
+        <div class="deck-meta"><strong id="deckTotal">0</strong> cards · max 3 copies per card</div>
+      </div>
+
+      <!-- 5-METRIC DASHBOARD -->
+      <div class="metrics">
+        <!-- Row 1: Avg Cost + Type Ratio -->
+        <div class="metric-row">
+          <div class="metric">
+            <div class="metric-label">Avg Cost</div>
+            <div class="metric-val" id="mAvgCost">—</div>
+            <div class="metric-sub" id="mCostTag"></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Type Ratio</div>
+            <div class="ratio-pills" id="mTypeRatio"><span style="color:var(--text3);font-size:10px;">—</span></div>
+            <div class="metric-sub" id="mTypeBreak"></div>
+          </div>
+        </div>
+        <!-- Row 2: Exhaust Density + Scaling Cards -->
+        <div class="metric-row">
+          <div class="metric">
+            <div class="metric-label">Exhaust</div>
+            <div class="metric-val" id="mExhaust">—</div>
+            <div class="metric-sub" id="mExhaustSub"></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Scaling</div>
+            <div class="metric-val" id="mScaling">—</div>
+            <div class="metric-sub" id="mScalingSub"></div>
+          </div>
+        </div>
+        <!-- Row 3: Consistency (full width) -->
+        <div class="metric wide">
+          <div class="metric-label">Consistency Score</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
+            <div style="flex:1;">
+              <div class="cons-bar-bg"><div class="cons-bar-fill" id="consBar" style="width:0%;background:var(--text3)"></div></div>
+              <div class="metric-sub" id="consNote">Add cards to see a score.</div>
+            </div>
+            <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;min-width:38px;text-align:right;" id="consPct">—</div>
+          </div>
+          <!-- Win conditions detected -->
+          <div class="win-con-list" id="winConList"></div>
+        </div>
+      </div>
+
+      <!-- DECK LIST -->
+      <div class="deck-list" id="deckList">
+        <div class="deck-empty">
+          <div class="deck-empty-icon">🃏</div>
+          <p>Click any card to add it to your deck.<br>Up to 3 copies per card.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /workspace -->
+</div><!-- /app -->
+
+<script>
+// ─── GLOBALS ──────────────────────────────────────────────────────────────────
+let _cards = [];            // all cards from API
+let _activeChar = 'all';
+let _activeType = 'all';
+let _activeRar  = '';
+const _deck = {};           // name -> { card, count }
+
+const CHAR_HEX = {
+  ironclad:'#e06050', silent:'#50c090', defect:'#60a0e0',
+  regent:'#c070e0', necrobinder:'#70b060', colorless:'#a09898'
+};
+
+// ─── FETCH ────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res = await fetch('/api/cards');
+    if (!res.ok) throw new Error('API ' + res.status);
+    const data = await res.json();
+    _cards = (data.cards || []).filter(c => c.type !== 'Status' && c.type !== 'Curse');
+    renderGrid();
+    tryLoadHash();
+  } catch(e) {
+    document.getElementById('grid').innerHTML =
+      '<div class="no-results">⚠ Could not load cards (' + e.message + '). Are you running on Vercel?</div>';
+    document.getElementById('browserMeta').textContent = 'Error loading cards.';
+  }
+}
+
+// ─── FILTER CONTROLS ──────────────────────────────────────────────────────────
+document.querySelectorAll('.class-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    _activeChar = tab.dataset.char;
+    document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderGrid();
+  });
+});
+document.querySelectorAll('.fbtn[data-type]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    _activeType = btn.dataset.type;
+    document.querySelectorAll('.fbtn[data-type]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGrid();
+  });
+});
+document.querySelectorAll('.fbtn[data-rar]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const rar = btn.dataset.rar;
+    if (_activeRar === rar) {
+      _activeRar = '';
+      btn.classList.remove('active');
+    } else {
+      _activeRar = rar;
+      document.querySelectorAll('.fbtn[data-rar]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    renderGrid();
+  });
+});
+document.getElementById('search').addEventListener('input', renderGrid);
+
+// ─── RENDER CARD GRID ─────────────────────────────────────────────────────────
+function renderGrid() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const filtered = _cards.filter(c => {
+    if (_activeChar !== 'all' && c.char !== _activeChar) return false;
+    if (_activeType !== 'all' && c.type !== _activeType) return false;
+    if (_activeRar && c.rarity !== _activeRar) return false;
+    if (q && !c.name.toLowerCase().includes(q) && !(c.desc||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const meta = document.getElementById('browserMeta');
+  meta.innerHTML = `Showing <strong>${filtered.length}</strong> of ${_cards.length} cards`;
+
+  const grid = document.getElementById('grid');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="no-results">No cards match your filters.</div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  filtered.forEach((card, i) => {
+    const cc = CHAR_HEX[card.char] || '#7050b0';
+    const typeClass = 'b-' + (card.type||'skill').toLowerCase();
+    const rarClass = {Uncommon:'b-uncommon',Rare:'b-rare',Ancient:'b-ancient'}[card.rarity] || '';
+    const inDeck = _deck[card.name];
+    const count = inDeck ? inDeck.count : 0;
+
+    const tile = document.createElement('div');
+    tile.className = 'ctile';
+    tile.style.setProperty('--cc', cc);
+
+    // Art
+    const artDiv = document.createElement('div');
+    artDiv.className = 'ctile-art';
+    const img = document.createElement('img');
+    img.src = 'images/cards/' + card.img + '.png';
+    img.alt = card.name;
+    const fb = document.createElement('div');
+    fb.className = 'ctile-art-fb';
+    fb.textContent = '🃏';
+    fb.style.display = 'none';
+    img.onerror = () => { img.style.display='none'; fb.style.display='flex'; };
+    artDiv.appendChild(img);
+    artDiv.appendChild(fb);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'ctile-body';
+    const head = document.createElement('div');
+    head.className = 'ctile-head';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'ctile-name';
+    nameEl.textContent = card.name;
+    const costEl = document.createElement('div');
+    costEl.className = 'ctile-cost';
+    costEl.textContent = card.cost != null ? card.cost : '?';
+    head.appendChild(nameEl);
+    head.appendChild(costEl);
+
+    const badges = document.createElement('div');
+    badges.className = 'ctile-badges';
+    const typeBadge = document.createElement('span');
+    typeBadge.className = 'badge ' + typeClass;
+    typeBadge.textContent = card.type || '';
+    badges.appendChild(typeBadge);
+    if (rarClass) {
+      const rarBadge = document.createElement('span');
+      rarBadge.className = 'badge ' + rarClass;
+      rarBadge.textContent = card.rarity;
+      badges.appendChild(rarBadge);
+    }
+
+    const desc = document.createElement('div');
+    desc.className = 'ctile-desc';
+    const d = card.desc || '';
+    desc.textContent = d.length > 75 ? d.slice(0, 75) + '…' : d;
+
+    body.appendChild(head);
+    body.appendChild(badges);
+    body.appendChild(desc);
+
+    // Add overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'ctile-add-overlay';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add';
+    addBtn.textContent = '+ Add';
+    addBtn.addEventListener('click', e => { e.stopPropagation(); addCard(card.name); });
+    overlay.appendChild(addBtn);
+
+    // In-deck badge
+    const badge = document.createElement('div');
+    badge.className = 'ctile-in-deck' + (count > 0 ? ' visible' : '');
+    badge.id = 'badge-' + safeId(card.name);
+    badge.textContent = count || '';
+
+    tile.appendChild(document.createElement('div')).className = 'ctile-bar'; // bar hack
+    // fix: re-append properly
+    tile.innerHTML = ''; // clear the bar div that was appended
+    const bar = document.createElement('div');
+    bar.className = 'ctile-bar';
+    tile.appendChild(bar);
+    tile.appendChild(artDiv);
+    tile.appendChild(body);
+    tile.appendChild(overlay);
+    tile.appendChild(badge);
+
+    tile.addEventListener('click', () => addCard(card.name));
+
+    grid.appendChild(tile);
+  });
+}
+
+function safeId(name) { return name.replace(/[^a-z0-9]/gi,'_'); }
+
+// ─── DECK MANAGEMENT ──────────────────────────────────────────────────────────
+function addCard(name) {
+  const card = _cards.find(c => c.name === name);
+  if (!card) return;
+  if (!_deck[name]) _deck[name] = { card, count: 0 };
+  if (_deck[name].count >= 3) return;
+  _deck[name].count++;
+  refreshBadge(name);
+  renderDeck();
+  renderMetrics();
+}
+
+function adjustCount(name, delta) {
+  if (!_deck[name]) return;
+  _deck[name].count += delta;
+  if (_deck[name].count <= 0) delete _deck[name];
+  refreshBadge(name);
+  renderDeck();
+  renderMetrics();
+}
+
+function refreshBadge(name) {
+  const el = document.getElementById('badge-' + safeId(name));
+  if (!el) return;
+  const count = _deck[name]?.count || 0;
+  el.textContent = count || '';
+  el.classList.toggle('visible', count > 0);
+}
+
+function clearDeck() {
+  Object.keys(_deck).forEach(k => delete _deck[k]);
+  document.querySelectorAll('.ctile-in-deck').forEach(el => {
+    el.textContent = '';
+    el.classList.remove('visible');
+  });
+  renderDeck();
+  renderMetrics();
+}
+
+// ─── RENDER DECK LIST ─────────────────────────────────────────────────────────
+function renderDeck() {
+  const entries = Object.values(_deck);
+  const total = entries.reduce((s,e) => s + e.count, 0);
+  document.getElementById('deckTotal').textContent = total;
+
+  const dl = document.getElementById('deckList');
+  if (!entries.length) {
+    dl.innerHTML = '<div class="deck-empty"><div class="deck-empty-icon">🃏</div><p>Click any card to add it to your deck.<br>Up to 3 copies per card.</p></div>';
+    return;
+  }
+
+  // Group by type
+  const TYPE_ORDER = ['Attack','Skill','Power','Status','Curse','Other'];
+  const TYPE_COLOR = {
+    Attack:'var(--attack)', Skill:'var(--skill)', Power:'var(--power)',
+    Status:'#e8b870', Curse:'#b880d8', Other:'var(--text3)'
+  };
+  const groups = {};
+  TYPE_ORDER.forEach(t => groups[t] = []);
+  entries.forEach(e => {
+    const t = TYPE_ORDER.includes(e.card.type) ? e.card.type : 'Other';
+    groups[t].push(e);
+  });
+  // Sort within each group by cost asc, then name
+  const costNum = c => typeof c.cost === 'number' ? c.cost : (c.cost === 0 ? 0 : 99);
+  Object.values(groups).forEach(arr => arr.sort((a,b) => costNum(a.card) - costNum(b.card) || a.card.name.localeCompare(b.card.name)));
+
+  dl.innerHTML = '';
+  TYPE_ORDER.forEach(type => {
+    const items = groups[type];
+    if (!items.length) return;
+    const typeTotal = items.reduce((s,e) => s+e.count, 0);
+
+    const sec = document.createElement('div');
+    sec.className = 'deck-section';
+
+    const hd = document.createElement('div');
+    hd.className = 'deck-section-hd';
+    hd.style.color = TYPE_COLOR[type];
+    hd.innerHTML = `<span>${type}s</span><span class="deck-section-ct">${typeTotal}</span>`;
+    sec.appendChild(hd);
+
+    items.forEach(({ card, count }) => {
+      const isScaling = cardIsScaling(card);
+      const isExhaust = card.kw && card.kw.includes('Exhaust');
+      const isDraw    = card.kw && card.kw.includes('Draw');
+
+      const row = document.createElement('div');
+      row.className = 'deck-row';
+
+      // Cost
+      const costEl = document.createElement('div');
+      costEl.className = 'dr-cost';
+      costEl.textContent = card.cost != null ? card.cost : '?';
+      row.appendChild(costEl);
+
+      // Name
+      const nameEl = document.createElement('div');
+      nameEl.className = 'dr-name';
+      nameEl.textContent = card.name;
+      row.appendChild(nameEl);
+
+      // Tags
+      const tagsEl = document.createElement('div');
+      tagsEl.className = 'dr-tags';
+      if (isScaling) { const t = document.createElement('span'); t.className='dr-tag dt-scale'; t.textContent='↑'; tagsEl.appendChild(t); }
+      if (isExhaust) { const t = document.createElement('span'); t.className='dr-tag dt-exhaust'; t.textContent='X'; tagsEl.appendChild(t); }
+      if (isDraw)    { const t = document.createElement('span'); t.className='dr-tag dt-draw'; t.textContent='↓'; tagsEl.appendChild(t); }
+      row.appendChild(tagsEl);
+
+      // Controls
+      const ctrl = document.createElement('div');
+      ctrl.className = 'dr-ctrl';
+
+      const minus = document.createElement('button');
+      minus.className = 'ctrl-btn minus';
+      minus.textContent = '−';
+      minus.addEventListener('click', () => adjustCount(card.name, -1));
+
+      const ct = document.createElement('span');
+      ct.className = 'dr-ct';
+      ct.textContent = count;
+
+      const plus = document.createElement('button');
+      plus.className = 'ctrl-btn';
+      plus.textContent = '+';
+      if (count >= 3) plus.disabled = true;
+      plus.addEventListener('click', () => adjustCount(card.name, 1));
+
+      ctrl.appendChild(minus);
+      ctrl.appendChild(ct);
+      ctrl.appendChild(plus);
+      row.appendChild(ctrl);
+
+      sec.appendChild(row);
+    });
+
+    dl.appendChild(sec);
+  });
+}
+
+// ─── CARD CLASSIFICATION ──────────────────────────────────────────────────────
+function cardIsScaling(card) {
+  const kw = card.kw || [];
+  const desc = (card.desc || '').toLowerCase();
+  return kw.includes('Scaling') ||
+    (card.type === 'Power' && (desc.includes('each turn') || desc.includes('per turn') || desc.includes('stack'))) ||
+    (kw.includes('Strength') && card.type === 'Power') ||
+    (kw.includes('Focus') && card.type === 'Power');
+}
+
+function cardIsWinCon(card) {
+  const desc = (card.desc || '').toLowerCase();
+  return cardIsScaling(card) ||
+    desc.includes('double') ||
+    desc.includes('limit break') ||
+    desc.includes('demon form') ||
+    desc.includes('noxious fumes') ||
+    desc.includes('creative ai') ||
+    desc.includes('storm') ||
+    desc.includes('echo form');
+}
+
+// ─── RENDER 5-METRIC DASHBOARD ────────────────────────────────────────────────
+function renderMetrics() {
+  const entries = Object.values(_deck);
+  const total = entries.reduce((s,e) => s+e.count, 0);
+
+  if (!total) {
+    document.getElementById('mAvgCost').textContent = '—';
+    document.getElementById('mCostTag').textContent = '';
+    document.getElementById('mTypeRatio').innerHTML = '<span style="color:var(--text3);font-size:10px;">—</span>';
+    document.getElementById('mTypeBreak').textContent = '';
+    document.getElementById('mExhaust').textContent = '—';
+    document.getElementById('mExhaustSub').textContent = '';
+    document.getElementById('mScaling').textContent = '—';
+    document.getElementById('mScalingSub').textContent = '';
+    document.getElementById('consBar').style.width = '0%';
+    document.getElementById('consPct').textContent = '—';
+    document.getElementById('consPct').style.color = 'var(--text3)';
+    document.getElementById('consNote').textContent = 'Add cards to see a score.';
+    document.getElementById('winConList').innerHTML = '';
+    return;
+  }
+
+  // Expand entries into flat card array
+  const flat = entries.flatMap(e => Array(e.count).fill(e.card));
+
+  // ── 1. AVG COST ──
+  const costed = flat.filter(c => typeof c.cost === 'number');
+  const avgCost = costed.length ? (costed.reduce((s,c) => s+c.cost, 0)/costed.length) : null;
+  const avgCostStr = avgCost != null ? avgCost.toFixed(1) : '—';
+  document.getElementById('mAvgCost').textContent = avgCostStr;
+  let costTag = '';
+  if (avgCost != null) {
+    if (avgCost < 1.0) costTag = '<span class="metric-tag tag-fast">Fast</span>';
+    else if (avgCost <= 1.5) costTag = '<span class="metric-tag tag-med">Medium</span>';
+    else costTag = '<span class="metric-tag tag-slow">Heavy</span>';
+  }
+  document.getElementById('mCostTag').innerHTML = costTag;
+
+  // ── 2. TYPE RATIO ──
+  const typeCounts = { Attack:0, Skill:0, Power:0 };
+  flat.forEach(c => { if (typeCounts[c.type] !== undefined) typeCounts[c.type]++; });
+  const typeTotal = typeCounts.Attack + typeCounts.Skill + typeCounts.Power;
+  const tr = document.getElementById('mTypeRatio');
+  const pct = n => typeTotal ? Math.round(n/typeTotal*100) + '%' : '0%';
+  tr.innerHTML = (typeCounts.Attack ? `<span class="rp rp-a">${typeCounts.Attack}A</span>` : '') +
+    (typeCounts.Skill ? `<span class="rp rp-s">${typeCounts.Skill}S</span>` : '') +
+    (typeCounts.Power ? `<span class="rp rp-p">${typeCounts.Power}P</span>` : '');
+  document.getElementById('mTypeBreak').textContent = typeTotal
+    ? `${pct(typeCounts.Attack)} atk · ${pct(typeCounts.Skill)} skill · ${pct(typeCounts.Power)} power`
+    : '';
+
+  // ── 3. EXHAUST DENSITY ──
+  const exhaustCount = flat.filter(c => c.kw && c.kw.includes('Exhaust')).length;
+  document.getElementById('mExhaust').textContent = exhaustCount;
+  let exSub = '';
+  if (total > 0) {
+    const exPct = Math.round(exhaustCount/total*100);
+    if (exPct >= 30) exSub = 'Lean — deck thins itself';
+    else if (exPct >= 15) exSub = 'Moderate exhaust';
+    else exSub = 'Low exhaust';
+  }
+  document.getElementById('mExhaustSub').textContent = exSub;
+
+  // ── 4. SCALING CARDS ──
+  const scalingCards = entries.filter(e => cardIsScaling(e.card));
+  const scalingCount = scalingCards.reduce((s,e) => s+e.count, 0);
+  document.getElementById('mScaling').textContent = scalingCount;
+  let scaleSub = '';
+  if (scalingCount === 0) scaleSub = 'No win condition found';
+  else if (scalingCount === 1) scaleSub = 'Minimal — consider more';
+  else if (scalingCount <= 3) scaleSub = 'Good win condition';
+  else scaleSub = 'Well-supplied scaling';
+  document.getElementById('mScalingSub').textContent = scaleSub;
+
+  // Win con list (unique scaling card names)
+  const wcNames = [...new Set(scalingCards.map(e => e.card.name))];
+  const wcEl = document.getElementById('winConList');
+  if (wcNames.length) {
+    wcEl.innerHTML = wcNames.map(n => `<span class="wc-tag">↑ ${n}</span>`).join('');
+  } else {
+    wcEl.innerHTML = '';
+  }
+
+  // ── 5. CONSISTENCY SCORE ──
+  const drawCount = flat.filter(c => c.kw && c.kw.includes('Draw')).length;
+  const zeroCost  = flat.filter(c => c.cost === 0).length;
+  const innate    = flat.filter(c => c.kw && c.kw.includes('Innate')).length;
+  const retain    = flat.filter(c => c.kw && c.kw.includes('Retain')).length;
+  const score = calcConsistency(total, drawCount, zeroCost, innate, retain);
+
+  const bar = document.getElementById('consBar');
+  const pctEl = document.getElementById('consPct');
+  const noteEl = document.getElementById('consNote');
+  bar.style.width = score + '%';
+  pctEl.textContent = score + '%';
+
+  let color, note;
+  if (score >= 80)      { color='#88cc70'; note='Tight deck — you\'ll see key cards every cycle.'; }
+  else if (score >= 65) { color='#d4a84b'; note='Good consistency — solid draw helps.'; }
+  else if (score >= 45) { color='#e08060'; note='Moderate — consider trimming or adding draw.'; }
+  else                  { color='#e06050'; note='Low consistency — deck is too large or lacks draw.'; }
+  bar.style.background = color;
+  pctEl.style.color = color;
+  noteEl.textContent = note;
+}
+
+function calcConsistency(total, drawCount, zeroCost, innate, retain) {
+  // Base from deck size: 20 cards = 60, smaller = better, larger = worse
+  const base = total <= 20
+    ? Math.min(85, 60 + Math.max(0, 20 - total) * 2.5)
+    : Math.max(5, 60 - (total - 20) * 2.5);
+  const drawBonus   = Math.min(15, drawCount * 3);
+  const zeroBonus   = Math.min(8, zeroCost * 1);
+  const innateBonus = Math.min(8, innate * 2);
+  const retainBonus = Math.min(4, retain * 1);
+  return Math.min(100, Math.max(0, Math.round(base + drawBonus + zeroBonus + innateBonus + retainBonus)));
+}
+
+// ─── SHARE / LOAD ─────────────────────────────────────────────────────────────
+document.getElementById('shareBtn').addEventListener('click', () => {
+  const entries = Object.values(_deck);
+  if (!entries.length) { alert('Add cards to your deck first!'); return; }
+  const payload = entries.map(e => e.card.name + ':' + e.count).join('|');
+  const url = location.origin + location.pathname + '#deck=' + btoa(encodeURIComponent(payload));
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('shareBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Share'; btn.classList.remove('copied'); }, 2200);
+  }).catch(() => {
+    prompt('Copy this link:', url);
+  });
+});
+
+document.getElementById('clearBtn').addEventListener('click', clearDeck);
+
+function tryLoadHash() {
+  const hash = location.hash;
+  if (!hash.includes('deck=')) return;
+  try {
+    const encoded = hash.replace(/.*deck=/, '');
+    const payload = decodeURIComponent(atob(encoded));
+    payload.split('|').forEach(pair => {
+      const idx = pair.lastIndexOf(':');
+      if (idx < 0) return;
+      const name = pair.slice(0, idx);
+      const count = Math.min(3, parseInt(pair.slice(idx+1)) || 1);
+      const card = _cards.find(c => c.name === name);
+      if (card) _deck[name] = { card, count };
+    });
+    renderGrid();
+    renderDeck();
+    renderMetrics();
+  } catch(e) { /* ignore bad hash */ }
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
