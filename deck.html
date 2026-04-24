@@ -58,7 +58,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .card-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;padding:12px 14px 20px;align-content:start;}
 
 /* CARD TILE */
-.ctile{background:var(--bg2);border:1px solid #221d33;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform 0.12s,border-color 0.12s;position:relative;}
+.ctile{background:var(--bg2);border:1px solid #221d33;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform 0.12s,border-color 0.12s;position:relative;min-height:170px;}
 .ctile:hover{border-color:rgba(212,168,75,0.5);transform:translateY(-2px);box-shadow:0 4px 16px rgba(212,168,75,0.08);}
 .ctile-bar{height:3px;background:var(--cc,#7050b0);opacity:0.7;}
 .ctile-art{height:88px;overflow:hidden;background:#0e0b1a;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e1a2e;}
@@ -356,8 +356,8 @@ function renderGrid() {
     return true;
   });
 
-  const meta = document.getElementById('browserMeta');
-  meta.innerHTML = `Showing <strong>${filtered.length}</strong> of ${_cards.length} cards`;
+  document.getElementById('browserMeta').innerHTML =
+    `Showing <strong>${filtered.length}</strong> of ${_cards.length} cards`;
 
   const grid = document.getElementById('grid');
   if (!filtered.length) {
@@ -365,98 +365,105 @@ function renderGrid() {
     return;
   }
 
+  // Build all tiles into a fragment, then swap in one shot
+  const frag = document.createDocumentFragment();
+  for (const card of filtered) {
+    frag.appendChild(makeTile(card));
+  }
   grid.innerHTML = '';
-  filtered.forEach((card, i) => {
-    const cc = CHAR_HEX[card.char] || '#7050b0';
-    const typeClass = 'b-' + (card.type||'skill').toLowerCase();
-    const rarClass = {Uncommon:'b-uncommon',Rare:'b-rare',Ancient:'b-ancient'}[card.rarity] || '';
-    const inDeck = _deck[card.name];
-    const count = inDeck ? inDeck.count : 0;
+  grid.appendChild(frag);
+}
 
-    const tile = document.createElement('div');
-    tile.className = 'ctile';
-    tile.style.setProperty('--cc', cc);
+function makeTile(card) {
+  const cc = CHAR_HEX[card.char] || '#7050b0';
+  const count = _deck[card.name]?.count || 0;
 
-    // Art
-    const artDiv = document.createElement('div');
-    artDiv.className = 'ctile-art';
-    const img = document.createElement('img');
-    img.src = 'images/cards/' + card.img + '.png';
-    img.alt = card.name;
-    const fb = document.createElement('div');
-    fb.className = 'ctile-art-fb';
-    fb.textContent = '🃏';
-    fb.style.display = 'none';
-    img.onerror = () => { img.style.display='none'; fb.style.display='flex'; };
-    artDiv.appendChild(img);
-    artDiv.appendChild(fb);
+  const tile = document.createElement('div');
+  tile.className = 'ctile';
+  tile.style.cssText = '--cc:' + cc;
 
-    // Body
-    const body = document.createElement('div');
-    body.className = 'ctile-body';
-    const head = document.createElement('div');
-    head.className = 'ctile-head';
-    const nameEl = document.createElement('div');
-    nameEl.className = 'ctile-name';
-    nameEl.textContent = card.name;
-    const costEl = document.createElement('div');
-    costEl.className = 'ctile-cost';
-    costEl.textContent = card.cost != null ? card.cost : '?';
-    head.appendChild(nameEl);
-    head.appendChild(costEl);
+  // Colored top bar
+  const bar = document.createElement('div');
+  bar.className = 'ctile-bar';
 
-    const badges = document.createElement('div');
-    badges.className = 'ctile-badges';
-    const typeBadge = document.createElement('span');
-    typeBadge.className = 'badge ' + typeClass;
-    typeBadge.textContent = card.type || '';
-    badges.appendChild(typeBadge);
-    if (rarClass) {
-      const rarBadge = document.createElement('span');
-      rarBadge.className = 'badge ' + rarClass;
-      rarBadge.textContent = card.rarity;
-      badges.appendChild(rarBadge);
-    }
+  // Art area
+  const art = document.createElement('div');
+  art.className = 'ctile-art';
+  const img = document.createElement('img');
+  img.src = 'images/cards/' + card.img + '.png';
+  img.alt = card.name;
+  const imgFb = document.createElement('div');
+  imgFb.className = 'ctile-art-fb';
+  imgFb.textContent = '🃏';
+  imgFb.style.display = 'none';
+  img.onerror = () => { img.style.display = 'none'; imgFb.style.display = 'flex'; };
+  art.appendChild(img);
+  art.appendChild(imgFb);
 
-    const desc = document.createElement('div');
-    desc.className = 'ctile-desc';
-    const d = card.desc || '';
-    desc.textContent = d.length > 75 ? d.slice(0, 75) + '…' : d;
+  // Body: name + cost
+  const body = document.createElement('div');
+  body.className = 'ctile-body';
 
-    body.appendChild(head);
-    body.appendChild(badges);
-    body.appendChild(desc);
+  const head = document.createElement('div');
+  head.className = 'ctile-head';
+  const nm = document.createElement('div');
+  nm.className = 'ctile-name';
+  nm.textContent = card.name;
+  const cs = document.createElement('div');
+  cs.className = 'ctile-cost';
+  cs.textContent = card.cost != null ? card.cost : '?';
+  head.appendChild(nm);
+  head.appendChild(cs);
 
-    // Add overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'ctile-add-overlay';
-    const addBtn = document.createElement('button');
-    addBtn.className = 'btn-add';
-    addBtn.textContent = '+ Add';
-    addBtn.addEventListener('click', e => { e.stopPropagation(); addCard(card.name); });
-    overlay.appendChild(addBtn);
+  // Badges
+  const bgs = document.createElement('div');
+  bgs.className = 'ctile-badges';
+  const tBadge = document.createElement('span');
+  tBadge.className = 'badge b-' + (card.type || 'skill').toLowerCase();
+  tBadge.textContent = card.type || '';
+  bgs.appendChild(tBadge);
+  const rarClass = {Uncommon:'b-uncommon', Rare:'b-rare', Ancient:'b-ancient'}[card.rarity];
+  if (rarClass) {
+    const rBadge = document.createElement('span');
+    rBadge.className = 'badge ' + rarClass;
+    rBadge.textContent = card.rarity;
+    bgs.appendChild(rBadge);
+  }
 
-    // In-deck badge
-    const badge = document.createElement('div');
-    badge.className = 'ctile-in-deck' + (count > 0 ? ' visible' : '');
-    badge.id = 'badge-' + safeId(card.name);
-    badge.textContent = count || '';
+  // Description
+  const desc = document.createElement('div');
+  desc.className = 'ctile-desc';
+  const d = card.desc || '';
+  desc.textContent = d.length > 80 ? d.slice(0, 80) + '…' : d;
 
-    tile.appendChild(document.createElement('div')).className = 'ctile-bar'; // bar hack
-    // fix: re-append properly
-    tile.innerHTML = ''; // clear the bar div that was appended
-    const bar = document.createElement('div');
-    bar.className = 'ctile-bar';
-    tile.appendChild(bar);
-    tile.appendChild(artDiv);
-    tile.appendChild(body);
-    tile.appendChild(overlay);
-    tile.appendChild(badge);
+  body.appendChild(head);
+  body.appendChild(bgs);
+  body.appendChild(desc);
 
-    tile.addEventListener('click', () => addCard(card.name));
+  // Hover overlay with Add button
+  const overlay = document.createElement('div');
+  overlay.className = 'ctile-add-overlay';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn-add';
+  addBtn.textContent = '+ Add';
+  addBtn.addEventListener('click', e => { e.stopPropagation(); addCard(card.name); });
+  overlay.appendChild(addBtn);
 
-    grid.appendChild(tile);
-  });
+  // In-deck count badge
+  const deckBadge = document.createElement('div');
+  deckBadge.className = 'ctile-in-deck' + (count > 0 ? ' visible' : '');
+  deckBadge.id = 'badge-' + safeId(card.name);
+  if (count > 0) deckBadge.textContent = count;
+
+  // Assemble — order matters for layout
+  tile.appendChild(bar);
+  tile.appendChild(art);
+  tile.appendChild(body);
+  tile.appendChild(overlay);
+  tile.appendChild(deckBadge);
+
+  tile.addEventListener('click', () => addCard(card.name));
+  return tile;
 }
 
 function safeId(name) { return name.replace(/[^a-z0-9]/gi,'_'); }
