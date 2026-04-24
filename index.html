@@ -8,6 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
+.home-logo{position:fixed;top:14px;left:16px;z-index:200;opacity:0.8;transition:opacity 0.2s;}
+.home-logo:hover{opacity:1;}
+.home-logo img{width:42px;height:42px;display:block;image-rendering:pixelated;}
 :root{
   --ink:#07050f;
   --deep:#0d0b18;
@@ -136,6 +139,9 @@ footer{position:relative;overflow:hidden;padding:56px 48px 36px;text-align:cente
 </style>
 </head>
 <body>
+<a href="index.html" class="home-logo" title="SpireIndex Home">
+  <img src="images/icon_1024.png" alt="Home">
+</a>
 
 <nav>
   <a class="nav-logo" href="home.html">
