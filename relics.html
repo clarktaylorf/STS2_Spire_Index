@@ -76,6 +76,10 @@ nav-row{display:flex;align-items:center;justify-content:center;gap:24px;padding:
 .b-ancient{background:#2a1f10;color:#e0b060;border:1px solid #5a3a10;}
 .b-char{font-size:9px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 6px;border-radius:10px;background:#1a1628;color:var(--text3);border:1px solid var(--border2);}
 .relic-desc{font-size:11px;line-height:1.55;color:var(--text2);font-style:italic;}
+.kw-chips{display:flex;gap:4px;flex-wrap:wrap;max-width:500px;}
+.kw-chip{font-family:"DM Sans",sans-serif;font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.kw-chip:hover{border-color:#d4a84b;color:var(--text);}
+.kw-chip.active{background:#1e1608;border-color:rgba(212,168,75,0.5);color:#d4a84b;}
 .no-results{grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text3);font-size:15px;font-style:italic;}
 
 footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
@@ -128,6 +132,10 @@ footer a:hover{color:var(--text);}
   <button class="fbtn" data-tier="Shop" onclick="setTier(this)">Shop</button>
   <button class="fbtn" data-tier="Event" onclick="setTier(this)">Event</button>
   <button class="fbtn" data-tier="Ancient" onclick="setTier(this)">Ancient</button>
+  <div class="fdiv"></div>
+  <span class="flabel">Keywords</span>
+  <div id="relicKwChips" class="kw-chips"></div>
+  <button class="fbtn" id="relicKwClear" onclick="clearRelicKws()" style="display:none">&#x2715; Clear</button>
 </div>
 
 <div class="stats">
@@ -505,11 +513,71 @@ document.getElementById('search').addEventListener('input',render);
 
 function tierBadgeClass(t){return{Starter:'b-starter',Common:'b-common',Uncommon:'b-uncommon',Rare:'b-rare',Shop:'b-shop',Event:'b-event',Ancient:'b-ancient'}[t]||'b-common';}
 
+// Extract keywords from relic descriptions
+function relicKws(desc){
+  const kws=new Set();
+  const d=(desc||'').toLowerCase();
+  if(d.includes('energy'))kws.add('Energy');
+  if(d.includes('block'))kws.add('Block');
+  if(d.includes('strength'))kws.add('Strength');
+  if(d.includes('dexterity'))kws.add('Dexterity');
+  if(d.includes('potion'))kws.add('Potion');
+  if(d.includes('heal')||d.includes('hp'))kws.add('Heal');
+  if(d.includes('gold'))kws.add('Gold');
+  if(d.includes('draw'))kws.add('Draw');
+  if(d.includes('exhaust'))kws.add('Exhaust');
+  if(d.includes('max hp'))kws.add('Max HP');
+  if(d.includes('upgrade'))kws.add('Upgrade');
+  if(d.includes('transform'))kws.add('Transform');
+  if(d.includes('relic'))kws.add('Relic');
+  if(d.includes('card reward')||d.includes('add.*card')||d.includes('obtain.*card'))kws.add('Card Reward');
+  if(d.includes('poison'))kws.add('Poison');
+  if(d.includes('thorns')||d.includes('damage back')||d.includes('deal.*damage'))kws.add('Thorns');
+  if(d.includes('vulnerable'))kws.add('Vulnerable');
+  if(d.includes('weak'))kws.add('Weak');
+  if(d.includes('start.*combat')||d.includes('at the start'))kws.add('On Combat Start');
+  if(d.includes('upon pickup'))kws.add('On Pickup');
+  if(d.includes('rest site')||d.includes('rest'))kws.add('Rest Site');
+  if(d.includes('shop'))kws.add('Shop');
+  if(d.includes('elite'))kws.add('Elite');
+  if(d.includes('boss'))kws.add('Boss');
+  if(d.includes('stars'))kws.add('Stars');
+  if(d.includes('orb'))kws.add('Orb');
+  if(d.includes('focus'))kws.add('Focus');
+  return [...kws];
+}
+
+let activeRelicKws=new Set();
+
+function buildRelicKwChips(){
+  const allKws=[...new Set(relics.flatMap(r=>relicKws(r.desc)))].sort();
+  const container=document.getElementById('relicKwChips');
+  container.innerHTML=allKws.map(k=>
+    '<button class="kw-chip'+(activeRelicKws.has(k)?' active':'')+'" onclick="toggleRelicKw(''+k+'')">'+k+'</button>'
+  ).join('');
+}
+
+function toggleRelicKw(kw){
+  if(activeRelicKws.has(kw))activeRelicKws.delete(kw);
+  else activeRelicKws.add(kw);
+  document.getElementById('relicKwClear').style.display=activeRelicKws.size>0?'inline-flex':'none';
+  buildRelicKwChips();
+  render();
+}
+
+function clearRelicKws(){
+  activeRelicKws.clear();
+  document.getElementById('relicKwClear').style.display='none';
+  buildRelicKwChips();
+  render();
+}
+
 function render(){
   const q=document.getElementById('search').value.toLowerCase().trim();
   const filtered=relics.filter(r=>{
     if(activeChar!=='all'&&r.char!==activeChar)return false;
     if(activeTier!=='all'&&r.tier!==activeTier)return false;
+    if(activeRelicKws.size>0&&![...activeRelicKws].every(kw=>relicKws(r.desc).includes(kw)))return false;
     if(q&&!r.name.toLowerCase().includes(q)&&!r.desc.toLowerCase().includes(q))return false;
     return true;
   });
@@ -540,6 +608,7 @@ function render(){
     </div>`;
   }).join('');
 }
+buildRelicKwChips();
 render();
 </script>
 </body>
