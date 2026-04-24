@@ -158,6 +158,17 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .spinner{width:26px;height:26px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:10px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .no-results{grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text3);font-style:italic;font-size:13px;}
+/* Keyword filter chips */
+.kw-bar{display:flex;align-items:center;gap:5px;padding:6px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.kw-chip{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.kw-chip:hover{border-color:#6040a0;color:var(--text);}
+.kw-chip.active{background:#1e1608;border-color:rgba(212,168,75,0.5);color:#d4a84b;}
+.kw-clear{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;white-space:nowrap;}
+.kw-clear:hover{border-color:var(--red);color:var(--red);}
+/* Compatibility orphan tags */
+.compat-orphans{margin-top:6px;display:flex;flex-direction:column;gap:3px;}
+.orphan-row{font-size:10px;color:#e08060;display:flex;align-items:center;gap:4px;}
+.orphan-row::before{content:'⚠';font-size:9px;}
 </style>
 </head>
 <body>
@@ -209,6 +220,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
           <button class="fbtn" data-rar="Rare">Rare</button>
         </div>
       </div>
+      <div class="kw-bar" id="kwBar" style="display:none"></div>
       <div class="browser-meta" id="browserMeta">Loading cards…</div>
       <div class="card-grid" id="grid">
         <div class="loading-wrap"><div class="spinner"></div>Loading cards from spire-codex…</div>
@@ -246,9 +258,9 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
         <!-- Row 2: Exhaust Density + Scaling Cards -->
         <div class="metric-row">
           <div class="metric">
-            <div class="metric-label">Exhaust</div>
-            <div class="metric-val" id="mExhaust">—</div>
-            <div class="metric-sub" id="mExhaustSub"></div>
+            <div class="metric-label">Compatibility</div>
+            <div class="metric-val" id="mCompat">—</div>
+            <div class="metric-sub" id="mCompatSub"></div>
           </div>
           <div class="metric">
             <div class="metric-label">Scaling</div>
@@ -268,6 +280,8 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
           </div>
           <!-- Win conditions detected -->
           <div class="win-con-list" id="winConList"></div>
+          <!-- Compatibility orphans -->
+          <div class="compat-orphans" id="compatOrphans"></div>
         </div>
       </div>
 
@@ -289,6 +303,7 @@ let _cards = [];            // all cards from API
 let _activeChar = 'all';
 let _activeType = 'all';
 let _activeRar  = '';
+let _activeKws  = new Set();
 const _deck = {};           // name -> { card, count }
 
 const CHAR_HEX = {
@@ -303,6 +318,7 @@ async function init() {
     if (!res.ok) throw new Error('API ' + res.status);
     const data = await res.json();
     _cards = (data.cards || []).filter(c => c.type !== 'Status' && c.type !== 'Curse');
+    buildKwChips();
     renderGrid();
     tryLoadHash();
   } catch(e) {
@@ -345,6 +361,46 @@ document.querySelectorAll('.fbtn[data-rar]').forEach(btn => {
 });
 document.getElementById('search').addEventListener('input', renderGrid);
 
+// ─── KEYWORD CHIPS ────────────────────────────────────────────────────────────
+function buildKwChips() {
+  const allKws = [...new Set(_cards.flatMap(c => c.kw || []))].sort();
+  const bar = document.getElementById('kwBar');
+  if (!allKws.length) return;
+  bar.style.display = 'flex';
+  bar.innerHTML = '';
+
+  const label = document.createElement('span');
+  label.className = 'flabel';
+  label.textContent = 'Keywords';
+  bar.appendChild(label);
+
+  allKws.forEach(kw => {
+    const btn = document.createElement('button');
+    btn.className = 'kw-chip' + (_activeKws.has(kw) ? ' active' : '');
+    btn.textContent = kw;
+    btn.addEventListener('click', () => {
+      if (_activeKws.has(kw)) _activeKws.delete(kw);
+      else _activeKws.add(kw);
+      btn.classList.toggle('active', _activeKws.has(kw));
+      clearBtn.style.display = _activeKws.size ? 'inline-block' : 'none';
+      renderGrid();
+    });
+    bar.appendChild(btn);
+  });
+
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'kw-clear';
+  clearBtn.textContent = '✕ Clear';
+  clearBtn.style.display = 'none';
+  clearBtn.addEventListener('click', () => {
+    _activeKws.clear();
+    bar.querySelectorAll('.kw-chip').forEach(b => b.classList.remove('active'));
+    clearBtn.style.display = 'none';
+    renderGrid();
+  });
+  bar.appendChild(clearBtn);
+}
+
 // ─── RENDER CARD GRID ─────────────────────────────────────────────────────────
 function renderGrid() {
   const q = document.getElementById('search').value.toLowerCase().trim();
@@ -352,6 +408,7 @@ function renderGrid() {
     if (_activeChar !== 'all' && c.char !== _activeChar) return false;
     if (_activeType !== 'all' && c.type !== _activeType) return false;
     if (_activeRar && c.rarity !== _activeRar) return false;
+    if (_activeKws.size && ![..._activeKws].every(kw => (c.kw||[]).includes(kw))) return false;
     if (q && !c.name.toLowerCase().includes(q) && !(c.desc||'').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -555,8 +612,7 @@ function renderDeck() {
 
     items.forEach(({ card, count }) => {
       const isScaling = cardIsScaling(card);
-      const isExhaust = card.kw && card.kw.includes('Exhaust');
-      const isDraw    = card.kw && card.kw.includes('Draw');
+      const isOrphan  = getNeeds(card).some(n => !_deckProvides().has(n));
 
       const row = document.createElement('div');
       row.className = 'deck-row';
@@ -573,12 +629,11 @@ function renderDeck() {
       nameEl.textContent = card.name;
       row.appendChild(nameEl);
 
-      // Tags
+      // Tags — only scaling ↑ and compatibility warning ⚠
       const tagsEl = document.createElement('div');
       tagsEl.className = 'dr-tags';
       if (isScaling) { const t = document.createElement('span'); t.className='dr-tag dt-scale'; t.textContent='↑'; tagsEl.appendChild(t); }
-      if (isExhaust) { const t = document.createElement('span'); t.className='dr-tag dt-exhaust'; t.textContent='X'; tagsEl.appendChild(t); }
-      if (isDraw)    { const t = document.createElement('span'); t.className='dr-tag dt-draw'; t.textContent='↓'; tagsEl.appendChild(t); }
+      if (isOrphan)  { const t = document.createElement('span'); t.className='dr-tag'; t.style.cssText='background:#2a1010;color:#e06050;border:1px solid #5a1010;'; t.textContent='⚠'; tagsEl.appendChild(t); }
       row.appendChild(tagsEl);
 
       // Controls
@@ -644,8 +699,8 @@ function renderMetrics() {
     document.getElementById('mCostTag').textContent = '';
     document.getElementById('mTypeRatio').innerHTML = '<span style="color:var(--text3);font-size:10px;">—</span>';
     document.getElementById('mTypeBreak').textContent = '';
-    document.getElementById('mExhaust').textContent = '—';
-    document.getElementById('mExhaustSub').textContent = '';
+    document.getElementById('mCompat').textContent = '—';
+    document.getElementById('mCompatSub').textContent = '';
     document.getElementById('mScaling').textContent = '—';
     document.getElementById('mScalingSub').textContent = '';
     document.getElementById('consBar').style.width = '0%';
@@ -653,6 +708,7 @@ function renderMetrics() {
     document.getElementById('consPct').style.color = 'var(--text3)';
     document.getElementById('consNote').textContent = 'Add cards to see a score.';
     document.getElementById('winConList').innerHTML = '';
+    document.getElementById('compatOrphans').innerHTML = '';
     return;
   }
 
@@ -685,17 +741,22 @@ function renderMetrics() {
     ? `${pct(typeCounts.Attack)} atk · ${pct(typeCounts.Skill)} skill · ${pct(typeCounts.Power)} power`
     : '';
 
-  // ── 3. EXHAUST DENSITY ──
-  const exhaustCount = flat.filter(c => c.kw && c.kw.includes('Exhaust')).length;
-  document.getElementById('mExhaust').textContent = exhaustCount;
-  let exSub = '';
-  if (total > 0) {
-    const exPct = Math.round(exhaustCount/total*100);
-    if (exPct >= 30) exSub = 'Lean — deck thins itself';
-    else if (exPct >= 15) exSub = 'Moderate exhaust';
-    else exSub = 'Low exhaust';
+  // ── 3. COMPATIBILITY ──
+  const { score: compatScore, orphans } = calcCompatibility(entries);
+  const compatEl = document.getElementById('mCompat');
+  const compatSub = document.getElementById('mCompatSub');
+  const compatOrphans = document.getElementById('compatOrphans');
+  compatEl.textContent = compatScore === 100 ? '✓' : compatScore + '%';
+  compatEl.style.color = compatScore === 100 ? '#88cc70' : compatScore >= 70 ? '#d4a84b' : '#e06050';
+  if (orphans.length === 0) {
+    compatSub.textContent = 'All synergies satisfied';
+    compatOrphans.innerHTML = '';
+  } else {
+    compatSub.textContent = orphans.length + ' card' + (orphans.length > 1 ? 's' : '') + ' missing synergy';
+    compatOrphans.innerHTML = orphans.map(o =>
+      `<div class="orphan-row">${o.name} needs ${o.missing.join(', ')}</div>`
+    ).join('');
   }
-  document.getElementById('mExhaustSub').textContent = exSub;
 
   // ── 4. SCALING CARDS ──
   const scalingCards = entries.filter(e => cardIsScaling(e.card));
@@ -738,6 +799,67 @@ function renderMetrics() {
   bar.style.background = color;
   pctEl.style.color = color;
   noteEl.textContent = note;
+}
+
+// ─── COMPATIBILITY ENGINE ─────────────────────────────────────────────────────
+// What synergies does this card CONSUME (require from other cards)?
+function getNeeds(card) {
+  const d = ((card.desc || '') + ' ' + (card.descUp || '')).toLowerCase();
+  const needs = new Set();
+  if (/whenever you exhaust|when you exhaust|each time you exhaust/.test(d)) needs.add('exhaust');
+  if (/whenever you lose hp|when you lose hp|whenever you take.*damage/.test(d)) needs.add('self-damage');
+  if (/whenever.*apply.*vuln|bonus.*vuln|extra.*vuln|when.*enemy.*vuln/.test(d)) needs.add('vulnerable');
+  if (/whenever.*apply.*poison|per poison stack|for each poison|scales with poison/.test(d)) needs.add('poison');
+  if (/whenever you discard|when you discard/.test(d)) needs.add('discard');
+  if (/whenever.*summon|when.*summon|per summon/.test(d) && card.char === 'necrobinder') needs.add('summon');
+  return [...needs];
+}
+
+// What synergies does this card PROVIDE to other cards?
+function getProvides(card) {
+  const d = ((card.desc || '') + ' ' + (card.descUp || '')).toLowerCase();
+  const kw = card.kw || [];
+  const provides = new Set();
+  if (kw.includes('Exhaust')) provides.add('exhaust');
+  // Self-damage: explicitly costs HP (not "whenever you lose hp" triggers)
+  if (/lose \d+ hp|deal \d+ damage to (yourself|you)/.test(d) && !/whenever you lose/.test(d)) provides.add('self-damage');
+  if (/apply \d+ vulnerable|vulnerable to all|gains? vulnerable|give.*vulnerable/.test(d)) provides.add('vulnerable');
+  if (/apply \d+ poison|poison to all|gain.*poison|gains? \d+ poison/.test(d)) provides.add('poison');
+  if (kw.includes('Discard') && /discard (a |your |cards?|the )/.test(d)) provides.add('discard');
+  if (kw.includes('Summon') || /\bsummon \d+\b/.test(d)) provides.add('summon');
+  return [...provides];
+}
+
+// Memoized set of what the current deck provides — called per render
+function _deckProvides() {
+  const provided = new Set();
+  Object.values(_deck).forEach(e => getProvides(e.card).forEach(p => provided.add(p)));
+  return provided;
+}
+
+function calcCompatibility(entries) {
+  if (!entries.length) return { score: 100, orphans: [] };
+  const provided = _deckProvides();
+  const orphans = [];
+  let consumers = 0, satisfied = 0;
+
+  entries.forEach(({ card, count }) => {
+    const needs = getNeeds(card);
+    if (!needs.length) return;
+    consumers += count;
+    const missing = needs.filter(n => !provided.has(n));
+    if (!missing.length) {
+      satisfied += count;
+    } else {
+      // Only list each orphan card once (not per copy)
+      if (!orphans.find(o => o.name === card.name)) {
+        orphans.push({ name: card.name, missing });
+      }
+    }
+  });
+
+  const score = consumers === 0 ? 100 : Math.round(satisfied / consumers * 100);
+  return { score, orphans };
 }
 
 function calcConsistency(total, drawCount, zeroCost, innate, retain) {
