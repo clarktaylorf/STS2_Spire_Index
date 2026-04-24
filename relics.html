@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpireIndex — Relic Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0c18;--bg2:#13101e;--bg3:#0f0d16;
+  --border:#1e1a2c;--border2:#2e2545;
+  --text:#c4b89a;--text2:#7a6a8a;--text3:#4a3a6a;
+  --gold:#d4a84b;--purple:#8060c0;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+.header{position:relative;overflow:hidden;padding:28px 28px 0;background:var(--bg);border-bottom:1px solid var(--border);}
+.header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% -10%,rgba(120,80,200,0.18) 0%,transparent 70%);pointer-events:none;}
+.header-inner{position:relative;text-align:center;padding-bottom:20px;}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;}
+.site-name{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#efe0c0;letter-spacing:0.5px;}
+.site-name em{font-style:italic;color:#a07be0;font-weight:400;}
+.site-tagline{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#6a5a88;font-weight:500;margin-bottom:18px;}
+.search-wrap{display:flex;justify-content:center;margin-bottom:20px;}
+.search-box{background:#1c1826;border:1px solid var(--border2);border-radius:8px;color:#ddd0b8;font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 16px 9px 40px;width:340px;max-width:100%;outline:none;transition:border-color 0.15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23665580' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center;}
+.search-box::placeholder{color:#554870;}
+.search-box:focus{border-color:#8060c0;}
+
+nav-row{display:flex;align-items:center;justify-content:center;gap:24px;padding:10px 0 18px;}
+.nav-link{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color 0.2s;}
+.nav-link:hover{color:var(--text);}
+.nav-link.active{color:var(--gold);}
+
+.class-tabs{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;padding:14px 28px 0;background:#0f0d16;border-bottom:1px solid var(--border);}
+.class-tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:8px 8px 0 0;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--text3);transition:all 0.15s;background:transparent;font-family:'DM Sans',sans-serif;}
+.class-tab:hover{color:var(--text);background:#1a1628;}
+.class-tab.active{background:#1a1628;border-color:var(--border2);color:#efe0c0;}
+.pip{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+.filters{display:flex;align-items:center;gap:8px;padding:12px 28px;background:var(--bg3);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.flabel{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-right:2px;}
+.fbtn{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:5px 13px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.fbtn:hover{border-color:#6040a0;color:var(--text);}
+.fbtn.active{background:#2a1f48;border-color:#7050b0;color:#c4a8f0;}
+
+.stats{display:flex;align-items:center;gap:20px;padding:8px 28px;background:#0d0b14;border-bottom:1px solid #1a1626;flex-wrap:wrap;}
+.stat{font-size:12px;color:var(--text3);}
+.stat strong{color:#a890c0;font-weight:500;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding:20px 28px 28px;}
+
+.relic-card{background:var(--bg2);border:1px solid #221d33;border-radius:10px;overflow:hidden;cursor:default;transition:transform 0.15s,border-color 0.15s,background 0.15s;}
+.relic-card:hover{border-color:var(--cc,#7050b0);background:#1c1730;transform:translateY(-2px);}
+.relic-bar{height:3px;background:var(--cc,#7050b0);opacity:0.7;}
+.relic-art{height:96px;overflow:hidden;background:#0e0b1a;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e1a2e;}
+.relic-art img{width:72px;height:72px;object-fit:contain;transition:transform 0.2s;}
+.relic-card:hover .relic-art img{transform:scale(1.1);}
+.relic-art-fallback{width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:0.15;}
+.relic-body{padding:9px 11px 11px;}
+.relic-name{font-family:'Playfair Display',serif;font-size:12.5px;font-weight:500;color:#e8d8b8;line-height:1.25;margin-bottom:6px;}
+.badges{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;}
+.badge{font-size:9px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 6px;border-radius:10px;}
+.b-starter{background:#1a1530;color:#9080c0;border:1px solid #302550;}
+.b-common{background:#1a1a1a;color:#888;border:1px solid #333;}
+.b-uncommon{background:#201a30;color:#9a88c8;border:1px solid #302548;}
+.b-rare{background:#302010;color:#d4a848;border:1px solid #503215;}
+.b-shop{background:#102530;color:#60b0c8;border:1px solid #1e4050;}
+.b-event{background:#102018;color:#60c880;border:1px solid #1e4030;}
+.b-ancient{background:#2a1f10;color:#e0b060;border:1px solid #5a3a10;}
+.b-char{font-size:9px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 6px;border-radius:10px;background:#1a1628;color:var(--text3);border:1px solid var(--border2);}
+.relic-desc{font-size:11px;line-height:1.55;color:var(--text2);font-style:italic;}
+.no-results{grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text3);font-size:15px;font-style:italic;}
+
+footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
+footer a{color:var(--text2);text-decoration:none;}
+footer a:hover{color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo-row">
+      <div>
+        <div class="site-name"><a href="index.html" style="text-decoration:none;color:inherit;">Spire<em>Index</em></a></div>
+      </div>
+    </div>
+    <div class="site-tagline">Slay the Spire 2 · Relic Index · Early Access</div>
+    <div style="display:flex;justify-content:center;gap:28px;margin-bottom:14px;">
+      <a href="cards.html" style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#6a5a88;text-decoration:none;">Card Library</a>
+      <span style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#d4a84b;">Relic Index</span>
+      <a href="#" style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#6a5a88;text-decoration:none;">Deck Builder</a>
+    </div>
+    <div class="search-wrap">
+      <input class="search-box" type="text" id="search" placeholder="Search relics and effects…" />
+    </div>
+  </div>
+</div>
+
+<div class="class-tabs">
+  <div class="class-tab active" data-char="all" onclick="setChar(this)">All Classes</div>
+  <div class="class-tab" data-char="ironclad" onclick="setChar(this)"><span class="pip" style="background:#e06050"></span>Ironclad</div>
+  <div class="class-tab" data-char="silent" onclick="setChar(this)"><span class="pip" style="background:#50c090"></span>Silent</div>
+  <div class="class-tab" data-char="defect" onclick="setChar(this)"><span class="pip" style="background:#60a0e0"></span>Defect</div>
+  <div class="class-tab" data-char="regent" onclick="setChar(this)"><span class="pip" style="background:#c070e0"></span>Regent</div>
+  <div class="class-tab" data-char="necrobinder" onclick="setChar(this)"><span class="pip" style="background:#70b060"></span>Necrobinder</div>
+  <div class="class-tab" data-char="colorless" onclick="setChar(this)"><span class="pip" style="background:#a09898"></span>Colorless</div>
+</div>
+
+<div class="filters">
+  <span class="flabel">Tier</span>
+  <button class="fbtn active" data-tier="all" onclick="setTier(this)">All</button>
+  <button class="fbtn" data-tier="Starter" onclick="setTier(this)">Starter</button>
+  <button class="fbtn" data-tier="Common" onclick="setTier(this)">Common</button>
+  <button class="fbtn" data-tier="Uncommon" onclick="setTier(this)">Uncommon</button>
+  <button class="fbtn" data-tier="Rare" onclick="setTier(this)">Rare</button>
+  <button class="fbtn" data-tier="Shop" onclick="setTier(this)">Shop</button>
+  <button class="fbtn" data-tier="Event" onclick="setTier(this)">Event</button>
+  <button class="fbtn" data-tier="Ancient" onclick="setTier(this)">Ancient</button>
+</div>
+
+<div class="stats">
+  <span class="stat">Showing <strong id="cnt">0</strong> relics</span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  SpireIndex is a fan-made database and is not affiliated with Mega Crit Games. ·
+  <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Play Slay the Spire 2 on Steam</a>
+</footer>
+
+<script>
+const CHARS={
+  ironclad:{hex:'#e06050',label:'Ironclad'},
+  silent:{hex:'#50c090',label:'Silent'},
+  defect:{hex:'#60a0e0',label:'Defect'},
+  regent:{hex:'#c070e0',label:'Regent'},
+  necrobinder:{hex:'#70b060',label:'Necrobinder'},
+  colorless:{hex:'#a09898',label:'Colorless'},
+};
+const IMG='images/relics';
+
+const relics=[
+// ── STARTER ──────────────────────────────────────────────
+{name:'Black Blood',char:'ironclad',tier:'Starter',desc:'At the end of combat, heal 12 HP.',img:'black_blood'},
+{name:'Burning Blood',char:'ironclad',tier:'Starter',desc:'At the end of combat, heal 6 HP.',img:'burning_blood'},
+{name:'Ring of the Snake',char:'silent',tier:'Starter',desc:'At the start of each combat, draw 2 additional cards.',img:'ring_of_the_snake'},
+{name:'Ring of the Drake',char:'silent',tier:'Starter',desc:'At the start of each combat, draw 1 additional card.',img:'ring_of_the_drake'},
+{name:'Cracked Core',char:'defect',tier:'Starter',desc:'At the start of each combat, Channel 1 Lightning.',img:'cracked_core'},
+{name:'Infused Core',char:'defect',tier:'Starter',desc:'At the start of each combat, Channel 1 random Orb.',img:'infused_core'},
+{name:'Divine Destiny',char:'regent',tier:'Starter',desc:'Start each combat with 3 Stars.',img:'divine_destiny'},
+{name:'Divine Right',char:'regent',tier:'Starter',desc:'Whenever you spend Stars, draw 1 card.',img:'divine_right'},
+{name:'Bound Phylactery',char:'necrobinder',tier:'Starter',desc:'At the start of each combat, Summon 3.',img:'bound_phylactery'},
+{name:'Phylactery Unbound',char:'necrobinder',tier:'Starter',desc:'At the start of each combat, Summon 5.',img:'phylactery_unbound'},
+
+// ── COMMON ──────────────────────────────────────────────
+{name:'Amethyst Aubergine',char:'colorless',tier:'Common',desc:'Enemies drop 10 additional Gold.',img:'amethyst_aubergine'},
+{name:'Anchor',char:'colorless',tier:'Common',desc:'Start each combat with 10 Block.',img:'anchor'},
+{name:'Bag of Marbles',char:'colorless',tier:'Common',desc:'At the start of each combat, apply 1 Vulnerable to ALL enemies.',img:'bag_of_marbles'},
+{name:'Bag of Preparation',char:'colorless',tier:'Common',desc:'At the start of each combat, draw 2 additional cards.',img:'bag_of_preparation'},
+{name:'Blood Vial',char:'colorless',tier:'Common',desc:'At the start of each combat, heal 2 HP.',img:'blood_vial'},
+{name:'Book of Five Rings',char:'colorless',tier:'Common',desc:'Whenever you play your 5th card each turn, draw 1 card.',img:'book_of_five_rings'},
+{name:'Bronze Scales',char:'colorless',tier:'Common',desc:'Whenever you take unblocked damage, deal 3 damage back.',img:'bronze_scales'},
+{name:'Centennial Puzzle',char:'colorless',tier:'Common',desc:'The first time you lose HP each combat, draw 3 cards.',img:'centennial_puzzle'},
+{name:'Data Disk',char:'defect',tier:'Common',desc:'At the start of each combat, gain 1 Focus.',img:'data_disk'},
+{name:'Fencing Manual',char:'regent',tier:'Common',desc:'The Sovereign Blade costs 1 less Energy.',img:'fencing_manual'},
+{name:'Festive Popper',char:'colorless',tier:'Common',desc:'Upon pickup, gain 100 Gold. Then it becomes a Dud Popper.',img:'festive_popper'},
+{name:'Gorget',char:'colorless',tier:'Common',desc:'At the start of each turn, gain 1 Plated Armor.',img:'gorget'},
+{name:'Happy Flower',char:'colorless',tier:'Common',desc:'Every 3 turns, gain 1 Energy.',img:'happy_flower'},
+{name:'Juzu Bracelet',char:'colorless',tier:'Common',desc:'No Curses can be added to your Deck.',img:'juzu_bracelet'},
+{name:'Lantern',char:'colorless',tier:'Common',desc:'Gain 1 Energy on the first turn of each combat.',img:'lantern'},
+{name:'Meal Ticket',char:'colorless',tier:'Common',desc:'Whenever you enter a shop, heal 15 HP.',img:'meal_ticket'},
+{name:'Oddly Smooth Stone',char:'colorless',tier:'Common',desc:'At the start of each combat, gain 1 Dexterity.',img:'oddly_smooth_stone'},
+{name:'Pendulum',char:'colorless',tier:'Common',desc:'Every other turn, gain 1 additional Energy.',img:'pendulum'},
+{name:'Permafrost',char:'colorless',tier:'Common',desc:'At the start of each combat, gain 3 Plated Armor.',img:'permafrost'},
+{name:'Potion Belt',char:'colorless',tier:'Common',desc:'Gain 2 additional potion slots.',img:'potion_belt'},
+{name:'Red Skull',char:'ironclad',tier:'Common',desc:'While your HP is at or below 50%, you have 3 additional Strength.',img:'red_skull'},
+{name:'Regal Pillow',char:'colorless',tier:'Common',desc:'Heal 6 HP at rest sites instead of the usual amount.',img:'regal_pillow'},
+{name:'Strawberry',char:'colorless',tier:'Common',desc:'Upon pickup, raise your Max HP by 7.',img:'strawberry'},
+{name:'Strike Dummy',char:'colorless',tier:'Common',desc:'Whenever you play a card containing "Strike", gain 3 Block.',img:'strike_dummy'},
+{name:'Tiny Mailbox',char:'colorless',tier:'Common',desc:'At the start of each combat, gain a random Potion.',img:'tiny_mailbox'},
+{name:'Vajra',char:'colorless',tier:'Common',desc:'At the start of each combat, gain 1 Strength.',img:'vajra'},
+{name:'Venerable Tea Set',char:'colorless',tier:'Common',desc:'At the start of each combat, gain 2 Dexterity.',img:'venerable_tea_set'},
+{name:'War Paint',char:'colorless',tier:'Common',desc:'Upon pickup, Upgrade 2 random Skills in your Deck.',img:'war_paint'},
+{name:'Whetstone',char:'colorless',tier:'Common',desc:'Upon pickup, Upgrade 2 random Attacks in your Deck.',img:'whetstone'},
+
+// ── UNCOMMON ──────────────────────────────────────────────
+{name:'Akabeko',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, gain 8 Vigor.',img:'akabeko'},
+{name:'Bag of Marbles',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, apply 1 Vulnerable to ALL enemies.',img:'bag_of_marbles'},
+{name:'Bellows',char:'colorless',tier:'Uncommon',desc:'The first Hand you draw each combat is Upgraded.',img:'bellows'},
+{name:'Book Repair Knife',char:'necrobinder',tier:'Uncommon',desc:'At the end of combat, Upgrade a random card in your Deck.',img:'book_repair_knife'},
+{name:'Bowler Hat',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, Upgrade a random card in your Hand.',img:'bowler_hat'},
+{name:'Candelabra',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, gain 3 Block for each Power you have.',img:'candelabra'},
+{name:'Eternal Feather',char:'colorless',tier:'Uncommon',desc:'For every 5 cards in your Deck, heal 3 HP at rest sites.',img:'eternal_feather'},
+{name:'Funerary Mask',char:'colorless',tier:'Uncommon',desc:'Whenever you add a Curse to your Deck, gain 25 Gold and increase your Max HP by 5.',img:'funerary_mask'},
+{name:'Gremlin Horn',char:'colorless',tier:'Uncommon',desc:'Whenever you kill an enemy, gain 1 Energy and draw 1 card.',img:'gremlin_horn'},
+{name:'Horn Cleat',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Block at the start of your turn, gain 3 additional Block.',img:'horn_cleat'},
+{name:'Joss Paper',char:'colorless',tier:'Uncommon',desc:'Whenever you Exhaust a card, gain 3 Gold.',img:'joss_paper'},
+{name:'Kusarigama',char:'colorless',tier:'Uncommon',desc:'The first Attack you play each turn deals 3 additional damage.',img:'kusarigama'},
+{name:'Letter Opener',char:'colorless',tier:'Uncommon',desc:'Whenever you play 3 Skills in a turn, deal 5 damage to ALL enemies.',img:'letter_opener'},
+{name:'Lapis Lazuli',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Weak, apply 1 additional stack.',img:'lapis_lazuli'},
+{name:'Louder Horn',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, apply 2 Vulnerable to ALL enemies.',img:'bag_of_marbles'},
+{name:'Lucky Fysh',char:'colorless',tier:'Uncommon',desc:'Whenever you use a Potion, draw 1 card.',img:'lucky_fysh'},
+{name:'Mango',char:'colorless',tier:'Uncommon',desc:'Upon pickup, raise your Max HP by 14.',img:'mango'},
+{name:'Medicinal Pouch',char:'colorless',tier:'Uncommon',desc:'Gain 1 additional potion slot. Potions heal 5 additional HP.',img:'medicinal_pouch'},
+{name:'Mercury Hourglass',char:'colorless',tier:'Uncommon',desc:'At the start of your turn, deal 3 damage to ALL enemies.',img:'mercury_hourglass'},
+{name:'Metronome',char:'colorless',tier:'Uncommon',desc:'Every 10 turns of total combat, gain 1 Max HP.',img:'metronome'},
+{name:'Miniature Cannon',char:'colorless',tier:'Uncommon',desc:'Whenever you play a Skill, deal 2 damage to a random enemy.',img:'miniature_cannon'},
+{name:'Molten Egg',char:'colorless',tier:'Uncommon',desc:'Whenever you add an Attack to your Deck, it is Upgraded.',img:'molten_egg'},
+{name:'Mummified Hand',char:'colorless',tier:'Uncommon',desc:'Whenever you play a Power, a random card in your Hand costs 0 this turn.',img:'mummified_hand'},
+{name:'Ninja Scroll',char:'silent',tier:'Uncommon',desc:'Start each combat with 3 Shivs in your Hand.',img:'ninja_scroll'},
+{name:'Nunchaku',char:'colorless',tier:'Uncommon',desc:'Every 10 Attacks you play, gain 1 Energy.',img:'nunchaku'},
+{name:'Orichalcum',char:'colorless',tier:'Uncommon',desc:'If you end your turn with 0 Block, gain 6 Block.',img:'orichalcum'},
+{name:'Ornamental Fan',char:'colorless',tier:'Uncommon',desc:'Every 3 Attacks you play, gain 4 Block.',img:'ornamental_fan'},
+{name:'Oversized Watch',char:'colorless',tier:'Uncommon',desc:'Every 3 turns, draw 3 additional cards.',img:'oversized_watch'},
+{name:'Paper Krane',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Weak, deal 2 damage.',img:'paper_krane'},
+{name:'Paper Phrog',char:'ironclad',tier:'Uncommon',desc:'Enemies with Vulnerable take 75% more damage rather than 50%.',img:'paper_phrog'},
+{name:'Parrying Dagger',char:'colorless',tier:'Uncommon',desc:'Whenever you Exhaust a card, gain 4 Block.',img:'parrying_dagger'},
+{name:'Pear',char:'colorless',tier:'Uncommon',desc:'Upon pickup, raise your Max HP by 10.',img:'pear'},
+{name:'Pocketwatch',char:'colorless',tier:'Uncommon',desc:'Whenever you play 3 or fewer cards in a turn, draw 3 additional cards next turn.',img:'pocketwatch'},
+{name:'Power Cell',char:'colorless',tier:'Uncommon',desc:'Once per combat, your first Power costs 0.',img:'power_cell'},
+{name:'Prayer Wheel',char:'colorless',tier:'Uncommon',desc:'Card rewards contain an additional card.',img:'prayer_wheel'},
+{name:'Razor Tooth',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Poison, deal 1 additional damage.',img:'razor_tooth'},
+{name:'Regalite',char:'colorless',tier:'Uncommon',desc:'Upon pickup, raise your Max HP by 8. Heal 2 HP after each room.',img:'regalite'},
+{name:'Reptile Trinket',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, if your Hand is empty, gain 1 Energy.',img:'reptile_trinket'},
+{name:'Sand Castle',char:'colorless',tier:'Uncommon',desc:'Whenever you play a Skill, gain 1 Dexterity for the rest of combat.',img:'sand_castle'},
+{name:'Sea Glass',char:'colorless',tier:'Uncommon',desc:'Whenever you discard a card outside of your turn, gain 1 Dexterity for the rest of combat.',img:'sea_glass'},
+{name:'Self-Forming Clay',char:'ironclad',tier:'Uncommon',desc:'Whenever you lose HP in combat, gain 3 Block next turn.',img:'self_forming_clay'},
+{name:'Shuriken',char:'colorless',tier:'Uncommon',desc:'Every 3 Attacks you play each turn, gain 1 Strength.',img:'shuriken'},
+{name:'Singing Bowl',char:'colorless',tier:'Uncommon',desc:'When adding cards to your Deck, you may gain 2 Max HP instead.',img:'singing_bowl'},
+{name:'Snecko Eye',char:'colorless',tier:'Uncommon',desc:'Draw 2 additional cards each turn. Start each combat Confused.',img:'snecko_eye'},
+{name:'Snecko Skull',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Poison, apply 1 additional stack.',img:'snecko_skull'},
+{name:'Soup Recipe',char:'colorless',tier:'Uncommon',desc:'You may eat the same food item multiple times per run.',img:'soup_recipe'},
+{name:'Stone Calendar',char:'colorless',tier:'Uncommon',desc:'At the end of turn 7 of each combat, deal 52 damage to ALL enemies.',img:'stone_calendar'},
+{name:'Stone Cracker',char:'colorless',tier:'Uncommon',desc:'Whenever you would gain Plated Armor, gain twice as much.',img:'stone_cracker'},
+{name:'Stone Ring',char:'colorless',tier:'Uncommon',desc:'Every 3 turns, gain 1 Strength.',img:'stone_ring'},
+{name:'Sturdy Clamp',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, gain 4 Plated Armor.',img:'sturdy_clamp'},
+{name:'Tea of Discourtesy',char:'colorless',tier:'Event',desc:"At the start of combat, your opponent loses 1 Strength.",img:'tea_of_discourtesy'},
+{name:'Tingsha',char:'colorless',tier:'Uncommon',desc:'Whenever you discard a card outside of your turn, deal 3 damage to ALL enemies.',img:'tingsha'},
+{name:'Toasty Mittens',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Frost, gain 1 Block.',img:'toasty_mittens'},
+{name:'Toolbox',char:'colorless',tier:'Shop',desc:'At the start of each combat, choose 1 of 3 random Colorless cards to add into your Hand.',img:'toolbox'},
+{name:'Tough Bandages',char:'colorless',tier:'Uncommon',desc:'Whenever you discard a card outside of your turn, gain 3 Block.',img:'tough_bandages'},
+{name:'Toxic Egg',char:'colorless',tier:'Uncommon',desc:'Whenever you add a Skill to your Deck, it is Upgraded.',img:'toxic_egg'},
+{name:'Toy Box',char:'colorless',tier:'Uncommon',desc:'Whenever you add a Power to your Deck, it is Upgraded.',img:'toy_box'},
+{name:'Tungsten Rod',char:'colorless',tier:'Uncommon',desc:'Whenever you would lose HP, lose 1 less.',img:'tungsten_rod'},
+{name:'Tuning Fork',char:'colorless',tier:'Uncommon',desc:'Whenever you Channel an Orb, it triggers once immediately.',img:'tuning_fork'},
+{name:'Twisted Funnel',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, apply 4 Poison to ALL enemies.',img:'twisted_funnel'},
+{name:'Unceasing Top',char:'colorless',tier:'Uncommon',desc:'Whenever your Hand is empty during your turn, draw 1 card.',img:'unceasing_top'},
+{name:'Vambrace',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, gain 6 Block.',img:'vambrace'},
+{name:'Velvet Choker',char:'colorless',tier:'Uncommon',desc:'You may play no more than 6 cards per turn. After each combat, gain 1 Energy.',img:'velvet_choker'},
+{name:'Winged Boots',char:'colorless',tier:'Uncommon',desc:'The first 3 times you enter a room this run, you may ignore it.',img:'winged_boots'},
+
+// ── RARE ──────────────────────────────────────────────
+{name:'Art of War',char:'colorless',tier:'Rare',desc:'If you do not play any Attacks during your turn, gain 1 additional Energy next turn.',img:'art_of_war'},
+{name:'Beating Remnant',char:'colorless',tier:'Rare',desc:'You cannot lose more than 20 HP in a single turn.',img:'beating_remnant'},
+{name:'Bellows',char:'colorless',tier:'Rare',desc:'The first Hand you draw each combat is Upgraded.',img:'bellows'},
+{name:'Big Hat',char:'necrobinder',tier:'Rare',desc:'At the start of each combat, add 2 random Ethereal cards into your Hand.',img:'big_hat'},
+{name:'Bookmark',char:'necrobinder',tier:'Rare',desc:"Whenever Osty's HP changes, draw 1 card.",img:'bookmark'},
+{name:"Captain's Wheel",char:'colorless',tier:'Rare',desc:'After 3 complete turns, gain 2 Dexterity.',img:'captains_wheel'},
+{name:'Chandelier',char:'colorless',tier:'Rare',desc:'Whenever you trigger an Orb Passive, deal 1 extra damage.',img:'chandelier'},
+{name:"Charon's Ashes",char:'ironclad',tier:'Rare',desc:'Whenever you Exhaust a card, deal 3 damage to ALL enemies.',img:'charons_ashes'},
+{name:'Cloak Clasp',char:'colorless',tier:'Rare',desc:'At the end of your turn, gain 1 Strength for each card in your Hand.',img:'cloak_clasp'},
+{name:'Demon Tongue',char:'ironclad',tier:'Rare',desc:'The first time you gain Strength each combat, double the amount gained.',img:'demon_tongue'},
+{name:'Diamond Diadem',char:'colorless',tier:'Rare',desc:'Whenever you shuffle your Draw Pile, gain 3 Block.',img:'diamond_diadem'},
+{name:'Dollys Mirror',char:'colorless',tier:'Rare',desc:'Upon pickup, obtain an additional copy of a card in your Deck.',img:'dollys_mirror'},
+{name:'Dragon Fruit',char:'colorless',tier:'Rare',desc:'Whenever you gain Gold, raise your Max HP by 1.',img:'dragon_fruit'},
+{name:'Dream Catcher',char:'colorless',tier:'Rare',desc:'Whenever you Rest, you may also add a card to your Deck.',img:'dream_catcher'},
+{name:'Ectoplasm',char:'colorless',tier:'Rare',desc:'You can no longer gain Gold. Gain 1 Energy at the start of each turn.',img:'ectoplasm'},
+{name:'Emotion Chip',char:'defect',tier:'Rare',desc:'Whenever you lose HP in combat, your Orbs trigger their Passive effects twice until the start of your next turn.',img:'emotion_chip'},
+{name:'Eternal Feather',char:'colorless',tier:'Rare',desc:'For every 5 cards in your Deck, heal 3 HP at rest sites.',img:'eternal_feather'},
+{name:'Frozen Egg',char:'colorless',tier:'Rare',desc:'Whenever you add a Power to your Deck, it is Upgraded.',img:'frozen_egg'},
+{name:'Galactic Dust',char:'colorless',tier:'Rare',desc:'Gain 1 additional Star at the start of each combat.',img:'galactic_dust'},
+{name:'Gambling Chip',char:'colorless',tier:'Rare',desc:'At the start of each combat, discard your Hand and draw that many cards.',img:'gambling_chip'},
+{name:'Ghost Seed',char:'colorless',tier:'Rare',desc:'Whenever you Exhaust a card, add a copy of it to your Hand. It costs 0.',img:'ghost_seed'},
+{name:'Girya',char:'colorless',tier:'Rare',desc:'You may gain Strength at Rest Sites up to 3 times per run.',img:'girya'},
+{name:'Gnarled Hammer',char:'colorless',tier:'Rare',desc:'Upon pickup, Enchant up to 3 Attacks with Sharp 3.',img:'gnarled_hammer'},
+{name:'Golden Compass',char:'colorless',tier:'Rare',desc:'Whenever you enter an unknown room, gain 30 Gold.',img:'golden_compass'},
+{name:'Hand Drill',char:'colorless',tier:'Rare',desc:'Whenever you apply Vulnerable, it applies 1 additional stack.',img:'hand_drill'},
+{name:'Helical Dart',char:'colorless',tier:'Rare',desc:'Whenever you draw a Status, deal 10 damage to a random enemy.',img:'helical_dart'},
+{name:'Horn Cleat',char:'colorless',tier:'Rare',desc:'Whenever you apply Block on your turn, gain 3 additional Block.',img:'horn_cleat'},
+{name:'Ice Cream',char:'colorless',tier:'Rare',desc:'Energy is now conserved between turns.',img:'ice_cream'},
+{name:'Ink Bottle',char:'colorless',tier:'Rare',desc:'Whenever you play 10 cards, draw 1 card.',img:'ink_bottle'},
+{name:'Intimidating Helmet',char:'colorless',tier:'Rare',desc:'At the start of each combat, apply 2 Weak to ALL enemies.',img:'intimidating_helmet'},
+{name:'Ivory Tile',char:'colorless',tier:'Rare',desc:'Upon pickup, remove 1 card from your Deck.',img:'ivory_tile'},
+{name:'Jeweled Mask',char:'colorless',tier:'Rare',desc:'Whenever you enter a shop, 1 item is free.',img:'jeweled_mask'},
+{name:'Juzu Bracelet',char:'colorless',tier:'Rare',desc:'No Curses can be added to your Deck.',img:'juzu_bracelet'},
+{name:'Kifuda',char:'colorless',tier:'Rare',desc:'Upon pickup, Enchant up to 3 cards with Adroit.',img:'kifuda'},
+{name:'Kunai',char:'colorless',tier:'Rare',desc:'Every 3 Attacks you play each turn, gain 1 Dexterity.',img:'kunai'},
+{name:'Large Capsule',char:'colorless',tier:'Rare',desc:'Upon pickup, obtain 2 random Relics. Add an additional Strike and Defend to your Deck.',img:'large_capsule'},
+{name:'Lasting Candy',char:'colorless',tier:'Rare',desc:'You may use a Potion an additional time before it is consumed.',img:'lasting_candy'},
+{name:'Lava Lamp',char:'colorless',tier:'Rare',desc:'Whenever you Rest, gain 6 Max HP.',img:'lava_lamp'},
+{name:'Letter Opener',char:'colorless',tier:'Rare',desc:'Whenever you play 3 Skills in a turn, deal 5 damage to ALL enemies.',img:'letter_opener'},
+{name:'Lizard Tail',char:'colorless',tier:'Rare',desc:'Once per run, when you would die, heal to 50% of your Max HP.',img:'lizard_tail'},
+{name:'Lost Coffer',char:'colorless',tier:'Rare',desc:'Upon pickup, obtain 4 random relics.',img:'lost_coffer'},
+{name:'Maw Bank',char:'colorless',tier:'Rare',desc:'Whenever you gain Gold, raise your Max HP by 1.',img:'maw_bank'},
+{name:'Meat on the Bone',char:'colorless',tier:'Rare',desc:'If your HP is at or below 50% at the end of combat, heal 12 HP.',img:'meat_on_the_bone'},
+{name:'Medical Kit',char:'colorless',tier:'Rare',desc:'Status cards may now be played. Playing a Status Exhausts it.',img:'medical_kit'},
+{name:'Mini Regent',char:'regent',tier:'Rare',desc:'Whenever you spend Stars, gain 1 Strength.',img:'mini_regent'},
+{name:'Mr. Struggles',char:'colorless',tier:'Rare',desc:'Whenever you play an Attack, gain 1 Block.',img:'mr_struggles'},
+{name:'Music Box',char:'colorless',tier:'Rare',desc:'Neow is skipped. At the start of Act 1, obtain 3 relics.',img:'music_box'},
+{name:'Mysterious Cocoon',char:'colorless',tier:'Rare',desc:'At the start of Act 3, transform into a powerful relic.',img:'mysterious_cocoon'},
+{name:'Old Coin',char:'colorless',tier:'Rare',desc:'Upon pickup, gain 300 Gold.',img:'old_coin'},
+{name:'Orange Dough',char:'colorless',tier:'Rare',desc:'Upon pickup, raise your Max HP by 9. You can no longer lose Max HP.',img:'orange_dough'},
+{name:'Pandoras Box',char:'colorless',tier:'Rare',desc:'Upon pickup, Transform ALL Strikes and Defends.',img:'pandoras_box'},
+{name:'Pantograph',char:'colorless',tier:'Rare',desc:'At the start of each Boss fight, heal 25 HP.',img:'pantograph'},
+{name:'Parrying Shield',char:'colorless',tier:'Rare',desc:'Whenever you take unblocked damage, gain 3 Block.',img:'parrying_shield'},
+{name:'Pen Nib',char:'colorless',tier:'Rare',desc:'Every 10 Attacks you play, your next Attack deals double damage.',img:'pen_nib'},
+{name:'Petrified Toad',char:'colorless',tier:'Rare',desc:'Whenever you would die, heal to 1 HP once per run.',img:'petrified_toad'},
+{name:'Philosophers Stone',char:'colorless',tier:'Rare',desc:'Gain 1 Energy at the start of each turn. ALL enemies start with 1 Strength.',img:'philosophers_stone'},
+{name:'Planisphere',char:'colorless',tier:'Rare',desc:'Whenever you enter a new Act, upgrade 2 random cards in your Deck.',img:'planisphere'},
+{name:'Pollinous Core',char:'colorless',tier:'Rare',desc:'Every 4 turns, draw 2 additional cards.',img:'pollinous_core'},
+{name:'Preserved Fog',char:'colorless',tier:'Rare',desc:'At the start of each combat, gain 3 Intangible.',img:'preserved_fog'},
+{name:'Rainbow Ring',char:'colorless',tier:'Rare',desc:'Card rewards can now contain Colorless cards.',img:'rainbow_ring'},
+{name:'Red Mask',char:'silent',tier:'Rare',desc:'At the start of each combat, apply 1 Weak to ALL enemies.',img:'red_mask'},
+{name:'Ripple Basin',char:'defect',tier:'Rare',desc:'Whenever you Channel an Orb, trigger it once immediately.',img:'ripple_basin'},
+{name:'Royal Scepter',char:'regent',tier:'Rare',desc:'Whenever you gain Stars, gain 1 additional Star.',img:'royal_scepter'},
+{name:'Ruined Helmet',char:'ironclad',tier:'Rare',desc:'At the start of your turn, gain 2 Strength and ALL enemies gain 1 Strength.',img:'ruined_helmet'},
+{name:'Runic Capacitor',char:'defect',tier:'Rare',desc:'Start each combat with 3 additional Orb Slots.',img:'runic_capacitor'},
+{name:'Runic Cube',char:'colorless',tier:'Rare',desc:'Whenever you lose HP, draw 1 card.',img:'runic_cube'},
+{name:'Runic Pyramid',char:'colorless',tier:'Rare',desc:'At the end of your turn, you no longer discard your Hand.',img:'runic_pyramid'},
+{name:'Shovel',char:'colorless',tier:'Rare',desc:'You may Dig at Rest Sites.',img:'shovel'},
+{name:'Snecko Eye',char:'colorless',tier:'Rare',desc:'Draw 2 additional cards each turn. Start each combat Confused.',img:'snecko_eye'},
+{name:'Sparkling Rouge',char:'colorless',tier:'Rare',desc:'Upon pickup, gain 3 potions.',img:'sparkling_rouge'},
+{name:'Spiked Gauntlets',char:'colorless',tier:'Rare',desc:'Gain 1 Energy at the start of each turn. Powers cost 1 more Energy.',img:'spiked_gauntlets'},
+{name:'The Boot',char:'colorless',tier:'Rare',desc:'Whenever you would deal 4 or less unblocked damage, deal 5 instead.',img:'the_boot'},
+{name:'The Courier',char:'colorless',tier:'Rare',desc:'The Shop no longer carries Curses. 20% discount on all products.',img:'the_courier'},
+{name:'Throwing Axe',char:'colorless',tier:'Rare',desc:'The first card you play each combat is played an extra time.',img:'throwing_axe'},
+{name:'Tri Boomerang',char:'colorless',tier:'Rare',desc:'Choose 3 Attacks in your Deck. Enchant them with Instinct.',img:'tri_boomerang'},
+{name:'Undulating Mass',char:'colorless',tier:'Rare',desc:'At the start of each combat, apply 2 Vulnerable and 2 Weak to ALL enemies.',img:'undulating_mass'},
+{name:'Unsettling Lamp',char:'colorless',tier:'Rare',desc:'Whenever you play a Power, draw 1 card.',img:'unsettling_lamp'},
+{name:'Vakuus Cape',char:'colorless',tier:'Rare',desc:'Retain your Hand on the first turn of combat.',img:'vakuus_cape'},
+{name:'Vexing Puzzlebox',char:'colorless',tier:'Rare',desc:'At the end of combat, Upgrade all card rewards if you took no damage.',img:'vexing_puzzlebox'},
+{name:'War Hammer',char:'colorless',tier:'Rare',desc:'Whenever you kill an Elite, Upgrade 4 random cards.',img:'war_hammer'},
+{name:'White Beast Statue',char:'colorless',tier:'Rare',desc:'Potions now appear after every fight.',img:'white_beast_statue'},
+{name:'White Star',char:'colorless',tier:'Rare',desc:'Whenever you would obtain a Relic, you may obtain a different one instead.',img:'white_star'},
+{name:'Wongos Mystery Ticket',char:'colorless',tier:'Rare',desc:'Upon pickup, gain 5 card rewards.',img:'wongos_mystery_ticket'},
+
+// ── SHOP ──────────────────────────────────────────────
+{name:'Belt Buckle',char:'colorless',tier:'Shop',desc:'While you have no potions, you have 2 additional Dexterity.',img:'belt_buckle'},
+{name:'Bread',char:'colorless',tier:'Shop',desc:'Upon pickup, heal to full HP.',img:'bread'},
+{name:'Brimstone',char:'ironclad',tier:'Shop',desc:'At the start of your turn, gain 2 Strength and ALL enemies gain 1 Strength.',img:'brimstone'},
+{name:'Burning Sticks',char:'colorless',tier:'Shop',desc:'Upon pickup, raise your Max HP by 7 and heal all of your HP.',img:'burning_sticks'},
+{name:'Cauldron',char:'colorless',tier:'Shop',desc:'Upon pickup, brews 5 random potions.',img:'cauldron'},
+{name:'Chemical X',char:'colorless',tier:'Shop',desc:'The effects of your X-cost cards are increased by 2.',img:'chemical_x'},
+{name:'Dingy Rug',char:'colorless',tier:'Shop',desc:'50% discount on all products!',img:'dingy_rug'},
+{name:"Dolly's Mirror",char:'colorless',tier:'Shop',desc:'Upon pickup, obtain an additional copy of a card in your Deck.',img:'dollys_mirror'},
+{name:'Dragon Fruit',char:'colorless',tier:'Shop',desc:'Whenever you gain Gold, raise your Max HP by 1.',img:'dragon_fruit'},
+{name:'Ghost Seed',char:'colorless',tier:'Shop',desc:'Whenever you Exhaust a card, add a copy of it to your Hand. It costs 0.',img:'ghost_seed'},
+{name:'Gnarled Hammer',char:'colorless',tier:'Shop',desc:'Upon pickup, Enchant up to 3 Attacks with Sharp 3.',img:'gnarled_hammer'},
+{name:'Kifuda',char:'colorless',tier:'Shop',desc:'Upon pickup, Enchant up to 3 cards with Adroit.',img:'kifuda'},
+{name:'Lava Lamp',char:'colorless',tier:'Shop',desc:'Whenever you Rest, gain 6 Max HP.',img:'lava_lamp'},
+{name:"Lee's Waffle",char:'colorless',tier:'Shop',desc:'Upon pickup, raise your Max HP by 7 and heal all of your HP.',img:'lees_waffle'},
+{name:'Membership Card',char:'colorless',tier:'Shop',desc:'50% discount on all products!',img:'membership_card'},
+{name:'Miniature Tent',char:'colorless',tier:'Shop',desc:'You may choose any number of options at Rest Sites.',img:'miniature_tent'},
+{name:'Mystic Lighter',char:'colorless',tier:'Shop',desc:'At the end of combat, Upgrade all card rewards if you took no damage.',img:'mystic_lighter'},
+{name:'Ninja Scroll',char:'silent',tier:'Shop',desc:'Start each combat with 3 Shivs in your Hand.',img:'ninja_scroll'},
+{name:'Orrery',char:'colorless',tier:'Shop',desc:'Upon pickup, gain 5 card rewards.',img:'orrery'},
+{name:'Punch Dagger',char:'colorless',tier:'Shop',desc:'Upon pickup, Enchant an Attack with Momentum 5.',img:'punch_dagger'},
+{name:'Ringing Triangle',char:'colorless',tier:'Shop',desc:'Gain 1 Energy at the start of every 3rd combat.',img:'ringing_triangle'},
+{name:'Royal Stamp',char:'colorless',tier:'Shop',desc:'Card removal now costs 75 Gold less.',img:'royal_stamp'},
+{name:'Runic Capacitor',char:'defect',tier:'Shop',desc:'Start each combat with 3 additional Orb Slots.',img:'runic_capacitor'},
+{name:'Screaming Flagon',char:'colorless',tier:'Shop',desc:'A random card in each card reward is Enchanted with Swift 1.',img:'screaming_flagon'},
+{name:'Sling of Courage',char:'colorless',tier:'Shop',desc:'Start each Elite combat with 2 Strength.',img:'sling_of_courage'},
+{name:'The Abacus',char:'colorless',tier:'Shop',desc:'Whenever you shuffle your Draw Pile, gain 6 Block.',img:'the_abacus'},
+{name:'Toolbox',char:'colorless',tier:'Shop',desc:'At the start of each combat, choose 1 of 3 random Colorless cards to add into your Hand.',img:'toolbox'},
+{name:'Undying Sigil',char:'necrobinder',tier:'Shop',desc:'Enemies with at least as much Doom as HP deal 50% less damage.',img:'undying_sigil'},
+{name:'Vitruvian Minion',char:'regent',tier:'Shop',desc:'Cards containing "Minion" deal double damage and gain double Block.',img:'vitruvian_minion'},
+{name:'Wing Charm',char:'colorless',tier:'Shop',desc:'At the start of your first turn, lose 1 Energy. At the start of all other turns, gain 1 Energy.',img:'wing_charm'},
+
+// ── EVENT ──────────────────────────────────────────────
+{name:'Anchor???',char:'colorless',tier:'Event',desc:'A fake Anchor. Its effects are reversed.',img:'fake_anchor'},
+{name:'Big Mushroom',char:'colorless',tier:'Event',desc:'Upon pickup, raise your Max HP by 20. At the start of each combat, draw 2 fewer cards.',img:'big_mushroom'},
+{name:'Bing Bong',char:'colorless',tier:'Event',desc:'Whenever you add a card to your Deck, add one additional copy.',img:'bing_bong'},
+{name:'Blood Vial???',char:'colorless',tier:'Event',desc:'At the start of each combat, lose 2 HP.',img:'fake_blood_vial'},
+{name:'Bone Tea',char:'colorless',tier:'Event',desc:'At the start of the next combat, shuffle 2 Dazed into your Draw Pile.',img:'bone_tea'},
+{name:'Byrdpip',char:'colorless',tier:'Event',desc:'Upon pickup, gain the card Byrd Swoop. A Byrdpip will accompany you in battles.',img:'byrdpip'},
+{name:'Daughter of the Wind',char:'colorless',tier:'Event',desc:'Whenever you play an Attack, gain 1 Block.',img:'daughter_of_the_wind'},
+{name:'Darkstone Periapt',char:'colorless',tier:'Event',desc:'Whenever you add a Curse to your Deck, increase your Max HP by 8.',img:'darkstone_periapt'},
+{name:'Delicate Frond',char:'colorless',tier:'Event',desc:'Upon pickup, lose 15 HP and Upgrade 3 random cards.',img:'delicate_frond'},
+{name:'Ember Tea',char:'colorless',tier:'Event',desc:'At the start of the next 5 combats, gain 2 Strength.',img:'ember_tea'},
+{name:'Forgotten Soul',char:'colorless',tier:'Event',desc:'Whenever you Exhaust a card, deal 1 damage to a random enemy.',img:'forgotten_soul'},
+{name:'Fragrant Mushroom',char:'colorless',tier:'Event',desc:'Upon pickup, lose 15 HP and Upgrade 3 random cards.',img:'fragrant_mushroom'},
+{name:'Fresnel Lens',char:'colorless',tier:'Event',desc:'At the start of each combat, apply 3 Vulnerable to ALL enemies.',img:'fresnel_lens'},
+{name:'Happy Flower???',char:'colorless',tier:'Event',desc:'Every 3 turns, lose 1 Energy.',img:'fake_happy_flower'},
+{name:'History Course',char:'colorless',tier:'Event',desc:'Transforms into a powerful Relic after defeating 5 Elites.',img:'history_course'},
+{name:"Lee's Waffle???",char:'colorless',tier:'Event',desc:'Upon pickup, lose 7 Max HP.',img:'fake_lees_waffle'},
+{name:'Lost Wisp',char:'colorless',tier:'Event',desc:'At the end of each combat, gain 1 Max HP.',img:'lost_wisp'},
+{name:'Mango???',char:'colorless',tier:'Event',desc:'Upon pickup, lose 10 Max HP.',img:'fake_mango'},
+{name:'Maw Bank',char:'colorless',tier:'Event',desc:'Whenever you gain Gold, raise your Max HP by 1.',img:'maw_bank'},
+{name:"Merchant's Rug???",char:'colorless',tier:'Event',desc:'All shop prices are increased by 50%.',img:'fake_merchants_rug'},
+{name:'Mr. Struggles',char:'colorless',tier:'Event',desc:'Whenever you play an Attack, gain 1 Block.',img:'mr_struggles'},
+{name:'Orichalcum???',char:'colorless',tier:'Event',desc:'If you end your turn with Block, lose 6 Block.',img:'fake_orichalcum'},
+{name:'Pollinous Core',char:'colorless',tier:'Event',desc:'Every 4 turns, draw 2 additional cards.',img:'pollinous_core'},
+{name:'Royal Poison',char:'colorless',tier:'Event',desc:'Whenever you apply Poison, apply 2 additional stacks.',img:'royal_poison'},
+{name:"Snecko Eye???",char:'colorless',tier:'Event',desc:'At the start of each combat, draw 2 fewer cards.',img:'fake_snecko_eye'},
+{name:"Strike Dummy???",char:'colorless',tier:'Event',desc:'Whenever you play a card containing "Strike", lose 3 Block.',img:'fake_strike_dummy'},
+{name:'Sword of Jade',char:'colorless',tier:'Event',desc:'Start each combat with 3 Strength. At the end of combat, lose 3 Strength.',img:'sword_of_jade'},
+{name:'Sword of Stone',char:'colorless',tier:'Event',desc:'Start each combat with 3 Strength. You cannot gain Strength from other sources.',img:'sword_of_stone'},
+{name:"Venerable Tea Set???",char:'colorless',tier:'Event',desc:'At the start of each combat, lose 2 Dexterity.',img:'fake_venerable_tea_set'},
+{name:'Wongo Customer Appreciation Badge',char:'colorless',tier:'Event',desc:'At the start of each combat, lose 4 HP.',img:'wongo_customer_appreciation_badge'},
+{name:"The Chosen Cheese",char:'colorless',tier:'Event',desc:'Start each combat with 3 Strength.',img:'chosen_cheese'},
+
+// ── ANCIENT (Neow) ──────────────────────────────────────────────
+{name:'Alchemical Coffer',char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 4 potion slots filled with random potions.',img:'alchemical_coffer'},
+{name:'Arcane Scroll',char:'colorless',tier:'Ancient',desc:'Upon pickup, obtain a random Rare Card to add to your Deck.',img:'arcane_scroll'},
+{name:'Archaic Tooth',char:'colorless',tier:'Ancient',desc:'Upon pickup, Transform a starter card into an ancient version.',img:'archaic_tooth'},
+{name:'Astrolabe',char:'colorless',tier:'Ancient',desc:'Upon pickup, Transform 3 cards, then Upgrade them.',img:'astrolabe'},
+{name:'Beautiful Bracelet',char:'colorless',tier:'Ancient',desc:'Upon pickup, choose 3 cards in your Deck. Enchant them with Swift 3.',img:'beautiful_bracelet'},
+{name:'Biiig Hug',char:'colorless',tier:'Ancient',desc:'Upon pickup, remove 4 cards from your Deck. Whenever you shuffle your Draw Pile, add a Soot into your Draw Pile.',img:'biiig_hug'},
+{name:'Black Star',char:'colorless',tier:'Ancient',desc:'Elites drop an additional Relic when defeated.',img:'black_star'},
+{name:'Blessed Antler',char:'colorless',tier:'Ancient',desc:'Upon pickup, raise your Max HP by 20.',img:'blessed_antler'},
+{name:'Booming Conch',char:'colorless',tier:'Ancient',desc:'At the start of Elite combats, draw 2 additional cards.',img:'booming_conch'},
+{name:'Brilliant Scarf',char:'colorless',tier:'Ancient',desc:'Upon pickup, choose 3 cards to Upgrade.',img:'brilliant_scarf'},
+{name:'Calling Bell',char:'colorless',tier:'Ancient',desc:'Upon pickup, obtain a unique Curse and 3 Relics.',img:'calling_bell'},
+{name:'Claws',char:'colorless',tier:'Ancient',desc:'Upon pickup, Transform up to 6 cards into Maul.',img:'claws'},
+{name:'Crossbow',char:'colorless',tier:'Ancient',desc:'At the start of your turn, add a random Attack into your Hand. It costs 0 Energy this turn.',img:'crossbow'},
+{name:'Cursed Pearl',char:'colorless',tier:'Ancient',desc:'Upon pickup, receive Greed. Gain 333 Gold.',img:'cursed_pearl'},
+{name:'Diamond Diadem',char:'colorless',tier:'Ancient',desc:'Whenever you shuffle your Draw Pile, gain 3 Block.',img:'diamond_diadem'},
+{name:'Driftwood',char:'colorless',tier:'Ancient',desc:'You may reroll each card reward once.',img:'driftwood'},
+{name:'Dusty Tome',char:'colorless',tier:'Ancient',desc:'Upon pickup, obtain a class-specific Ancient card.',img:'dusty_tome'},
+{name:'Ectoplasm',char:'colorless',tier:'Ancient',desc:'You can no longer gain Gold. Gain 1 Energy at the start of each turn.',img:'ectoplasm'},
+{name:'Electric Shrymp',char:'colorless',tier:'Ancient',desc:'Upon pickup, Enchant a Skill with Imbued.',img:'electric_shrymp'},
+{name:'Empty Cage',char:'colorless',tier:'Ancient',desc:'Upon pickup, remove 2 cards from your Deck.',img:'empty_cage'},
+{name:'Fur Coat',char:'colorless',tier:'Ancient',desc:'Upon pickup, mark 7 random combats. Enemies in those rooms have 1 HP.',img:'fur_coat'},
+{name:'Glass Eye',char:'colorless',tier:'Ancient',desc:'Upon pickup, obtain 2 Common, 2 Uncommon, and 1 Rare card.',img:'glass_eye'},
+{name:'Glitter',char:'colorless',tier:'Ancient',desc:'Upon pickup, Enchant all card rewards with Glam.',img:'glitter'},
+{name:'Golden Pearl',char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 150 Gold.',img:'golden_pearl'},
+{name:'Hefty Tablet',char:'colorless',tier:'Ancient',desc:'Upon pickup, choose 1 of 3 Rare cards to add to your Deck. Add 1 Injury to your Deck.',img:'hefty_tablet'},
+{name:'Iron Club',char:'colorless',tier:'Ancient',desc:'Every 4 cards you play, draw 1 card.',img:'iron_club'},
+{name:'Jewelry Box',char:'colorless',tier:'Ancient',desc:'Upon pickup, add 1 Apotheosis to your Deck.',img:'jewelry_box'},
+{name:'Large Capsule',char:'colorless',tier:'Ancient',desc:'Upon pickup, obtain 2 random Relics. Add an additional Strike and Defend to your Deck.',img:'large_capsule'},
+{name:'Lava Rock',char:'colorless',tier:'Ancient',desc:'The Act 1 Boss drops 2 Relics.',img:'lava_rock'},
+{name:'Lead Paperweight',char:'colorless',tier:'Ancient',desc:'Upon pickup, choose 1 of 2 Colorless cards to add to your Deck.',img:'lead_paperweight'},
+{name:'Leafy Poultice',char:'colorless',tier:'Ancient',desc:'Upon pickup, Transform 1 of your Strikes and 1 of your Defends and lose 10 Max HP.',img:'leafy_poultice'},
+{name:'Looming Fruit',char:'colorless',tier:'Ancient',desc:'Upon pickup, raise your Max HP by 31.',img:'looming_fruit'},
+{name:'Massive Scroll',char:'colorless',tier:'Ancient',desc:'Upon pickup, choose 3 cards in your Deck. Enchant them with Sharp 3.',img:'massive_scroll'},
+{name:'Meat Cleaver',char:'colorless',tier:'Ancient',desc:'You may Cook at Rest Sites.',img:'meat_cleaver'},
+{name:"Neow's Bones",char:'colorless',tier:'Ancient',desc:"Upon pickup, gain 2 random Neow Relics. Add 1 random Curse to your Deck.",img:'neows_bones'},
+{name:"Neow's Lament",char:'colorless',tier:'Ancient',desc:'Upon pickup, enemies in your first 3 combats start with 1 HP.',img:'neows_lament'},
+{name:"Neow's Talisman",char:'colorless',tier:'Ancient',desc:'Upon pickup, heal to full HP and gain 1 Max HP.',img:'neows_talisman'},
+{name:"Neow's Torment",char:'colorless',tier:'Ancient',desc:"Upon pickup, add 1 Neow's Fury to your Deck.",img:'neows_torment'},
+{name:'New Leaf',char:'colorless',tier:'Ancient',desc:'Upon pickup, Transform 1 card.',img:'new_leaf'},
+{name:'Nutritious Oyster',char:'colorless',tier:'Ancient',desc:'Upon pickup, raise your Max HP by 11.',img:'nutritious_oyster'},
+{name:'Nutritious Soup',char:'colorless',tier:'Ancient',desc:'Upon pickup, raise your Max HP by 15.',img:'nutritious_soup'},
+{name:"Pael's Blood",char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 2 Max HP for every card in your Deck.',img:'paels_blood'},
+{name:"Pael's Claw",char:'colorless',tier:'Ancient',desc:"Your Attacks deal bonus damage equal to Pael's current Strength.",img:'paels_claw'},
+{name:"Pael's Eye",char:'colorless',tier:'Ancient',desc:'Whenever you draw a card, there is a chance it is Upgraded.',img:'paels_eye'},
+{name:"Pael's Flesh",char:'colorless',tier:'Ancient',desc:'You gain the abilities of all Pael Relics at once.',img:'paels_flesh'},
+{name:"Pael's Growth",char:'colorless',tier:'Ancient',desc:"Pael's Strength grows each Act.",img:'paels_growth'},
+{name:"Pael's Horn",char:'colorless',tier:'Ancient',desc:"Pael's Strength doubles at the start of each Act.",img:'paels_horn'},
+{name:"Pael's Legion",char:'colorless',tier:'Ancient',desc:"Pael's Strength is added to your Strength at the start of combat.",img:'paels_legion'},
+{name:"Pael's Tears",char:'colorless',tier:'Ancient',desc:'Whenever you lose HP, Pael gains Strength.',img:'paels_tears'},
+{name:"Pael's Tooth",char:'colorless',tier:'Ancient',desc:"Pael fights alongside you in combat.",img:'paels_tooth'},
+{name:"Pael's Wing",char:'colorless',tier:'Ancient',desc:'You may fly over combat rooms.',img:'paels_wing'},
+{name:'Pandoras Box',char:'colorless',tier:'Ancient',desc:'Upon pickup, Transform ALL Strikes and Defends.',img:'pandoras_box'},
+{name:'Phial Holster',char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 1 potion slot and procure 2 random potions.',img:'phial_holster'},
+{name:'Planisphere',char:'colorless',tier:'Ancient',desc:'Whenever you enter a new Act, upgrade 2 random cards.',img:'planisphere'},
+{name:'Pomander',char:'colorless',tier:'Ancient',desc:'Upon pickup, Upgrade a card.',img:'pomander'},
+{name:'Precarious Shears',char:'colorless',tier:'Ancient',desc:'Upon pickup, remove 2 cards from your Deck and take 16 damage.',img:'precarious_shears'},
+{name:'Precise Scissors',char:'colorless',tier:'Ancient',desc:'Upon pickup, remove 1 card from your Deck.',img:'precise_scissors'},
+{name:'Prismatic Gem',char:'colorless',tier:'Ancient',desc:'Card rewards always have one card of each rarity.',img:'prismatic_gem'},
+{name:'Pumpkin Candle',char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 2 random Relics.',img:'pumpkin_candle'},
+{name:'Radiant Pearl',char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 200 Gold.',img:'radiant_pearl'},
+{name:'Ripple Basin',char:'defect',tier:'Ancient',desc:'Whenever you Channel an Orb, trigger it once immediately.',img:'ripple_basin'},
+{name:'Runic Cube',char:'colorless',tier:'Ancient',desc:'Whenever you lose HP, draw 1 card.',img:'runic_cube'},
+{name:'Runic Pyramid',char:'colorless',tier:'Ancient',desc:"At the end of your turn, you no longer discard your Hand.",img:'runic_pyramid'},
+{name:'Sai',char:'colorless',tier:'Ancient',desc:'At the start of your turn, gain 7 Block.',img:'sai'},
+{name:'Scroll Boxes',char:'colorless',tier:'Ancient',desc:'Upon pickup, lose all Gold and choose 1 of 2 packs of cards to add to your Deck.',img:'scroll_boxes'},
+{name:'Seal of Gold',char:'colorless',tier:'Ancient',desc:'At the end of combat, gain Gold equal to the number of cards in your Deck.',img:'seal_of_gold'},
+{name:'Signet Ring',char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 999 Gold.',img:'signet_ring'},
+{name:'Silver Crucible',char:'colorless',tier:'Ancient',desc:'The first 3 card rewards you see are Upgraded. The first Treasure Chest you open is empty.',img:'silver_crucible'},
+{name:'Small Capsule',char:'colorless',tier:'Ancient',desc:'Upon pickup, obtain a random Relic.',img:'small_capsule'},
+{name:'Spiked Gauntlets',char:'colorless',tier:'Ancient',desc:'Gain 1 Energy at the start of each turn. Powers cost 1 more Energy.',img:'spiked_gauntlets'},
+{name:'Stone Humidifier',char:'colorless',tier:'Ancient',desc:'Whenever you Rest at a Rest Site, raise your Max HP by 5.',img:'stone_humidifier'},
+{name:'Storybook',char:'colorless',tier:'Ancient',desc:'Upon pickup, choose an Enchantment to apply to all future card rewards.',img:'storybook'},
+{name:"Tanx's Whistle",char:'colorless',tier:'Ancient',desc:"Add 1 Whistle to your Deck.",img:'tanxs_whistle'},
+{name:'Tezcataras Candle',char:'colorless',tier:'Ancient',desc:'Upon pickup, gain 2 Relics.',img:'tezcataras_candle'},
+{name:'Throwing Axe',char:'colorless',tier:'Ancient',desc:'The first card you play each combat is played an extra time.',img:'throwing_axe'},
+{name:'Tri Boomerang',char:'colorless',tier:'Ancient',desc:'Upon pickup, choose 3 Attacks in your Deck to Enchant with Instinct.',img:'tri_boomerang'},
+{name:'War Hammer',char:'colorless',tier:'Ancient',desc:'Whenever you kill an Elite, Upgrade 4 random cards.',img:'war_hammer'},
+{name:"Yummy Cookie (Ironclad)",char:'ironclad',tier:'Ancient',desc:'Upon pickup, remove 1 Strike and gain 1 Max HP.',img:'yummy_cookie_ironclad'},
+{name:"Yummy Cookie (Silent)",char:'silent',tier:'Ancient',desc:'Upon pickup, remove 1 Defend and gain 1 Max HP.',img:'yummy_cookie_silent'},
+{name:"Yummy Cookie (Defect)",char:'defect',tier:'Ancient',desc:'Upon pickup, remove 1 Zap and gain 1 Max HP.',img:'yummy_cookie_defect'},
+{name:"Yummy Cookie (Regent)",char:'regent',tier:'Ancient',desc:'Upon pickup, remove a Starter card and gain 1 Max HP.',img:'yummy_cookie_regent'},
+{name:"Yummy Cookie (Necrobinder)",char:'necrobinder',tier:'Ancient',desc:'Upon pickup, remove a Starter card and gain 1 Max HP.',img:'yummy_cookie_necro'},
+];
+
+let activeChar='all',activeTier='all';
+
+function setChar(el){activeChar=el.dataset.char;document.querySelectorAll('.class-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');render();}
+function setTier(el){activeTier=el.dataset.tier;document.querySelectorAll('.fbtn[data-tier]').forEach(b=>b.classList.remove('active'));el.classList.add('active');render();}
+document.getElementById('search').addEventListener('input',render);
+
+function tierBadgeClass(t){return{Starter:'b-starter',Common:'b-common',Uncommon:'b-uncommon',Rare:'b-rare',Shop:'b-shop',Event:'b-event',Ancient:'b-ancient'}[t]||'b-common';}
+
+function render(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const filtered=relics.filter(r=>{
+    if(activeChar!=='all'&&r.char!==activeChar)return false;
+    if(activeTier!=='all'&&r.tier!==activeTier)return false;
+    if(q&&!r.name.toLowerCase().includes(q)&&!r.desc.toLowerCase().includes(q))return false;
+    return true;
+  });
+  // deduplicate by name+tier
+  const seen=new Set();
+  const deduped=filtered.filter(r=>{const k=r.name+r.tier;if(seen.has(k))return false;seen.add(k);return true;});
+  document.getElementById('cnt').textContent=deduped.length;
+  const grid=document.getElementById('grid');
+  if(!deduped.length){grid.innerHTML='<div class="no-results">No relics match your filters.</div>';return;}
+  const CHARS_LOCAL={ironclad:'#e06050',silent:'#50c090',defect:'#60a0e0',regent:'#c070e0',necrobinder:'#70b060',colorless:'#a09898'};
+  grid.innerHTML=deduped.map(r=>{
+    const cc=CHARS_LOCAL[r.char]||'#7050b0';
+    const charLabel={ironclad:'Ironclad',silent:'Silent',defect:'Defect',regent:'Regent',necrobinder:'Necrobinder',colorless:''}[r.char]||'';
+    return `<div class="relic-card" style="--cc:${cc}">
+      <div class="relic-bar"></div>
+      <div class="relic-art">
+        <img src="images/relics/${r.img}.png" alt="${r.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="relic-art-fallback" style="display:none">🔮</div>
+      </div>
+      <div class="relic-body">
+        <div class="relic-name">${r.name}</div>
+        <div class="badges">
+          <span class="badge ${tierBadgeClass(r.tier)}">${r.tier}</span>
+          ${charLabel?`<span class="b-char">${charLabel}</span>`:''}
+        </div>
+        <div class="relic-desc">${r.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>
