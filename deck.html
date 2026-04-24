@@ -55,7 +55,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .browser-meta{flex-shrink:0;padding:5px 14px;background:#0d0b14;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);}
 .browser-meta strong{color:#a890c0;font-weight:500;}
 
-.card-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;padding:12px 14px 20px;align-content:start;}
+.card-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;padding:10px 12px 20px;align-content:start;}
 
 /* CARD TILE */
 .ctile{background:var(--bg2);border:1px solid #221d33;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform 0.12s,border-color 0.12s;position:relative;min-height:170px;}
@@ -90,68 +90,68 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .ctile-in-deck.visible{opacity:1;transform:scale(1);}
 
 /* ── RIGHT: DECK PANEL ── */
-.deck-panel{width:316px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid var(--border2);background:var(--bg4);}
+.deck-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;border-left:2px solid var(--border2);background:var(--bg4);}
 
 /* Panel header */
-.deck-hd{flex-shrink:0;padding:12px 14px 10px;border-bottom:1px solid var(--border);}
-.deck-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.deck-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#efe0c0;letter-spacing:1px;display:flex;align-items:center;gap:6px;}
-.deck-actions{display:flex;gap:5px;}
-.deck-btn{font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.deck-hd{flex-shrink:0;padding:14px 20px 12px;border-bottom:1px solid var(--border);}
+.deck-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.deck-title{font-family:'Cinzel',serif;font-size:17px;font-weight:700;color:#efe0c0;letter-spacing:1.5px;display:flex;align-items:center;gap:8px;}
+.deck-actions{display:flex;gap:8px;}
+.deck-btn{font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 16px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;}
 .deck-btn:hover{border-color:var(--gold);color:var(--gold);}
 .deck-btn.clear:hover{border-color:var(--red);color:var(--red);}
 .deck-btn.share.copied{border-color:var(--green);color:var(--green);}
-.deck-meta{font-size:12px;color:var(--text3);}
+.deck-meta{font-size:14px;color:var(--text3);}
 .deck-meta strong{color:#a080b8;font-weight:600;}
 
-/* Stats grid — 5 metrics */
-.metrics{flex-shrink:0;padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
-.metric-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.metric{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;position:relative;overflow:hidden;}
-.metric.wide{grid-column:span 2;}
-.metric-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
-.metric-val{font-family:'Cinzel',serif;font-size:17px;font-weight:700;color:#efe0c0;line-height:1;}
-.metric-sub{font-size:10px;color:var(--text3);margin-top:3px;}
-.metric-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:4px;}
+/* Stats grid — 4 metrics in one row + full-width consistency */
+.metrics{flex-shrink:0;padding:14px 20px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden;}
+.metric.wide{grid-column:span 4;}
+.metric-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.metric-val{font-family:'Cinzel',serif;font-size:26px;font-weight:700;color:#efe0c0;line-height:1;}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+.metric-tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;margin-top:5px;}
 .tag-fast{background:#182812;color:#88cc70;border:1px solid #285a1e;}
 .tag-med{background:#1e1608;color:#d4a84b;border:1px solid #504010;}
 .tag-slow{background:#2a1010;color:#e08060;border:1px solid #5a2010;}
 /* Type ratio */
-.ratio-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
-.rp{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.ratio-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.rp{font-size:12px;font-weight:700;padding:3px 9px;border-radius:5px;}
 .rp-a{background:#3a1212;color:#e08080;}
 .rp-s{background:#122035;color:#80b0e8;}
 .rp-p{background:#182812;color:#88cc70;}
 /* Consistency bar */
-.cons-bar-bg{height:5px;background:#1a1628;border-radius:3px;overflow:hidden;margin:6px 0 3px;}
-.cons-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease,background 0.4s;}
+.cons-bar-bg{height:7px;background:#1a1628;border-radius:4px;overflow:hidden;margin:8px 0 4px;}
+.cons-bar-fill{height:100%;border-radius:4px;transition:width 0.4s ease,background 0.4s;}
 /* Scaling / exhaust tags */
-.win-con-list{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
-.wc-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:#182820;color:#88cc70;border:1px solid #284a20;}
+.win-con-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.wc-tag{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;background:#182820;color:#88cc70;border:1px solid #284a20;}
 
 /* Deck list */
-.deck-list{flex:1;overflow-y:auto;padding:6px 0 12px;}
-.deck-empty{text-align:center;padding:40px 20px;color:var(--text3);}
-.deck-empty-icon{font-size:30px;opacity:0.35;margin-bottom:10px;}
-.deck-empty p{font-size:12px;font-style:italic;line-height:1.6;}
-.deck-section{margin-bottom:4px;}
-.deck-section-hd{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:6px 14px 3px;display:flex;align-items:center;justify-content:space-between;}
+.deck-list{flex:1;overflow-y:auto;padding:8px 0 16px;}
+.deck-empty{text-align:center;padding:60px 20px;color:var(--text3);}
+.deck-empty-icon{font-size:44px;opacity:0.35;margin-bottom:14px;}
+.deck-empty p{font-size:14px;font-style:italic;line-height:1.7;}
+.deck-section{margin-bottom:6px;}
+.deck-section-hd{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:8px 20px 4px;display:flex;align-items:center;justify-content:space-between;}
 .deck-section-ct{font-weight:500;}
-.deck-row{display:flex;align-items:center;gap:7px;padding:3px 14px;transition:background 0.1s;}
-.deck-row:hover{background:rgba(255,255,255,0.025);}
-.dr-cost{min-width:21px;height:21px;border-radius:11px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0;}
-.dr-name{flex:1;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dr-tags{display:flex;gap:2px;flex-shrink:0;}
-.dr-tag{font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;}
+.deck-row{display:flex;align-items:center;gap:10px;padding:5px 20px;transition:background 0.1s;}
+.deck-row:hover{background:rgba(255,255,255,0.03);}
+.dr-cost{min-width:28px;height:28px;border-radius:14px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;}
+.dr-name{flex:1;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dr-tags{display:flex;gap:3px;flex-shrink:0;}
+.dr-tag{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;}
 .dt-scale{background:#1a2a12;color:#78b858;border:1px solid #2a4a18;}
 .dt-exhaust{background:#1a1830;color:#8060c0;border:1px solid #302060;}
 .dt-draw{background:#101828;color:#5090c0;border:1px solid #1a3048;}
-.dr-ctrl{display:flex;align-items:center;gap:3px;flex-shrink:0;}
-.ctrl-btn{width:17px;height:17px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;line-height:1;font-weight:600;}
+.dr-ctrl{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.ctrl-btn{width:22px;height:22px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;line-height:1;font-weight:600;}
 .ctrl-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
 .ctrl-btn.minus:hover:not(:disabled){border-color:var(--red);color:var(--red);}
 .ctrl-btn:disabled{opacity:0.25;cursor:not-allowed;}
-.dr-ct{font-size:11px;font-weight:700;color:var(--text);min-width:12px;text-align:center;}
+.dr-ct{font-size:13px;font-weight:700;color:var(--text);min-width:16px;text-align:center;}
 
 /* Loading / empty */
 .loading-wrap{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--text3);}
@@ -166,9 +166,9 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .kw-clear{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;white-space:nowrap;}
 .kw-clear:hover{border-color:var(--red);color:var(--red);}
 /* Compatibility orphan tags */
-.compat-orphans{margin-top:6px;display:flex;flex-direction:column;gap:3px;}
-.orphan-row{font-size:10px;color:#e08060;display:flex;align-items:center;gap:4px;}
-.orphan-row::before{content:'⚠';font-size:9px;}
+.compat-orphans{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.orphan-row{font-size:12px;color:#e08060;display:flex;align-items:center;gap:5px;}
+.orphan-row::before{content:'⚠';font-size:11px;}
 </style>
 </head>
 <body>
@@ -242,7 +242,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 
       <!-- 5-METRIC DASHBOARD -->
       <div class="metrics">
-        <!-- Row 1: Avg Cost + Type Ratio -->
+        <!-- Row 1: All 4 metrics side by side -->
         <div class="metric-row">
           <div class="metric">
             <div class="metric-label">Avg Cost</div>
@@ -251,12 +251,9 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
           </div>
           <div class="metric">
             <div class="metric-label">Type Ratio</div>
-            <div class="ratio-pills" id="mTypeRatio"><span style="color:var(--text3);font-size:10px;">—</span></div>
+            <div class="ratio-pills" id="mTypeRatio"><span style="color:var(--text3);font-size:12px;">—</span></div>
             <div class="metric-sub" id="mTypeBreak"></div>
           </div>
-        </div>
-        <!-- Row 2: Exhaust Density + Scaling Cards -->
-        <div class="metric-row">
           <div class="metric">
             <div class="metric-label">Compatibility</div>
             <div class="metric-val" id="mCompat">—</div>
@@ -268,15 +265,15 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
             <div class="metric-sub" id="mScalingSub"></div>
           </div>
         </div>
-        <!-- Row 3: Consistency (full width) -->
+        <!-- Row 2: Consistency (full width) -->
         <div class="metric wide">
           <div class="metric-label">Consistency Score</div>
-          <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
+          <div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
             <div style="flex:1;">
               <div class="cons-bar-bg"><div class="cons-bar-fill" id="consBar" style="width:0%;background:var(--text3)"></div></div>
               <div class="metric-sub" id="consNote">Add cards to see a score.</div>
             </div>
-            <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;min-width:38px;text-align:right;" id="consPct">—</div>
+            <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;min-width:48px;text-align:right;" id="consPct">—</div>
           </div>
           <!-- Win conditions detected -->
           <div class="win-con-list" id="winConList"></div>
