@@ -100,6 +100,37 @@ body>*{position:relative;z-index:1;}
 .card-desc{font-size:11px;line-height:1.55;color:var(--text2);font-style:italic;}
 .kws{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px;}
 .kw{font-size:9px;padding:1px 5px;border-radius:3px;background:#1a1628;color:#6a5a88;border:1px solid #252038;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(7,5,15,0.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);animation:fadeIn 0.15s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal{background:#13101e;border:1px solid #2e2545;border-radius:14px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;position:relative;animation:slideUp 0.2s cubic-bezier(0.16,1,0.3,1);}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#1e1a2c;border:1px solid #2e2545;color:#7a6a8a;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;z-index:10;}
+.modal-close:hover{background:#2a2440;color:#e8d8b8;}
+.modal-bar{height:4px;border-radius:14px 14px 0 0;}
+.modal-art{height:200px;background:#0e0b1a;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e1a2e;position:relative;overflow:hidden;}
+.modal-art img{height:180px;object-fit:contain;}
+.modal-art-bg{position:absolute;inset:0;}
+.modal-body{padding:20px 24px 24px;}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.modal-name{font-family:"Playfair Display",serif;font-size:22px;font-weight:700;color:#efe0c0;line-height:1.2;}
+.modal-cost{min-width:32px;height:32px;border-radius:16px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#d4a84b;padding:0 6px;}
+.modal-badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;}
+.modal-versions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.modal-version{background:#0e0b1a;border:1px solid #1e1a2e;border-radius:8px;padding:14px;}
+.modal-version.upgraded{border-color:#3a2d5a;}
+.modal-version-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.modal-version-label.base{color:#6a5a88;}
+.modal-version-label.up{color:#c4a8f0;}
+.modal-cost-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.modal-cost-val{font-size:12px;font-weight:600;color:#d4a84b;}
+.modal-cost-change{font-size:10px;color:#60c080;font-weight:600;}
+.modal-desc{font-size:13px;line-height:1.65;color:#9a8aaa;font-style:italic;}
+.modal-desc.up{color:#c4b8d8;}
+.modal-kws{display:flex;gap:4px;flex-wrap:wrap;margin-top:16px;}
+.modal-section-label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#4a3a6a;margin-bottom:8px;}
+
 .no-results{grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text3);font-size:15px;font-style:italic;}
 
 footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
@@ -188,6 +219,23 @@ footer a:hover{color:var(--text);}
 
 <div class="grid" id="grid"></div>
 
+<div id="modalOverlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    <div class="modal-bar" id="modalBar"></div>
+    <div class="modal-art"><div class="modal-art-bg" id="modalArtBg"></div><img id="modalImg" src="" alt=""></div>
+    <div class="modal-body">
+      <div class="modal-head"><div class="modal-name" id="modalName"></div><div class="modal-cost" id="modalCost"></div></div>
+      <div class="modal-badges" id="modalBadges"></div>
+      <div class="modal-versions">
+        <div class="modal-version"><div class="modal-version-label base">Base</div><div class="modal-cost-row"><span class="modal-cost-val" id="modalBaseCost"></span></div><div class="modal-desc" id="modalBaseDesc"></div></div>
+        <div class="modal-version upgraded" id="modalUpVer"><div class="modal-version-label up">&#x2756; Upgraded</div><div class="modal-cost-row"><span class="modal-cost-val" id="modalUpCost"></span><span class="modal-cost-change" id="modalCostChange"></span></div><div class="modal-desc up" id="modalUpDesc"></div></div>
+      </div>
+      <div class="modal-section-label">Keywords</div>
+      <div class="modal-kws" id="modalKws"></div>
+    </div>
+  </div>
+</div>
 <footer>
   SpireIndex is a fan-made database and is not affiliated with Mega Crit Games. ·
   <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Play Slay the Spire 2 on Steam</a>
@@ -348,6 +396,42 @@ function render(){
 const style=document.createElement('style');
 style.textContent='.kw.kw-active{background:#2a1f48;color:#c4a8f0;border-color:#7050b0;}';
 document.head.appendChild(style);
+
+
+function openModal(card){
+  const CHARS2={ironclad:{hex:"#e06050",label:"Ironclad"},silent:{hex:"#50c090",label:"Silent"},defect:{hex:"#60a0e0",label:"Defect"},regent:{hex:"#c070e0",label:"Regent"},necrobinder:{hex:"#70b060",label:"Necrobinder"},colorless:{hex:"#a09898",label:"Colorless"},event:{hex:"#d4a84b",label:"Event"},token:{hex:"#e0c060",label:"Token"}};
+  const cc=CHARS2[card.char]||{hex:"#7050b0",label:"Unknown"};
+  document.getElementById("modalBar").style.background=cc.hex;
+  document.getElementById("modalArtBg").style.background="radial-gradient(ellipse 60% 80% at 50% 50%,"+cc.hex+"33 0%,transparent 70%)";
+  document.getElementById("modalImg").src=getImgPath(card);
+  document.getElementById("modalName").textContent=card.name;
+  document.getElementById("modalCost").textContent=card.cost===null?"—":card.cost==="X"?"X":card.cost;
+  document.getElementById("modalBaseCost").textContent=card.cost===null?"Unplayable":card.cost==="X"?"X Energy":card.cost+" Energy";
+  document.getElementById("modalBaseDesc").textContent=card.desc||"";
+  const upVer=document.getElementById("modalUpVer");
+  if(card.descUp){
+    upVer.style.display="block";
+    document.getElementById("modalUpCost").textContent=card.costUp!==undefined?(card.costUp===null?"Unplayable":card.costUp==="X"?"X Energy":card.costUp+" Energy"):(card.cost===null?"Unplayable":card.cost==="X"?"X Energy":card.cost+" Energy");
+    const diff=card.costUp!==undefined&&card.costUp!==card.cost?" ("+((card.costUp||0)<(card.cost||0)?"↓":"↑")+Math.abs((card.costUp||0)-(card.cost||0))+")":"";
+    document.getElementById("modalCostChange").textContent=diff;
+    document.getElementById("modalUpDesc").textContent=card.descUp;
+  } else { upVer.style.display="none"; }
+  const tb={Attack:"b-attack",Skill:"b-skill",Power:"b-power",Status:"b-status",Curse:"b-curse",Token:"b-token"};
+  const rb={Ancient:"b-ancient",Rare:"b-rare",Uncommon:"b-uncommon"};
+  document.getElementById("modalBadges").innerHTML=
+    "<span class=\"badge "+(tb[card.type]||"b-attack")+"\">"+card.type+"</span>"+
+    (rb[card.rarity]?"<span class=\"badge "+rb[card.rarity]+"\">"+card.rarity+"</span>":"")+
+    "<span class=\"badge\" style=\"background:#1a1628;color:#6a5a88;border:1px solid #252038;\">"+cc.label+"</span>";
+  document.getElementById("modalKws").innerHTML=(card.kw||[]).map(k=>"<span class=\"kw\" style=\"font-size:11px;padding:3px 8px;\">"+k+"</span>").join("");
+  const ov=document.getElementById("modalOverlay");
+  ov.style.display="flex";
+  document.body.style.overflow="hidden";
+}
+function closeModal(){
+  document.getElementById("modalOverlay").style.display="none";
+  document.body.style.overflow="";
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
 
 // ── BOOT ──────────────────────────────────────────────────────
 // STATIC_CARDS is defined below as fallback
