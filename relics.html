@@ -552,9 +552,14 @@ function relicKws(desc){
 function buildRelicKwChips(){
   const allKws=[...new Set(relics.flatMap(r=>relicKws(r.desc)))].sort();
   const container=document.getElementById('relicKwChips');
-  container.innerHTML=allKws.map(k=>
-    '<button class="kw-chip'+(activeRelicKws.has(k)?' active':'')+'" onclick="toggleRelicKw(''+k+'')">'+k+'</button>'
-  ).join('');
+  container.innerHTML='';
+  allKws.forEach(function(k){
+    const btn=document.createElement('button');
+    btn.className='kw-chip'+(activeRelicKws.has(k)?' active':'');
+    btn.textContent=k;
+    btn.addEventListener('click',function(){toggleRelicKw(k);});
+    container.appendChild(btn);
+  });
 }
 
 function toggleRelicKw(kw){
