@@ -24,6 +24,8 @@
   --purple:#8060c0;
 }
 html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glory/glory_03_a.png') center center / cover no-repeat;opacity:0.07;filter:saturate(0.6);pointer-events:none;z-index:0;}
+body>*{position:relative;z-index:1;}
 
 .header{position:relative;overflow:hidden;padding:28px 28px 0;background:var(--bg);border-bottom:1px solid var(--border);}
 .header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% -10%,rgba(120,80,200,0.18) 0%,transparent 70%),radial-gradient(ellipse 40% 50% at 20% 50%,rgba(180,100,60,0.08) 0%,transparent 60%);pointer-events:none;}
