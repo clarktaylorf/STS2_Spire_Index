@@ -390,7 +390,10 @@ function makeTile(card) {
   const art = document.createElement('div');
   art.className = 'ctile-art';
   const img = document.createElement('img');
-  img.src = 'images/cards/' + card.img + '.png';
+  const imgBase = 'images/packed/card_portraits';
+  img.src = (card.type === 'Curse') ? imgBase + '/curse/' + card.img + '.png'
+           : (card.type === 'Status') ? imgBase + '/status/' + card.img + '.png'
+           : imgBase + '/' + card.char + '/' + card.img + '.png';
   img.alt = card.name;
   const imgFb = document.createElement('div');
   imgFb.className = 'ctile-art-fb';
