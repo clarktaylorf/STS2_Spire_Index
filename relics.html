@@ -506,6 +506,7 @@ const relics=[
 ];
 
 let activeChar='all',activeTier='all';
+let activeRelicKws=new Set();
 
 function setChar(el){activeChar=el.dataset.char;document.querySelectorAll('.class-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');render();}
 function setTier(el){activeTier=el.dataset.tier;document.querySelectorAll('.fbtn[data-tier]').forEach(b=>b.classList.remove('active'));el.classList.add('active');render();}
@@ -547,7 +548,6 @@ function relicKws(desc){
   return [...kws];
 }
 
-let activeRelicKws=new Set();
 
 function buildRelicKwChips(){
   const allKws=[...new Set(relics.flatMap(r=>relicKws(r.desc)))].sort();
