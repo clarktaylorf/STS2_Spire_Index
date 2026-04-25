@@ -1349,7 +1349,13 @@ function detectArchetypes(flat, entries) {
       issues.push('Vulnerable applied but few attacks to capitalize on the damage bonus');
     }
     if (vulnSources === 1) {
-      issues.push('One Vulnerable source — add another (Bash, Bully, Tremble) for reliability');
+      // Suggest class-appropriate Vulnerable-applying cards not already in deck
+      const classMatch = c => _activeChar === 'all' || c.char === _activeChar || c.char === 'colorless';
+      const vulnCandidates = _cards
+        .filter(c => isVulnerableSource(c) && classMatch(c) && !entries.some(e => e.card.name === c.name))
+        .slice(0, 3).map(c => c.name);
+      const vulnHint = vulnCandidates.length ? vulnCandidates.join(', ') : 'another Vulnerable-applying card';
+      issues.push(`One Vulnerable source — add another (${vulnHint}) for reliability`);
     }
     results.push({ name: 'Vulnerable', score: Math.max(0, pts), max: 58, issues });
   }
