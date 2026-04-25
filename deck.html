@@ -58,9 +58,9 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .card-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;padding:10px 12px 20px;align-content:start;}
 
 /* CARD TILE */
-.ctile{background:var(--bg2);border:1px solid #221d33;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform 0.12s,border-color 0.12s;position:relative;min-height:170px;}
+.ctile{background:var(--bg2);border:1px solid #221d33;border-radius:9px;cursor:pointer;transition:transform 0.12s,border-color 0.12s;position:relative;overflow:visible;}
 .ctile:hover{border-color:rgba(212,168,75,0.5);transform:translateY(-2px);box-shadow:0 4px 16px rgba(212,168,75,0.08);}
-.ctile-bar{height:3px;background:var(--cc,#7050b0);opacity:0.7;}
+.ctile-bar{height:3px;background:var(--cc,#7050b0);opacity:0.7;border-radius:9px 9px 0 0;}
 .ctile-art{height:88px;overflow:hidden;background:#0e0b1a;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e1a2e;}
 .ctile-art img{width:100%;height:100%;object-fit:contain;padding:5px;transition:transform 0.15s;}
 .ctile:hover .ctile-art img{transform:scale(1.06);}
@@ -70,7 +70,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .ctile-name{font-family:'Playfair Display',serif;font-size:11.5px;font-weight:500;color:#e8d8b8;line-height:1.2;flex:1;}
 .ctile-cost{min-width:19px;height:19px;border-radius:10px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0;padding:0 3px;}
 .ctile-badges{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:4px;}
-.ctile-desc{font-size:10px;line-height:1.45;color:var(--text2);font-style:italic;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.ctile-desc{font-size:10px;line-height:1.45;color:var(--text2);font-style:italic;}
 .badge{font-size:8px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 5px;border-radius:8px;}
 .b-attack{background:#3a1212;color:#e08080;border:1px solid #5a1e1e;}
 .b-skill{background:#122035;color:#80b0e8;border:1px solid #1e3a5a;}
@@ -259,7 +259,6 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .dmodal-kw-list{display:flex;gap:4px;flex-wrap:wrap;}
 .dmodal-add-btn{width:100%;margin-top:16px;padding:11px;border-radius:8px;border:1px solid rgba(212,168,75,0.4);background:rgba(212,168,75,0.1);color:#e8c870;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;}
 .dmodal-add-btn:hover{background:rgba(212,168,75,0.22);border-color:rgba(212,168,75,0.7);}
-.dmodal-add-btn:disabled{opacity:0.35;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -2063,13 +2062,12 @@ function openDeckModal(card) {
   // Add button
   const addBtn = document.getElementById('dmAddBtn');
   const inDeck = (_deck[card.name]?.count || 0);
-  addBtn.textContent = inDeck >= 3 ? 'Max copies in deck' : '+ Add to Deck';
-  addBtn.disabled = inDeck >= 3;
+  addBtn.textContent = inDeck > 0 ? `+ Add to Deck (${inDeck} in deck)` : '+ Add to Deck';
+  addBtn.disabled = false;
   addBtn.onclick = () => {
     addCard(card.name);
     const newCount = _deck[card.name]?.count || 0;
-    addBtn.textContent = newCount >= 3 ? 'Max copies in deck' : `+ Add to Deck (${newCount} in deck)`;
-    addBtn.disabled = newCount >= 3;
+    addBtn.textContent = `+ Add to Deck (${newCount} in deck)`;
   };
 
   document.getElementById('dModalOverlay').style.display = 'flex';
