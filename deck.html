@@ -1457,11 +1457,32 @@ function calcCompatibility(entries) {
   const orphans = detectOrphans(entries);
   const allIssues = archetypes.flatMap(a => a.issues);
 
+  // Detect divergent archetype pairs (same as archetype scorer)
+  const COMPLEMENTARY_PAIRS = new Set([
+    'Vulnerable+Strength Scaling','Strength Scaling+Vulnerable',
+    'Exhaust Engine+Strength Scaling','Strength Scaling+Exhaust Engine',
+    'Exhaust Engine+Self-Damage','Self-Damage+Exhaust Engine',
+    'Shiv Burst+Discard Engine','Discard Engine+Shiv Burst',
+    'Stance Dance+Divinity','Divinity+Stance Dance',
+    'Osty / Summon+Doom','Doom+Osty / Summon',
+    'Stars+Forge','Forge+Stars',
+    'Poison+Discard Engine','Discard Engine+Poison',
+  ]);
+  let synergyDivergencePenalty = 0;
+  if (archetypes.length >= 2) {
+    const sortedA = [...archetypes].sort((a,b) => (b.score/b.max)-(a.score/a.max));
+    const pairKey = sortedA[0].name + '+' + sortedA[1].name;
+    if (!COMPLEMENTARY_PAIRS.has(pairKey)) {
+      // Divergent: structurally split focus hurts synergy health directly
+      synergyDivergencePenalty = archetypes.length >= 3 ? 30 : 15;
+    }
+  }
+
   // Start generous — penalize based on orphan count and missing payoffs
   let synergyScore = 85;
-  synergyScore -= orphans.length * 18;       // -18 per orphaned card (harsh)
-  synergyScore -= allIssues.length * 5;      // -5 per density warning
-  // Bonus: exhaust sources without payoffs (or vice versa) was already penalized in archetype
+  synergyScore -= orphans.length * 18;           // -18 per orphaned card
+  synergyScore -= allIssues.length * 5;          // -5 per density warning
+  synergyScore -= synergyDivergencePenalty;      // -15 or -30 for divergent archetypes
   synergyScore = Math.max(5, Math.min(100, synergyScore));
 
   // ── SUB-SCORE 3: WIN CONDITION (20% weight) ───────────────────────────────
