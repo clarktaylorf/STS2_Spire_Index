@@ -299,25 +299,27 @@ async function loadCards(){
 
 // ── KEYWORD CHIPS ─────────────────────────────────────────────
 const KW_SKIP=new Set(['Ancient']); // Ancient is a rarity, not a gameplay keyword
-// Keywords that are exclusive to one class and should never bleed into other class views
-const CLASS_EXCLUSIVE_KW={
-  ironclad:new Set(['Strike','Thorns','Metallicize']),
-  silent:new Set(['Shiv','Sly']),
-  defect:new Set(['Orb','Channel','Focus','Lightning','Frost','Dark','Plasma','Evoke']),
-  regent:new Set(['Stars','Forge','Minion','Sovereign Blade']),
-  necrobinder:new Set(['Osty','Doom','Summon','Soul']),
-};
 function buildKwChips(){
-  // Keywords match exactly what's visible in the grid — no colorless bleed into class views
-  const charCards=activeChar==='all'?cards:cards.filter(c=>c.char===activeChar);
-  // Build a blocklist of keywords that belong to OTHER classes (prevents API data bleed too)
-  const blocked=new Set();
-  if(activeChar!=='all'&&activeChar!=='colorless'){
-    Object.entries(CLASS_EXCLUSIVE_KW).forEach(([cls,kws])=>{
-      if(cls!==activeChar)kws.forEach(k=>blocked.add(k));
-    });
-  }
-  const allKws=[...new Set(charCards.flatMap(c=>(c.kw||[]).filter(k=>!KW_SKIP.has(k)&&!blocked.has(k))))].sort();
+  // Build chips only from keywords that actually appear on cards visible under current filters.
+  // This is data-driven — no hardcoded class maps, works correctly with both static and live API data.
+  const seen=new Set();
+  const pool=cards.filter(c=>{
+    // Dedup
+    const k=c.name+'|'+c.char;
+    if(seen.has(k))return false;
+    seen.add(k);
+    // Apply same filters as render() except keyword filter (to avoid circular dependency)
+    if(activeChar!=='all'&&c.char!==activeChar)return false;
+    if(activeType!=='all'&&c.type!==activeType)return false;
+    if(activeRarity!=='all'&&c.rarity!==activeRarity)return false;
+    if(activeCost!=='all'){
+      if(activeCost==='X'){if(!isXCostCard(c))return false;}
+      else if(activeCost==='4+'){if(isXCostCard(c)||typeof c.cost!=='number'||c.cost<4)return false;}
+      else{if(isXCostCard(c)||c.cost!==parseInt(activeCost))return false;}
+    }
+    return true;
+  });
+  const allKws=[...new Set(pool.flatMap(c=>(c.kw||[]).filter(k=>!KW_SKIP.has(k))))].sort();
   const container=document.getElementById('kwChips');
   container.innerHTML=allKws.map(k=>
     `<button class="kw-chip${activeKws.has(k)?' active':''}" onclick="toggleKw('${k}')">${k}</button>`

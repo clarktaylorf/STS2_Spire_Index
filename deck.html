@@ -474,24 +474,25 @@ document.getElementById('deckResetBtn').addEventListener('click', () => {
 
 // ─── KEYWORD CHIPS ────────────────────────────────────────────────────────────
 const _KW_SKIP = new Set(['Ancient']);
-const _CLASS_EXCLUSIVE_KW = {
-  ironclad: new Set(['Strike','Thorns','Metallicize']),
-  silent: new Set(['Shiv','Sly']),
-  defect: new Set(['Orb','Channel','Focus','Lightning','Frost','Dark','Plasma','Evoke']),
-  regent: new Set(['Stars','Forge','Minion','Sovereign Blade']),
-  necrobinder: new Set(['Osty','Doom','Summon','Soul']),
-};
 function buildKwChips() {
-  // Keyword pool matches what's visible in the grid — no colorless bleed into class views
-  const charCards = _activeChar === 'all' ? _cards : _cards.filter(c => c.char === _activeChar);
-  // Block keywords that belong to OTHER classes (double protection against API data bleed)
-  const _blocked = new Set();
-  if (_activeChar !== 'all' && _activeChar !== 'colorless') {
-    Object.entries(_CLASS_EXCLUSIVE_KW).forEach(([cls, kws]) => {
-      if (cls !== _activeChar) kws.forEach(k => _blocked.add(k));
-    });
-  }
-  const allKws = [...new Set(charCards.flatMap(c => (c.kw || []).filter(k => !_KW_SKIP.has(k) && !_blocked.has(k))))].sort();
+  // Data-driven: only show keywords that appear on cards visible under current filters.
+  // No hardcoded class maps — handles both static and live API data automatically.
+  const seen = new Set();
+  const pool = _cards.filter(c => {
+    const k = c.name + '|' + c.char;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    if (_activeChar !== 'all' && c.char !== _activeChar) return false;
+    if (_activeType !== 'all' && c.type !== _activeType) return false;
+    if (_activeRar && c.rarity !== _activeRar) return false;
+    if (_activeCost !== 'all') {
+      if (_activeCost === 'X') { if (!_isXCost(c)) return false; }
+      else if (_activeCost === '4+') { if (_isXCost(c) || typeof c.cost !== 'number' || c.cost < 4) return false; }
+      else { if (_isXCost(c) || c.cost !== parseInt(_activeCost)) return false; }
+    }
+    return true;
+  });
+  const allKws = [...new Set(pool.flatMap(c => (c.kw || []).filter(k => !_KW_SKIP.has(k))))].sort();
   const bar = document.getElementById('kwBar');
   if (!allKws.length) return;
   bar.style.display = 'flex';
