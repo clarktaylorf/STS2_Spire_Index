@@ -267,17 +267,36 @@ let dataSource='static';
 function isXCostCard(c){return c.cost==='X'||(c.cost===0&&/\bX\b/.test(c.desc||''));}
 function getCostStr(c,desc){if(c===null||c===undefined)return'--';if(c==='X')return'X';if(c===0&&/\bX\b/.test(desc||''))return'X';return String(c);}
 
+// Keywords that exclusively belong to one class — strip them from any card that isn't that class.
+// This fixes live API data quality issues where cross-class keyword tags bleed in.
+const KW_CLASS_OWNER={
+  Stars:'regent', Forge:'regent', 'Sovereign Blade':'regent', Minion:'regent',
+  Osty:'necrobinder', Doom:'necrobinder', Summon:'necrobinder', Soul:'necrobinder',
+  Shiv:'silent', Sly:'silent',
+  Orb:'defect', Focus:'defect', Evoke:'defect', Lightning:'defect', Frost:'defect', Dark:'defect', Plasma:'defect',
+};
+function cleanKws(card){
+  if(!card.kw||!card.kw.length)return card;
+  const cleaned=card.kw.filter(kw=>{
+    const owner=KW_CLASS_OWNER[kw];
+    // If this keyword has an owner class, only keep it on that class's cards (colorless may reference them legitimately)
+    if(owner&&card.char!==owner&&card.char!=='colorless'&&card.char!=='token')return false;
+    return true;
+  });
+  return cleaned.length===card.kw.length?card:{...card,kw:cleaned};
+}
+
 // ── LOAD DATA ─────────────────────────────────────────────────
 async function loadCards(){
   const grid=document.getElementById('grid');
   grid.innerHTML='<div class="loading-state"><div class="spinner"></div>Loading card data…</div>';
-  
+
   try {
     const resp = await fetch('/api/cards');
     if(resp.ok){
       const data = await resp.json();
       if(data.cards && data.cards.length > 100){
-        cards = data.cards;
+        cards = data.cards.map(cleanKws);
         dataSource = 'live';
         document.getElementById('dataSource').textContent = `Live data · ${data.version}`;
         document.getElementById('dataSource').style.display = 'inline';
@@ -289,7 +308,7 @@ async function loadCards(){
     }
   } catch(e) {
     console.warn('API failed, using static data:', e.message);
-    cards = STATIC_CARDS;
+    cards = STATIC_CARDS.map(cleanKws);
     dataSource = 'static';
     document.getElementById('dataSource').style.display = 'none';
   }

@@ -386,6 +386,23 @@ const _deck = {};           // name -> { card, count }
 function _isXCost(card){return card.cost==='X'||(card.cost===0&&/\bX\b/.test(card.desc||''));}
 function _costStr(card){const c=card.cost;if(c===null||c===undefined)return'?';if(c==='X')return'X';if(c===0&&/\bX\b/.test(card.desc||''))return'X';return String(c);}
 
+// Strip keywords that belong exclusively to another class — fixes live API data bleed
+const _KW_CLASS_OWNER={
+  Stars:'regent', Forge:'regent', 'Sovereign Blade':'regent', Minion:'regent',
+  Osty:'necrobinder', Doom:'necrobinder', Summon:'necrobinder', Soul:'necrobinder',
+  Shiv:'silent', Sly:'silent',
+  Orb:'defect', Focus:'defect', Evoke:'defect', Lightning:'defect', Frost:'defect', Dark:'defect', Plasma:'defect',
+};
+function _cleanKws(card){
+  if(!card.kw||!card.kw.length)return card;
+  const cleaned=card.kw.filter(kw=>{
+    const owner=_KW_CLASS_OWNER[kw];
+    if(owner&&card.char!==owner&&card.char!=='colorless'&&card.char!=='token')return false;
+    return true;
+  });
+  return cleaned.length===card.kw.length?card:{...card,kw:cleaned};
+}
+
 const CHAR_HEX = {
   ironclad:'#e06050', silent:'#50c090', defect:'#60a0e0',
   regent:'#c070e0', necrobinder:'#70b060', colorless:'#a09898'
@@ -397,7 +414,7 @@ async function init() {
     const res = await fetch('/api/cards');
     if (!res.ok) throw new Error('API ' + res.status);
     const data = await res.json();
-    _cards = (data.cards || []).filter(c => c.type !== 'Status' && c.type !== 'Curse');
+    _cards = (data.cards || []).filter(c => c.type !== 'Status' && c.type !== 'Curse').map(_cleanKws);
     buildKwChips();
     renderGrid();
     tryLoadHash();
