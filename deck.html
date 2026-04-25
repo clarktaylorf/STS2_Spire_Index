@@ -169,6 +169,39 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .compat-orphans{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
 .orphan-row{font-size:12px;color:#e08060;display:flex;align-items:center;gap:5px;}
 .orphan-row::before{content:'⚠';font-size:11px;}
+/* Metric tooltips */
+.metric{position:relative;}
+.metric-tip{position:absolute;top:8px;right:9px;width:15px;height:15px;border-radius:50%;background:#1e1a2e;border:1px solid var(--border2);color:var(--text3);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:default;line-height:1;}
+.metric-tip::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:calc(100% + 8px);
+  right:0;
+  background:#1c1828;
+  border:1px solid var(--border2);
+  color:#c4b89a;
+  font-family:'DM Sans',sans-serif;
+  font-size:11.5px;
+  font-weight:400;
+  font-style:normal;
+  text-transform:none;
+  letter-spacing:0;
+  padding:10px 13px;
+  border-radius:8px;
+  width:230px;
+  line-height:1.55;
+  z-index:200;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.15s;
+  box-shadow:0 6px 24px rgba(0,0,0,0.5);
+  white-space:normal;
+}
+.metric-tip:hover::after{opacity:1;}
+.metric.wide .metric-tip::after{right:0;bottom:calc(100% + 8px);}
+/* Win condition score bar */
+.wincon-bar-bg{height:5px;background:#1a1628;border-radius:3px;overflow:hidden;margin:8px 0 4px;}
+.wincon-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease,background 0.4s;}
 </style>
 </head>
 <body>
@@ -237,7 +270,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
             <button class="deck-btn clear" id="clearBtn">Clear</button>
           </div>
         </div>
-        <div class="deck-meta"><strong id="deckTotal">0</strong> cards · max 3 copies per card</div>
+        <div class="deck-meta"><strong id="deckTotal">0</strong> cards</div>
       </div>
 
       <!-- 5-METRIC DASHBOARD -->
@@ -245,28 +278,33 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
         <!-- Row 1: All 4 metrics side by side -->
         <div class="metric-row">
           <div class="metric">
+            <div class="metric-tip" data-tip="Average mana cost across all cards. Below 1.0 = fast deck that chains multiple plays per turn. Above 1.8 risks getting energy-locked on key turns.">?</div>
             <div class="metric-label">Avg Cost</div>
             <div class="metric-val" id="mAvgCost">—</div>
             <div class="metric-sub" id="mCostTag"></div>
           </div>
           <div class="metric">
+            <div class="metric-tip" data-tip="Attack / Skill / Power breakdown. Most strong decks are attack-heavy (50%+). Power-heavy decks need a long game plan. No skills often means weak defensive options.">?</div>
             <div class="metric-label">Type Ratio</div>
             <div class="ratio-pills" id="mTypeRatio"><span style="color:var(--text3);font-size:12px;">—</span></div>
             <div class="metric-sub" id="mTypeBreak"></div>
           </div>
           <div class="metric">
+            <div class="metric-tip" data-tip="How well your cards work together. Detects archetypes (Exhaust, Poison, Vulnerable…), flags orphaned pieces with no enablers, and measures overall build coherence. 80%+ = genuinely tight game plan. Intentionally hard to max.">?</div>
             <div class="metric-label">Compatibility</div>
             <div class="metric-val" id="mCompat">—</div>
             <div class="metric-sub" id="mCompatSub"></div>
           </div>
           <div class="metric">
-            <div class="metric-label">Scaling</div>
-            <div class="metric-val" id="mScaling">—</div>
-            <div class="metric-sub" id="mScalingSub"></div>
+            <div class="metric-tip" data-tip="Does this deck have a clear way to close out fights? Checks for scaling cards (Demon Form, Limit Break, Noxious Fumes), archetype finishers (Catalyst, Body Slam, Shiv burst), and redundancy. A deck with no win condition will be out-scaled by Act 3 bosses.">?</div>
+            <div class="metric-label">Win Condition</div>
+            <div class="metric-val" id="mWinCon">—</div>
+            <div class="metric-sub" id="mWinConSub"></div>
           </div>
         </div>
         <!-- Row 2: Consistency (full width) -->
         <div class="metric wide">
+          <div class="metric-tip" data-tip="How reliably you'll see key cards each combat. Factors in deck size, draw cards, 0-cost cards, Innate, and Retain keywords. Tight decks (10–16 cards) with draw consistently access their win conditions. Bloated decks are unpredictable.">?</div>
           <div class="metric-label">Consistency Score</div>
           <div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
             <div style="flex:1;">
@@ -286,7 +324,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
       <div class="deck-list" id="deckList">
         <div class="deck-empty">
           <div class="deck-empty-icon">🃏</div>
-          <p>Click any card to add it to your deck.<br>Up to 3 copies per card.</p>
+          <p>Click any card to add it to your deck.</p>
         </div>
       </div>
     </div>
@@ -530,7 +568,6 @@ function addCard(name) {
   const card = _cards.find(c => c.name === name);
   if (!card) return;
   if (!_deck[name]) _deck[name] = { card, count: 0 };
-  if (_deck[name].count >= 3) return;
   _deck[name].count++;
   refreshBadge(name);
   renderDeck();
@@ -649,7 +686,6 @@ function renderDeck() {
       const plus = document.createElement('button');
       plus.className = 'ctrl-btn';
       plus.textContent = '+';
-      if (count >= 3) plus.disabled = true;
       plus.addEventListener('click', () => adjustCount(card.name, 1));
 
       ctrl.appendChild(minus);
@@ -698,8 +734,8 @@ function renderMetrics() {
     document.getElementById('mTypeBreak').textContent = '';
     document.getElementById('mCompat').textContent = '—';
     document.getElementById('mCompatSub').textContent = '';
-    document.getElementById('mScaling').textContent = '—';
-    document.getElementById('mScalingSub').textContent = '';
+    document.getElementById('mWinCon').textContent = '—';
+    document.getElementById('mWinConSub').textContent = '';
     document.getElementById('consBar').style.width = '0%';
     document.getElementById('consPct').textContent = '—';
     document.getElementById('consPct').style.color = 'var(--text3)';
@@ -767,24 +803,20 @@ function renderMetrics() {
     ).join('');
   }
 
-  // ── 4. SCALING CARDS ──
-  const scalingCards = entries.filter(e => cardIsScaling(e.card));
-  const scalingCount = scalingCards.reduce((s,e) => s+e.count, 0);
-  document.getElementById('mScaling').textContent = scalingCount;
-  let scaleSub = '';
-  if (scalingCount === 0) scaleSub = 'No win condition found';
-  else if (scalingCount === 1) scaleSub = 'Minimal — consider more';
-  else if (scalingCount <= 3) scaleSub = 'Good win condition';
-  else scaleSub = 'Well-supplied scaling';
-  document.getElementById('mScalingSub').textContent = scaleSub;
+  // ── 4. WIN CONDITION ──
+  const { score: wcScore, label: wcLabel, scalingNames } = calcWinCondition(entries, archetypes);
+  const wcEl  = document.getElementById('mWinCon');
+  const wcSub = document.getElementById('mWinConSub');
+  wcEl.textContent = wcScore + '%';
+  wcEl.style.color = wcScore >= 70 ? '#88cc70' : wcScore >= 45 ? '#d4a84b' : '#e06050';
+  wcSub.textContent = wcLabel;
 
-  // Win con list (unique scaling card names)
-  const wcNames = [...new Set(scalingCards.map(e => e.card.name))];
-  const wcEl = document.getElementById('winConList');
-  if (wcNames.length) {
-    wcEl.innerHTML = wcNames.map(n => `<span class="wc-tag">↑ ${n}</span>`).join('');
+  // Show scaling card names in the consistency panel
+  const winConListEl = document.getElementById('winConList');
+  if (scalingNames.length) {
+    winConListEl.innerHTML = scalingNames.map(n => `<span class="wc-tag">↑ ${n}</span>`).join('');
   } else {
-    wcEl.innerHTML = '';
+    winConListEl.innerHTML = '';
   }
 
   // ── 5. CONSISTENCY SCORE ──
@@ -1286,6 +1318,40 @@ function detectOrphans(entries) {
   return orphans;
 }
 
+// ─── WIN CONDITION CALCULATOR ────────────────────────────────────────────────
+function calcWinCondition(entries, archetypes) {
+  const scalingCards = entries.filter(e => cardIsScaling(e.card));
+  const scalingCount = scalingCards.reduce((s, e) => s + e.count, 0);
+  const scalingNames = [...new Set(scalingCards.map(e => e.card.name))];
+
+  // An archetype counts as a win con if it's developed enough (≥45% of its max)
+  const archetypeWinCon = (archetypes || []).some(a =>
+    ['Exhaust Engine','Poison','Strength Scaling','Barricade','Shiv Burst',
+     'Stance Dance','Divinity','Doom','Forge','Orb Build','Vulnerable'].includes(a.name) &&
+    (a.score / a.max) >= 0.45
+  );
+
+  let score, label;
+
+  if (scalingCount === 0 && !archetypeWinCon) {
+    score = 8;   label = 'No win condition';
+  } else if (scalingCount === 0 && archetypeWinCon) {
+    score = 50;  label = 'Archetype-based';
+  } else if (scalingCount === 1 && !archetypeWinCon) {
+    score = 42;  label = 'Fragile — one piece';
+  } else if (scalingCount === 1 && archetypeWinCon) {
+    score = 68;  label = 'Developing';
+  } else if (scalingCount === 2) {
+    score = archetypeWinCon ? 82 : 70;
+    label = 'Solid';
+  } else {
+    score = Math.min(94, 82 + (scalingCount - 2) * 4);
+    label = scalingCount >= 4 ? 'Dominant' : 'Strong';
+  }
+
+  return { score, label, scalingNames };
+}
+
 // ─── MAIN COMPATIBILITY CALCULATOR ───────────────────────────────────────────
 function calcCompatibility(entries) {
   if (!entries.length) return { score: 0, orphans: [], archetypes: [], issues: [] };
@@ -1421,7 +1487,7 @@ function tryLoadHash() {
       const idx = pair.lastIndexOf(':');
       if (idx < 0) return;
       const name = pair.slice(0, idx);
-      const count = Math.min(3, parseInt(pair.slice(idx+1)) || 1);
+      const count = Math.max(1, parseInt(pair.slice(idx+1)) || 1);
       const card = _cards.find(c => c.name === name);
       if (card) _deck[name] = { card, count };
     });
