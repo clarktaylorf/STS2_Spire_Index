@@ -107,7 +107,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 /* Stats grid — 4 metrics in one row + full-width consistency */
 .metrics{flex-shrink:0;padding:14px 20px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
 .metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;}
 .metric.wide{grid-column:span 4;}
 .metric-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
 .metric-val{font-family:'Cinzel',serif;font-size:26px;font-weight:700;color:#efe0c0;line-height:1;}
@@ -815,10 +815,29 @@ function renderMetrics() {
   compatEl.textContent = compatScore + '%';
   compatEl.style.color = compatScore >= 80 ? '#88cc70' : compatScore >= 60 ? '#d4a84b' : '#e06050';
 
-  // Sub-label: show detected archetype names
+  // Sub-label: show detected archetype names, flag divergent combos
   if (archetypes.length > 0) {
     const sorted = [...archetypes].sort((a,b) => (b.score/b.max)-(a.score/a.max));
-    compatSub.textContent = sorted.slice(0,2).map(a => a.name).join(' + ');
+    const top2Names = sorted.slice(0,2).map(a => a.name);
+    if (archetypes.length >= 2) {
+      const COMPLEMENTARY_PAIRS = new Set([
+        'Vulnerable+Strength Scaling','Strength Scaling+Vulnerable',
+        'Exhaust Engine+Strength Scaling','Strength Scaling+Exhaust Engine',
+        'Exhaust Engine+Self-Damage','Self-Damage+Exhaust Engine',
+        'Shiv Burst+Discard Engine','Discard Engine+Shiv Burst',
+        'Stance Dance+Divinity','Divinity+Stance Dance',
+        'Osty / Summon+Doom','Doom+Osty / Summon',
+        'Stars+Forge','Forge+Stars',
+        'Poison+Discard Engine','Discard Engine+Poison',
+      ]);
+      const pairKey = top2Names[0] + '+' + top2Names[1];
+      const isDivergent = !COMPLEMENTARY_PAIRS.has(pairKey);
+      compatSub.textContent = isDivergent
+        ? top2Names.join(' vs ') + ' — split focus'
+        : top2Names.join(' + ');
+    } else {
+      compatSub.textContent = top2Names[0];
+    }
   } else {
     compatSub.textContent = total < 5 ? 'Add more cards' : 'No clear archetype';
   }
@@ -1407,8 +1426,30 @@ function calcCompatibility(entries) {
     const sorted = [...archetypes].sort((a, b) => (b.score/b.max) - (a.score/a.max));
     const primary = sorted[0];
     const primaryNorm = Math.round((primary.score / primary.max) * 100);
-    // Secondary archetype: complementary gets a bonus, competing gets a penalty
-    const secondaryPenalty = archetypes.length >= 3 ? 15 : archetypes.length === 2 ? 0 : 0;
+
+    // Archetype pairs that COMPLEMENT each other — no penalty for mixing these
+    const COMPLEMENTARY_PAIRS = new Set([
+      'Vulnerable+Strength Scaling', 'Strength Scaling+Vulnerable',
+      'Exhaust Engine+Strength Scaling', 'Strength Scaling+Exhaust Engine',
+      'Exhaust Engine+Self-Damage', 'Self-Damage+Exhaust Engine',
+      'Shiv Burst+Discard Engine', 'Discard Engine+Shiv Burst',
+      'Stance Dance+Divinity', 'Divinity+Stance Dance',
+      'Osty / Summon+Doom', 'Doom+Osty / Summon',
+      'Stars+Forge', 'Forge+Stars',
+      'Poison+Discard Engine', 'Discard Engine+Poison',
+    ]);
+
+    let secondaryPenalty = 0;
+    if (archetypes.length >= 2) {
+      const pairKey = sorted[0].name + '+' + sorted[1].name;
+      const isDivergent = !COMPLEMENTARY_PAIRS.has(pairKey);
+      if (archetypes.length >= 3) {
+        secondaryPenalty = isDivergent ? 28 : 12;
+      } else {
+        // 2 archetypes: complementary = no penalty, divergent = significant hit
+        secondaryPenalty = isDivergent ? 18 : 0;
+      }
+    }
     archetypeScore = Math.max(0, Math.min(100, primaryNorm - secondaryPenalty));
   }
 
