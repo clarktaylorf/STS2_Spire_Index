@@ -912,6 +912,18 @@ function isDarkSource(card) {
   return _kw(card).includes('Dark') || _has(card, /channel.*dark|dark orb/);
 }
 
+// Vulnerable (universal — any character)
+function isVulnerableSource(card) {
+  return _kw(card).includes('Vulnerable') ||
+    _has(card, /apply \d+ vulnerable|vulnerable to (all|an enemy|enemies)|inflict.*vulnerable/);
+}
+function isVulnerableHeavyAttack(card) {
+  // High-damage attacks that meaningfully benefit from the 50% damage amp
+  return card.type === 'Attack' && (
+    (typeof card.cost === 'number' && card.cost >= 1) ||
+    _has(card, /deal \d{2,}|bash|bully|break|cleave|whirlwind|heavy blade|carnage/));
+}
+
 // Stance dance (Watcher)
 function isCalmEntry(card) {
   return _has(card, /enter calm|inner peace|tranquil|empty (body|mind)|vigilance|perseverance/);
@@ -1064,6 +1076,35 @@ function detectArchetypes(flat, entries) {
       issues.push('Barricade is here — add Body Slam or Juggernaut to capitalize');
     }
     results.push({ name: 'Barricade', score: Math.max(0, pts), max: 40, issues });
+  }
+
+  // ── VULNERABLE (any character) ───────────────────────────────────────────
+  // Vulnerable causes enemies to take 50% more damage — it's a universal damage amp.
+  // Unlike Poison, there's no single "payoff card" — the payoff IS your attack suite.
+  // Score based on: how many Vulnerable sources + how many attacks capitalize on it.
+  const vulnSources = uCount(isVulnerableSource);
+  const heavyAttacks = uCount(isVulnerableHeavyAttack);
+  const totalAttacks = uCount(c => c.type === 'Attack');
+
+  if (vulnSources >= 1) {
+    const issues = [];
+    let pts = 0;
+    // Sources: each Vulnerable-applying card is valuable
+    pts += Math.min(25, vulnSources * 10);
+    // Payoff: attacks benefit — more heavy attacks = more value extracted from Vulnerable
+    pts += Math.min(20, heavyAttacks * 5);
+    // Density bonus: 2+ sources means Vulnerable is reliably up every fight
+    if (vulnSources >= 2) pts += 8;
+    if (vulnSources >= 3) pts += 5;
+    // Penalty: Vulnerable sources but almost no attacks to follow up
+    if (totalAttacks < 2 && vulnSources >= 2) {
+      pts -= 15;
+      issues.push('Vulnerable applied but few attacks to capitalize on the damage bonus');
+    }
+    if (vulnSources === 1) {
+      issues.push('One Vulnerable source — add another (Bash, Bully, Tremble) for reliability');
+    }
+    results.push({ name: 'Vulnerable', score: Math.max(0, pts), max: 58, issues });
   }
 
   // ── SHIV BURST (Silent) ───────────────────────────────────────────────────
@@ -1287,7 +1328,7 @@ function calcCompatibility(entries) {
   // Does the deck have any archetype with a clear win condition baked in?
   const hasWinConArchetype = archetypes.some(a =>
     ['Exhaust Engine','Poison','Strength Scaling','Barricade','Shiv Burst',
-     'Stance Dance','Divinity','Doom','Forge','Orb Build'].includes(a.name) &&
+     'Stance Dance','Divinity','Doom','Forge','Orb Build','Vulnerable'].includes(a.name) &&
     (a.score / a.max) >= 0.45
   );
 
