@@ -70,7 +70,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .ctile-name{font-family:'Playfair Display',serif;font-size:11.5px;font-weight:500;color:#e8d8b8;line-height:1.2;flex:1;}
 .ctile-cost{min-width:19px;height:19px;border-radius:10px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0;padding:0 3px;}
 .ctile-badges{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:4px;}
-.ctile-desc{font-size:10px;line-height:1.45;color:var(--text2);font-style:italic;}
+.ctile-desc{font-size:10px;line-height:1.45;color:var(--text2);font-style:italic;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .badge{font-size:8px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 5px;border-radius:8px;}
 .b-attack{background:#3a1212;color:#e08080;border:1px solid #5a1e1e;}
 .b-skill{background:#122035;color:#80b0e8;border:1px solid #1e3a5a;}
@@ -90,7 +90,16 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .ctile-in-deck.visible{opacity:1;transform:scale(1);}
 
 /* ── RIGHT: DECK PANEL ── */
-.deck-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;border-left:2px solid var(--border2);background:var(--bg4);}
+.deck-panel{display:flex;flex-direction:column;overflow:hidden;border-left:2px solid var(--border2);background:var(--bg4);width:340px;min-width:200px;max-width:600px;flex-shrink:0;transition:width 0.2s ease;}
+.deck-panel.collapsed{width:36px;min-width:36px;}
+.deck-panel.collapsed .deck-panel-inner{display:none;}
+/* Resize handle */
+.deck-resize{width:5px;position:absolute;top:0;bottom:0;left:0;cursor:col-resize;z-index:10;background:transparent;}
+.deck-resize:hover,.deck-resize.dragging{background:rgba(212,168,75,0.2);}
+/* Collapse toggle */
+.deck-collapse-btn{width:36px;height:36px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:color 0.15s;flex-shrink:0;}
+.deck-collapse-btn:hover{color:var(--gold);}
+.deck-panel.collapsed .deck-collapse-btn{width:36px;height:100%;align-items:flex-start;padding-top:14px;}
 
 /* Panel header */
 .deck-hd{flex-shrink:0;padding:14px 20px 12px;border-bottom:1px solid var(--border);}
@@ -292,7 +301,10 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
     </div>
 
     <!-- RIGHT: DECK PANEL -->
-    <div class="deck-panel">
+    <div class="deck-panel" id="deckPanel" style="position:relative;">
+      <div class="deck-resize" id="deckResize"></div>
+      <button class="deck-collapse-btn" id="deckCollapseBtn" title="Collapse panel">◀</button>
+      <div class="deck-panel-inner" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0;">
       <div class="deck-hd">
         <div class="deck-hd-row">
           <div class="deck-title">⚔ My Deck</div>
@@ -368,7 +380,8 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
         </div>
         <div class="relic-suggest-panel" id="relicSuggestPanel" style="display:none"></div>
       </div>
-    </div>
+      </div><!-- /deck-panel-inner -->
+    </div><!-- /deck-panel -->
 
   </div><!-- /workspace -->
 </div><!-- /app -->
@@ -1940,6 +1953,53 @@ function renderRelicSuggestions() {
     panel.appendChild(tile);
   });
 }
+
+// ─── DECK PANEL: COLLAPSE + RESIZE ───────────────────────────────────────────
+(function(){
+  const panel = document.getElementById('deckPanel');
+  const collapseBtn = document.getElementById('deckCollapseBtn');
+  const resizeHandle = document.getElementById('deckResize');
+
+  // ── Collapse toggle ──
+  let collapsed = false;
+  collapseBtn.addEventListener('click', () => {
+    collapsed = !collapsed;
+    panel.classList.toggle('collapsed', collapsed);
+    collapseBtn.textContent = collapsed ? '▶' : '◀';
+    collapseBtn.title = collapsed ? 'Expand panel' : 'Collapse panel';
+  });
+
+  // ── Drag to resize ──
+  let dragging = false;
+  let startX = 0;
+  let startW = 0;
+
+  resizeHandle.addEventListener('mousedown', e => {
+    if (collapsed) return;
+    dragging = true;
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    resizeHandle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const delta = startX - e.clientX; // dragging left edge: move left = wider
+    const newW = Math.min(600, Math.max(200, startW + delta));
+    panel.style.width = newW + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    resizeHandle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
 init();
