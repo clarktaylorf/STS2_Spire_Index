@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpireIndex — Patch Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0c18;--bg2:#13101e;--bg3:#0f0d16;--bg4:#111020;
+  --border:#1e1a2c;--border2:#2e2545;
+  --text:#c4b89a;--text2:#7a6a8a;--text3:#4a3a6a;
+  --gold:#d4a84b;--purple:#8060c0;
+  --green:#88cc70;--red:#e06050;--blue:#80b0e8;--orange:#e8a050;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glory/glory_03_a.png') center center / cover no-repeat;opacity:0.05;filter:saturate(0.6);pointer-events:none;z-index:0;}
+body>*{position:relative;z-index:1;}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 16px;background:rgba(14,12,24,0.98);border-bottom:1px solid rgba(212,168,75,0.2);position:sticky;top:0;z-index:100;}
+.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0;}
+.topbar-logo img{width:30px;height:30px;image-rendering:pixelated;opacity:0.85;}
+.topbar-logo span{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#c9a04a;letter-spacing:2px;}
+.topbar-nav{display:flex;gap:18px;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a:hover{color:var(--text);}
+.topbar-nav a.active{color:var(--gold);}
+
+/* PAGE HEADER */
+.page-header{padding:40px 48px 32px;border-bottom:1px solid var(--border);background:linear-gradient(to bottom,rgba(80,40,160,0.06),transparent);}
+.page-header-inner{max-width:960px;margin:0 auto;}
+.page-eyebrow{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:rgba(212,168,75,0.6);margin-bottom:10px;}
+.page-title{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#efe0c0;letter-spacing:1px;display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--green);}50%{opacity:0.6;box-shadow:0 0 16px var(--green);}}
+.page-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;}
+.page-sub a{color:var(--gold);text-decoration:none;}
+.page-sub a:hover{color:#efe0c0;}
+.meta-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.meta-tag{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:4px;}
+.tag-balance{background:rgba(212,168,75,0.1);color:var(--gold);border:1px solid rgba(212,168,75,0.2);}
+.tag-hotfix{background:rgba(224,96,80,0.1);color:#e08060;border:1px solid rgba(224,96,80,0.2);}
+.tag-content{background:rgba(128,176,232,0.1);color:var(--blue);border:1px solid rgba(128,176,232,0.2);}
+.tag-update{background:rgba(136,204,112,0.1);color:var(--green);border:1px solid rgba(136,204,112,0.2);}
+.tag-other{background:rgba(74,58,106,0.3);color:var(--text2);border:1px solid var(--border2);}
+#fetchStatus{font-size:11px;color:var(--text3);}
+
+/* FILTER BAR */
+.filter-bar{padding:12px 48px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.filter-bar-inner{max-width:960px;width:100%;margin:0 auto;display:flex;align-items:center;gap:8px;}
+.flabel{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);flex-shrink:0;}
+.fbtn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.fbtn:hover{border-color:#6040a0;color:var(--text);}
+.fbtn.active{background:#1e1608;border-color:rgba(212,168,75,0.5);color:#d4a84b;}
+#patchCount{margin-left:auto;font-size:11px;color:var(--text3);}
+
+/* TIMELINE */
+.timeline{max-width:960px;margin:0 auto;padding:32px 48px 80px;}
+.patch-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;transition:border-color 0.15s;}
+.patch-card:hover{border-color:var(--border2);}
+.patch-card-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:14px;cursor:pointer;user-select:none;}
+.patch-card-header:hover .patch-toggle{color:var(--text);}
+.patch-left{flex:1;min-width:0;}
+.patch-date{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.patch-title{font-family:'Cinzel',serif;font-size:15px;font-weight:600;color:#efe0c0;line-height:1.3;}
+.patch-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.patch-right{display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:2px;}
+.patch-steam-link{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);text-decoration:none;padding:4px 10px;border-radius:4px;border:1px solid var(--border2);transition:all 0.15s;white-space:nowrap;}
+.patch-steam-link:hover{border-color:var(--gold);color:var(--gold);}
+.patch-toggle{font-size:16px;color:var(--text3);transition:transform 0.2s,color 0.15s;flex-shrink:0;}
+.patch-toggle.open{transform:rotate(180deg);}
+
+/* PATCH CONTENT */
+.patch-body{padding:20px 22px 22px;display:none;}
+.patch-body.open{display:block;}
+.patch-content{font-size:13px;line-height:1.7;color:var(--text2);}
+/* Headings within patch notes */
+.patch-content h1,.patch-content h2{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#efe0c0;letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.patch-content h1:first-child,.patch-content h2:first-child{margin-top:0;}
+.patch-content h3{font-size:12px;font-weight:600;color:#c4a8c0;margin:14px 0 6px;}
+.patch-content p{margin-bottom:8px;}
+.patch-content ul,.patch-content ol{padding-left:0;list-style:none;display:flex;flex-direction:column;gap:3px;margin-bottom:12px;}
+.patch-content li{padding:5px 10px 5px 14px;border-radius:4px;font-size:12px;line-height:1.55;color:var(--text2);border-left:2px solid var(--border2);background:rgba(255,255,255,0.015);}
+/* Buff/nerf colorization applied by JS */
+.patch-content li.is-buff{border-left-color:var(--green);color:#a8d890;background:rgba(136,204,112,0.04);}
+.patch-content li.is-nerf{border-left-color:var(--red);color:#d0907a;background:rgba(224,96,80,0.04);}
+.patch-content li.is-new{border-left-color:var(--gold);color:#d4c080;background:rgba(212,168,75,0.04);}
+.patch-content li.is-fix{border-left-color:var(--blue);color:#90b0d8;background:rgba(128,176,232,0.04);}
+.patch-content strong,.patch-content b{color:#c4b89a;font-weight:600;}
+.patch-content em,.patch-content i{color:var(--text2);font-style:italic;}
+.patch-content a{color:var(--gold);text-decoration:none;}
+.patch-content a:hover{color:#efe0c0;}
+.patch-content img{display:none;}/* Hide images — keep notes clean */
+/* Change stat pills within content */
+.change-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.change-pill{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:10px;}
+.cp-buff{background:rgba(136,204,112,0.12);color:var(--green);border:1px solid rgba(136,204,112,0.2);}
+.cp-nerf{background:rgba(224,96,80,0.12);color:#e08060;border:1px solid rgba(224,96,80,0.2);}
+.cp-fix{background:rgba(128,176,232,0.12);color:var(--blue);border:1px solid rgba(128,176,232,0.2);}
+.cp-new{background:rgba(212,168,75,0.12);color:var(--gold);border:1px solid rgba(212,168,75,0.2);}
+
+/* LOADING / ERROR */
+.loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text3);}
+.spinner{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-wrap{text-align:center;padding:60px 20px;color:var(--text3);}
+.error-wrap .err-icon{font-size:32px;margin-bottom:12px;opacity:0.5;}
+.error-wrap p{font-size:13px;font-style:italic;line-height:1.7;}
+.error-wrap a{color:var(--gold);}
+
+footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
+footer a{color:var(--gold);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <img src="images/icon_1024.png" alt="SpireIndex">
+    <span>SpireIndex</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="cards.html">Card Library</a>
+    <a href="relics.html">Relics</a>
+    <a href="deck.html">Deck Builder</a>
+    <a href="patches.html" class="active">Patches</a>
+    <a href="#">Run Advisor</a>
+  </nav>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="page-eyebrow">Slay the Spire 2 · Early Access</div>
+    <div class="page-title">
+      <div class="live-dot"></div>
+      Patch Tracker
+    </div>
+    <div class="page-sub">
+      Live patch notes pulled directly from <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Steam</a> — updated automatically whenever MegaCrit ships a patch. Buffs <span style="color:var(--green)">■</span> nerfs <span style="color:var(--red)">■</span> and new content <span style="color:var(--gold)">■</span> are highlighted automatically.
+    </div>
+    <div class="meta-bar">
+      <span id="fetchStatus">Loading patch notes…</span>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="filter-bar-inner">
+    <span class="flabel">Filter</span>
+    <button class="fbtn active" data-filter="all">All</button>
+    <button class="fbtn" data-filter="balance">Balance</button>
+    <button class="fbtn" data-filter="hotfix">Hotfix</button>
+    <button class="fbtn" data-filter="content">Content</button>
+    <span id="patchCount"></span>
+  </div>
+</div>
+
+<!-- TIMELINE -->
+<div class="timeline" id="timeline">
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    Fetching patch notes from Steam…
+  </div>
+</div>
+
+<footer>
+  <a href="index.html">SpireIndex</a> · Patch data sourced live from the
+  <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Steam store</a> ·
+  Fan project, not affiliated with MegaCrit
+</footer>
+
+<script>
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+// Convert Steam BBCode to HTML (older posts use BBCode, newer use HTML)
+function bbToHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/\[h1\]([\s\S]*?)\[\/h1\]/gi, '<h2>$1</h2>')
+    .replace(/\[h2\]([\s\S]*?)\[\/h2\]/gi, '<h2>$1</h2>')
+    .replace(/\[h3\]([\s\S]*?)\[\/h3\]/gi, '<h3>$1</h3>')
+    .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>')
+    .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>')
+    .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>')
+    .replace(/\[strike\]([\s\S]*?)\[\/strike\]/gi, '<del>$1</del>')
+    .replace(/\[url=([^\]]+)\]([\s\S]*?)\[\/url\]/gi, '<a href="$1" target="_blank" rel="noopener">$2</a>')
+    .replace(/\[url\]([\s\S]*?)\[\/url\]/gi, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+    .replace(/\[img\][\s\S]*?\[\/img\]/gi, '') // strip images
+    .replace(/\[previewyoutube\][\s\S]*?\[\/previewyoutube\]/gi, '')
+    .replace(/\[list\]([\s\S]*?)\[\/list\]/gi, (_, inner) => {
+      const items = inner.replace(/\[\*\]/g, '\n§§§').split('\n§§§').filter(s => s.trim());
+      return '<ul>' + items.map(i => `<li>${i.trim()}</li>`).join('') + '</ul>';
+    })
+    .replace(/\[olist\]([\s\S]*?)\[\/olist\]/gi, (_, inner) => {
+      const items = inner.replace(/\[\*\]/g, '\n§§§').split('\n§§§').filter(s => s.trim());
+      return '<ol>' + items.map(i => `<li>${i.trim()}</li>`).join('') + '</ol>';
+    })
+    .replace(/\[p\]([\s\S]*?)\[\/p\]/gi, '<p>$1</p>')
+    .replace(/\[hr\]/gi, '<hr>')
+    .replace(/\r?\n/g, '<br>');
+}
+
+// Detect if content is BBCode (has [b], [h1], [list] etc.)
+function isBBCode(str) {
+  return /\[(h[123]|b|i|u|list|url|img)\]/i.test(str);
+}
+
+// Clean up HTML — remove excessive <br> chains, fix spacing
+function cleanHtml(html) {
+  return html
+    .replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>')  // max 2 consecutive breaks
+    .replace(/<br\s*\/?>\s*(<\/?(?:h[123]|ul|ol|li|p)[^>]*>)/gi, '$1') // br before block = remove
+    .replace(/(<\/?(?:h[123]|ul|ol|li|p)[^>]*>)\s*<br\s*\/?>/gi, '$1')
+    .trim();
+}
+
+// Colorize <li> items based on buff/nerf keywords
+const BUFF_RX = /\b(increas|buff|improv|now grants?|now deals? more|cost reduc|gains? \d|added \d|now also|upgraded|higher|faster|stronger|longer)\b/i;
+const NERF_RX = /\b(decreas|nerfed|reduc|now deals? less|cost increas|removed|no longer|lower|shorter|weaker|cap of|maximum of)\b/i;
+const NEW_RX  = /\b(new card|new relic|new (enemy|mechanic|content|mode|event)|added:?|introducing)\b/i;
+const FIX_RX  = /\b(fix(ed)?|crash|bug|correct|resolv|address|prevent)\b/i;
+
+function colorizeItems(container) {
+  let buffs = 0, nerfs = 0, fixes = 0, news = 0;
+  container.querySelectorAll('li').forEach(li => {
+    const t = li.textContent;
+    if (NEW_RX.test(t))       { li.classList.add('is-new');  news++; }
+    else if (BUFF_RX.test(t)) { li.classList.add('is-buff'); buffs++; }
+    else if (NERF_RX.test(t)) { li.classList.add('is-nerf'); nerfs++; }
+    else if (FIX_RX.test(t))  { li.classList.add('is-fix');  fixes++; }
+  });
+  return { buffs, nerfs, fixes, news };
+}
+
+// Classify a patch by title
+function classifyPatch(title) {
+  const t = title.toLowerCase();
+  if (/hotfix|emergency|critical/.test(t)) return 'hotfix';
+  if (/balance|nerf|buff/.test(t)) return 'balance';
+  if (/content|new card|new class|new relic|expansion/.test(t)) return 'content';
+  if (/patch|update|v\d|0\.\d/.test(t)) return 'balance'; // default for numbered patches
+  return 'other';
+}
+
+function tagLabel(type) {
+  return { balance:'Balance', hotfix:'Hotfix', content:'Content Update', other:'Update' }[type] || 'Update';
+}
+function tagClass(type) {
+  return { balance:'tag-balance', hotfix:'tag-hotfix', content:'tag-content', other:'tag-other' }[type] || 'tag-other';
+}
+
+function formatDate(unixTs) {
+  const d = new Date(unixTs * 1000);
+  return d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+let _patches = [];
+let _activeFilter = 'all';
+
+function renderTimeline() {
+  const timeline = document.getElementById('timeline');
+  const visible = _activeFilter === 'all'
+    ? _patches
+    : _patches.filter(p => classifyPatch(p.title) === _activeFilter);
+
+  document.getElementById('patchCount').textContent =
+    visible.length + ' patch' + (visible.length !== 1 ? 'es' : '');
+
+  if (!visible.length) {
+    timeline.innerHTML = '<div class="error-wrap"><div class="err-icon">📋</div><p>No patches match this filter yet.</p></div>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+
+  visible.forEach((patch, idx) => {
+    const type = classifyPatch(patch.title);
+
+    // Convert content
+    const rawContent = patch.contents || '';
+    const htmlContent = isBBCode(rawContent) ? bbToHtml(rawContent) : rawContent;
+    const cleanContent = cleanHtml(htmlContent);
+
+    const card = document.createElement('div');
+    card.className = 'patch-card';
+    card.dataset.type = type;
+
+    card.innerHTML = `
+      <div class="patch-card-header" data-idx="${idx}">
+        <div class="patch-left">
+          <div class="patch-date">${formatDate(patch.date)}</div>
+          <div class="patch-title">${patch.title}</div>
+          <div class="patch-badges">
+            <span class="meta-tag ${tagClass(type)}">${tagLabel(type)}</span>
+          </div>
+        </div>
+        <div class="patch-right">
+          <a class="patch-steam-link" href="${patch.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on Steam ↗</a>
+          <div class="patch-toggle${idx === 0 ? ' open' : ''}">▾</div>
+        </div>
+      </div>
+      <div class="patch-body${idx === 0 ? ' open' : ''}">
+        <div class="patch-content">${cleanContent}</div>
+        <div class="change-pills" id="pills-${idx}"></div>
+      </div>
+    `;
+
+    frag.appendChild(card);
+  });
+
+  timeline.innerHTML = '';
+  timeline.appendChild(frag);
+
+  // Colorize and compute change pills for each rendered patch
+  visible.forEach((_, idx) => {
+    const body = timeline.querySelector(`.patch-body:nth-of-type(${idx + 1}), .patch-card:nth-child(${idx + 1}) .patch-body`);
+    if (!body) return;
+    const content = body.querySelector('.patch-content');
+    const pills   = body.querySelector('.change-pills');
+    if (!content || !pills) return;
+
+    const { buffs, nerfs, fixes, news } = colorizeItems(content);
+    const pillHtml = [
+      buffs ? `<span class="change-pill cp-buff">▲ ${buffs} buff${buffs !== 1 ? 's' : ''}</span>` : '',
+      nerfs ? `<span class="change-pill cp-nerf">▼ ${nerfs} nerf${nerfs !== 1 ? 's' : ''}</span>` : '',
+      news  ? `<span class="change-pill cp-new">✦ ${news} new</span>` : '',
+      fixes ? `<span class="change-pill cp-fix">⚙ ${fixes} fix${fixes !== 1 ? 'es' : ''}</span>` : '',
+    ].join('');
+    pills.innerHTML = pillHtml;
+    if (!pillHtml) pills.style.display = 'none';
+  });
+
+  // Accordion toggle
+  timeline.querySelectorAll('.patch-card-header').forEach(hd => {
+    hd.addEventListener('click', () => {
+      const body   = hd.nextElementSibling;
+      const toggle = hd.querySelector('.patch-toggle');
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      toggle.classList.toggle('open', !isOpen);
+    });
+  });
+}
+
+// ─── FILTERS ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.fbtn[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    _activeFilter = btn.dataset.filter;
+    document.querySelectorAll('.fbtn[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTimeline();
+  });
+});
+
+// ─── FETCH ────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res = await fetch('/api/patches');
+    if (!res.ok) throw new Error('API ' + res.status);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    _patches = (data.patches || []);
+
+    // Update status
+    const fetched = data.fetchedAt ? new Date(data.fetchedAt) : new Date();
+    const ago = Math.round((Date.now() - fetched.getTime()) / 60000);
+    const agoStr = ago < 1 ? 'just now' : ago + ' min ago';
+    document.getElementById('fetchStatus').textContent =
+      `${_patches.length} posts fetched from Steam · ${agoStr}`;
+
+    if (!_patches.length) {
+      document.getElementById('timeline').innerHTML =
+        '<div class="error-wrap"><div class="err-icon">📋</div><p>No patch notes found yet — check back after MegaCrit ships their first update.</p></div>';
+      return;
+    }
+
+    renderTimeline();
+
+  } catch(e) {
+    document.getElementById('fetchStatus').textContent = 'Could not reach Steam API';
+    document.getElementById('timeline').innerHTML = `
+      <div class="error-wrap">
+        <div class="err-icon">⚠</div>
+        <p>Could not load patch notes (${e.message}).<br>
+        You can view them directly on the
+        <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/#app_reviews_hash" target="_blank">Steam page</a>.</p>
+      </div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
