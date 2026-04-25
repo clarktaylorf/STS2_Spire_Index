@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpireIndex — Build Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0c18;--bg2:#13101e;--bg3:#0f0d16;--bg4:#0d0b14;
+  --border:#1e1a2c;--border2:#2e2545;
+  --text:#c4b89a;--text2:#7a6a8a;--text3:#4a3a6a;
+  --gold:#d4a84b;--purple:#8060c0;--green:#5db86e;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glory/glory_03_a.png') center/cover no-repeat;opacity:0.06;filter:saturate(0.5);pointer-events:none;z-index:0;}
+body>*{position:relative;z-index:1;}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 16px;background:rgba(14,12,24,0.98);border-bottom:1px solid rgba(212,168,75,0.2);position:sticky;top:0;z-index:100;}
+.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0;}
+.topbar-logo img{width:30px;height:30px;image-rendering:pixelated;opacity:0.85;}
+.topbar-logo span{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#c9a04a;letter-spacing:2px;}
+.topbar-nav{display:flex;gap:18px;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:#7a6898;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a:hover{color:var(--text);}
+.topbar-nav a.active{color:var(--gold);}
+.topbar-search{flex:1;max-width:300px;margin-left:auto;}
+.topbar-search input{width:100%;background:#1c1826;border:1px solid var(--border2);border-radius:7px;color:#ddd0b8;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px 7px 34px;outline:none;transition:border-color 0.15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23665580' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center;}
+.topbar-search input::placeholder{color:#504870;}
+.topbar-search input:focus{border-color:var(--gold);}
+
+/* CLASS TABS */
+.class-tabs{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;padding:14px 28px 0;background:var(--bg3);border-bottom:1px solid var(--border);}
+.class-tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:8px 8px 0 0;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--text3);transition:all 0.15s;background:transparent;font-family:'DM Sans',sans-serif;}
+.class-tab:hover{color:var(--text);background:#1a1628;}
+.class-tab.active{background:#1a1628;border-color:rgba(212,168,75,0.4);color:#efe0c0;}
+.pip{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* STATS BAR */
+.stats{display:flex;align-items:center;gap:20px;padding:8px 28px;background:var(--bg4);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.stat{font-size:12px;color:var(--text3);}
+.stat strong{color:#a890c0;font-weight:500;}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:24px 28px 40px;}
+
+/* BUILD CARD */
+.build-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.15s,transform 0.15s,box-shadow 0.15s;}
+.build-card:hover{border-color:rgba(212,168,75,0.4);transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.4);}
+.build-bar{height:3px;}
+.build-body{padding:16px 18px 14px;flex:1;display:flex;flex-direction:column;gap:10px;}
+.build-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.build-name{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#efe0c0;line-height:1.3;}
+.build-class-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:2px;}
+.build-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.build-tag{font-size:10px;font-weight:600;letter-spacing:0.5px;padding:3px 9px;border-radius:10px;background:#1a1628;color:#9a88c8;border:1px solid #2e2545;}
+.build-desc{font-size:12px;line-height:1.6;color:var(--text2);font-style:italic;flex:1;}
+.build-cards{display:flex;flex-wrap:wrap;gap:4px;}
+.card-chip{font-size:10px;padding:3px 8px;border-radius:6px;background:#0e0b18;color:#9880b8;border:1px solid #1e1a2c;white-space:nowrap;}
+.card-chip.key{background:#1a1430;color:#c4a8f0;border-color:#3a2d5a;}
+.build-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 14px;}
+.build-meta{font-size:11px;color:var(--text3);}
+.build-meta strong{color:#8880a8;}
+.load-btn{display:inline-flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#d4a84b;text-decoration:none;padding:6px 14px;border-radius:20px;border:1px solid rgba(212,168,75,0.3);background:transparent;transition:all 0.15s;cursor:pointer;}
+.load-btn:hover{background:rgba(212,168,75,0.08);border-color:rgba(212,168,75,0.6);}
+.load-btn span{transition:transform 0.2s;}
+.load-btn:hover span{transform:translateX(3px);}
+
+.no-builds{grid-column:1/-1;text-align:center;padding:80px 0;color:var(--text3);font-size:14px;font-style:italic;}
+
+footer{text-align:center;padding:24px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
+footer a{color:var(--gold);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <img src="images/icon_1024.png" alt="SpireIndex">
+    <span>SpireIndex</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="cards.html">Card Library</a>
+    <a href="relics.html">Relics</a>
+    <a href="deck.html">Deck Builder</a>
+    <a href="gallery.html" class="active">Build Gallery</a>
+    <a href="patches.html">Patches</a>
+    <a href="#">Run Advisor</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="text" id="search" placeholder="Search builds, archetypes, cards…">
+  </div>
+</div>
+
+<div class="class-tabs" id="classTabs">
+  <div class="class-tab active" data-char="all" onclick="setChar(this)">All Classes</div>
+  <div class="class-tab" data-char="ironclad" onclick="setChar(this)"><span class="pip" style="background:#e06050"></span>Ironclad</div>
+  <div class="class-tab" data-char="silent" onclick="setChar(this)"><span class="pip" style="background:#50c090"></span>Silent</div>
+  <div class="class-tab" data-char="defect" onclick="setChar(this)"><span class="pip" style="background:#60a0e0"></span>Defect</div>
+  <div class="class-tab" data-char="regent" onclick="setChar(this)"><span class="pip" style="background:#c070e0"></span>Regent</div>
+  <div class="class-tab" data-char="necrobinder" onclick="setChar(this)"><span class="pip" style="background:#70b060"></span>Necrobinder</div>
+</div>
+
+<div class="stats">
+  <span class="stat">Showing <strong id="cnt">0</strong> builds</span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  SpireIndex is a fan-made database and is not affiliated with Mega Crit Games. ·
+  <a href="https://store.steampowered.com/app/2868840/Slay_the_Spire_2/" target="_blank">Play Slay the Spire 2 on Steam</a>
+</footer>
+
+<script>
+const CHARS = {
+  ironclad:{hex:'#e06050',label:'Ironclad',bg:'rgba(224,96,80,0.12)',border:'rgba(224,96,80,0.35)'},
+  silent:{hex:'#50c090',label:'Silent',bg:'rgba(80,192,144,0.10)',border:'rgba(80,192,144,0.30)'},
+  defect:{hex:'#60a0e0',label:'Defect',bg:'rgba(96,160,224,0.10)',border:'rgba(96,160,224,0.30)'},
+  regent:{hex:'#c070e0',label:'Regent',bg:'rgba(192,112,224,0.10)',border:'rgba(192,112,224,0.30)'},
+  necrobinder:{hex:'#70b060',label:'Necrobinder',bg:'rgba(112,176,96,0.10)',border:'rgba(112,176,96,0.30)'},
+};
+
+// Encode a card list to a deck builder URL
+function deckUrl(cards) {
+  const payload = cards.map(([name, count]) => name + ':' + (count || 1)).join('|');
+  return 'deck.html#deck=' + btoa(encodeURIComponent(payload));
+}
+
+const BUILDS = [
+  // ── IRONCLAD ────────────────────────────────────────────────────────────
+  {
+    id:'ic-exhaust', char:'ironclad',
+    name:'Exhaust Engine',
+    tags:['Exhaust','Scaling','Self-Damage'],
+    desc:'Corruption makes all Skills free and exhaust. Dark Embrace and Feel No Pain turn every exhaust into draw and block. Ashen Strike scales damage with the exhaust pile.',
+    key:['Corruption','Dark Embrace','Feel No Pain','Ashen Strike'],
+    cards:[
+      ['Corruption',1],['Dark Embrace',1],['Feel No Pain',2],['Ashen Strike',2],
+      ['Fiend Fire',1],['Battle Trance',2],['Barricade',1],['Burning Pact',2],
+      ['Ashen Strike',1],['Iron Wave',2],['Defend',2],['Strike',1],
+    ],
+  },
+  {
+    id:'ic-strength', char:'ironclad',
+    name:'Strength Ascendant',
+    tags:['Strength Scaling','Win Condition'],
+    desc:'Stack Strength with Demon Form and Inflame, then delete enemies with Heavy Blade. Barricade and Impervious keep you alive while scaling.',
+    key:['Demon Form','Inflame','Bludgeon','Barricade'],
+    cards:[
+      ['Demon Form',1],['Inflame',2],['Bludgeon',2],['Barricade',1],
+      ['Impervious',1],['Colossus',1],['Armaments',2],['Battle Trance',2],
+      ['Iron Wave',2],['Defend',2],['Strike',1],['Bash',1],
+    ],
+  },
+  {
+    id:'ic-self-dmg', char:'ironclad',
+    name:'Hellraiser',
+    tags:['Self-Damage','Block Scaling'],
+    desc:'Spend HP to build energy and block. Hellraiser, Hemokinesis, and Bloodletting cycle fuel into Body Slam finishes backed by Barricade.',
+    key:['Hellraiser','Body Slam','Bloodletting','Barricade'],
+    cards:[
+      ['Hellraiser',2],['Body Slam',2],['Bloodletting',2],['Barricade',1],
+      ['Blood Wall',2],['Hemokinesis',2],['Cruelty',1],['Crimson Mantle',1],
+      ['Impervious',1],['Defend',2],['Strike',1],
+    ],
+  },
+
+  // ── SILENT ──────────────────────────────────────────────────────────────
+  {
+    id:'si-shiv', char:'silent',
+    name:'Shiv Blizzard',
+    tags:['Shiv Burst','Accuracy','Draw'],
+    desc:'Blade Dance and Infinite Blades flood your hand with Shivs. Accuracy makes each one hit hard. Storm of Steel refills the engine by discarding into Shivs.',
+    key:['Accuracy','Blade Dance','Infinite Blades','Storm of Steel'],
+    cards:[
+      ['Accuracy',2],['Blade Dance',2],['Infinite Blades',1],['Storm of Steel',1],
+      ['Cloak and Dagger',2],['Fan of Knives',1],['Leading Strike',2],
+      ['Up My Sleeve',1],['Blade of Ink',1],['Deflect',2],['Neutralize',1],
+    ],
+  },
+  {
+    id:'si-poison', char:'silent',
+    name:'Poison Aristocrat',
+    tags:['Poison','Exhaust'],
+    desc:'Stack Poison with Deadly Poison and Envenom, then Corpse Explosion on one enemy to nuke the entire room. Expertise and Acrobatics keep the draws flowing.',
+    key:['Deadly Poison','Envenom','Corpse Explosion','Expertise'],
+    cards:[
+      ['Deadly Poison',2],['Envenom',1],['Corpse Explosion',1],['Expertise',2],
+      ['Bouncing Flask',2],['Corrosive Wave',1],['Acrobatics',2],
+      ['Backflip',2],['Deflect',2],['Neutralize',1],['Strike',1],
+    ],
+  },
+  {
+    id:'si-discard', char:'silent',
+    name:'Calculated Chaos',
+    tags:['Discard Engine','Draw'],
+    desc:'Calculated Gamble and Adrenaline let you burn through your deck at speed. Bullet Time locks out enemy intent while your cards cycle freely.',
+    key:['Calculated Gamble','Adrenaline','Bullet Time','Burst'],
+    cards:[
+      ['Calculated Gamble',2],['Adrenaline',1],['Bullet Time',1],['Burst',1],
+      ['Acrobatics',2],['Expertise',2],['Backflip',2],['Blur',2],
+      ['Dodge and Roll',2],['Deflect',2],['Neutralize',1],
+    ],
+  },
+
+  // ── DEFECT ──────────────────────────────────────────────────────────────
+  {
+    id:'de-lightning', char:'defect',
+    name:'Lightning Array',
+    tags:['Lightning','Orb','Focus'],
+    desc:'Channel Lightning Orbs aggressively with Zap and Ball Lightning. Capacitor expands slots and Defragment Focus lets every evoke hit harder.',
+    key:['Zap','Ball Lightning','Defragment','Capacitor'],
+    cards:[
+      ['Zap',2],['Ball Lightning',2],['Defragment',2],['Capacitor',1],
+      ['Compile Driver',2],['Focused Strike',2],['Energy Surge',1],
+      ['Chaos',1],['Barrage',1],['Coolheaded',2],['Dualcast',1],
+    ],
+  },
+  {
+    id:'de-frost', char:'defect',
+    name:'Frost Sentinel',
+    tags:['Frost','Block','Focus'],
+    desc:'Coolheaded and Glacier stack Frost Orbs that passively block every turn. Defragment and Consume amplify Focus while Barrage punishes anything still alive.',
+    key:['Coolheaded','Chill','Defragment','Barrage'],
+    cards:[
+      ['Coolheaded',2],['Chill',2],['Defragment',2],['Barrage',2],
+      ['Cold Snap',2],['Coolant',1],['Consume',1],['Capacitor',1],
+      ['Compile Driver',1],['Dualcast',1],['Focused Strike',1],
+    ],
+  },
+  {
+    id:'de-dark', char:'defect',
+    name:'Void Engine',
+    tags:['Dark','Orb','Scaling'],
+    desc:'Darkness and Consuming Shadow Channel Dark Orbs that passively accumulate damage. Fission cashes them all out for a burst energy turn.',
+    key:['Darkness','Consuming Shadow','Fission','Defragment'],
+    cards:[
+      ['Darkness',2],['Consuming Shadow',1],['Fission',1],['Defragment',2],
+      ['Chaos',2],['Capacitor',1],['Barrage',2],['Energy Surge',1],
+      ['Compile Driver',2],['Coolheaded',1],['Zap',1],
+    ],
+  },
+
+  // ── REGENT ──────────────────────────────────────────────────────────────
+  {
+    id:'re-nova', char:'regent',
+    name:'Nova Cascade',
+    tags:['Stars','AoE','Scaling'],
+    desc:'Build Stars with Glimmer, Comet, and Genesis. Nova Burst and Gamma Blast spend them all on room-clearing AoE. Black Hole converts every Star spend into chip damage.',
+    key:['Nova Burst','Gamma Blast','Black Hole','Genesis'],
+    cards:[
+      ['Nova Burst',2],['Gamma Blast',1],['Black Hole',1],['Genesis',1],
+      ['Glimmer',2],['Comet',2],['Furnace',2],['Guiding Star',2],
+      ['Gather Light',2],['Falling Star',2],['Orbit',1],
+    ],
+  },
+  {
+    id:'re-star-block', char:'regent',
+    name:'Star Wall',
+    tags:['Stars','Block','Scaling'],
+    desc:'Accumulate Stars and convert them into massive Block with Particle Wall and Cloak of Stars. Child of the Stars turns every Star spend into free block.',
+    key:['Particle Wall','Child of the Stars','Pillar of Creation','Cloak of Stars'],
+    cards:[
+      ['Particle Wall',2],['Child of the Stars',1],['Pillar of Creation',1],['Cloak of Stars',2],
+      ['Orbit',2],['Gather Light',2],['Comet',2],['Glimmer',2],
+      ['Crescent Spear',2],['Pale Blue Dot',1],['Alignment',1],
+    ],
+  },
+
+  // ── NECROBINDER ─────────────────────────────────────────────────────────
+  {
+    id:'nb-doom', char:'necrobinder',
+    name:'Doom Clock',
+    tags:['Doom','Scaling','Win Condition'],
+    desc:'Countdown and End of Days put a ticking clock on every enemy. Danse Macabre and Dirge accelerate the doom count while Graveblast handles stragglers.',
+    key:['Countdown','End of Days','Danse Macabre','Graveblast'],
+    cards:[
+      ['Countdown',2],['End of Days',1],['Danse Macabre',2],['Graveblast',2],
+      ['Dirge',1],['Deathbringer',1],['Death March',2],['Scourge',2],
+      ['Reap',2],['Bone Shards',2],['Defend',1],
+    ],
+  },
+  {
+    id:'nb-summon', char:'necrobinder',
+    name:'Undead Legion',
+    tags:['Summon','Exhaust','Scaling'],
+    desc:'Fetch and Sow build your army from the discard pile. Bodyguard and Grave Warden soak damage while your horde scales. Sacrifice fuels more summons.',
+    key:['Fetch','Sow','Bodyguard','Sacrifice'],
+    cards:[
+      ['Fetch',2],['Sow',2],['Bodyguard',2],['Sacrifice',2],
+      ['Grave Warden',1],['Capture Spirit',2],['Dredge',2],
+      ['Bury',1],['Reap',2],['Afterlife',1],['Bone Shards',2],
+    ],
+  },
+];
+
+let activeChar = 'all';
+
+function setChar(el) {
+  activeChar = el.dataset.char;
+  document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const filtered = BUILDS.filter(b => {
+    if (activeChar !== 'all' && b.char !== activeChar) return false;
+    if (q && ![b.name, b.desc, ...b.tags, ...b.key].some(s => s.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  document.getElementById('cnt').textContent = filtered.length;
+  const grid = document.getElementById('grid');
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="no-builds">No builds match your filters.</div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  filtered.forEach(build => {
+    const cc = CHARS[build.char];
+    const url = deckUrl(build.cards);
+    const totalCards = build.cards.reduce((s, [, n]) => s + (n||1), 0);
+
+    const div = document.createElement('div');
+    div.className = 'build-card';
+
+    const tagsHtml = build.tags.map(t => `<span class="build-tag">${t}</span>`).join('');
+    const cardsHtml = [...new Set(build.cards.map(([n]) => n))].map(name =>
+      `<span class="card-chip${build.key.includes(name)?' key':''}">${name}</span>`
+    ).join('');
+
+    div.innerHTML = `
+      <div class="build-bar" style="background:${cc.hex}"></div>
+      <div class="build-body">
+        <div class="build-top">
+          <div class="build-name">${build.name}</div>
+          <span class="build-class-badge" style="background:${cc.bg};color:${cc.hex};border:1px solid ${cc.border}">${cc.label}</span>
+        </div>
+        <div class="build-tags">${tagsHtml}</div>
+        <div class="build-desc">${build.desc}</div>
+        <div class="build-cards">${cardsHtml}</div>
+      </div>
+      <div class="build-footer">
+        <span class="build-meta"><strong>${totalCards}</strong> cards</span>
+        <a href="${url}" class="load-btn">Load in Builder <span>→</span></a>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+document.getElementById('search').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
