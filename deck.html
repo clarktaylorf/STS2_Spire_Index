@@ -230,6 +230,36 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .rs-meta{font-size:10px;color:var(--text3);}
 .rs-tip{position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:#1c1828;border:1px solid rgba(212,168,75,0.25);color:#c4b89a;font-family:'DM Sans',sans-serif;font-size:11.5px;font-style:italic;line-height:1.5;padding:9px 12px;border-radius:8px;z-index:300;opacity:0;pointer-events:none;transition:opacity 0.15s;box-shadow:0 8px 28px rgba(0,0,0,0.6);white-space:normal;}
 .rs-tile:hover .rs-tip{opacity:1;}
+
+/* ── CARD MODAL ── */
+.dmodal-overlay{position:fixed;inset:0;background:rgba(7,5,15,0.88);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.dmodal{background:#13101e;border:1px solid #2e2545;border-radius:14px;width:100%;max-width:660px;max-height:90vh;overflow-y:auto;position:relative;}
+.dmodal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:#1e1a2c;border:1px solid #2e2545;color:#7a6a8a;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.dmodal-close:hover{background:#2a2440;color:#e8d8b8;}
+.dmodal-bar{height:4px;border-radius:14px 14px 0 0;}
+.dmodal-art{height:180px;background:#0e0b1a;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1e1a2e;overflow:hidden;position:relative;}
+.dmodal-art img{height:160px;object-fit:contain;}
+.dmodal-body{padding:18px 22px 22px;}
+.dmodal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.dmodal-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#efe0c0;}
+.dmodal-cost-badge{min-width:30px;height:30px;border-radius:15px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#d4a84b;padding:0 6px;}
+.dmodal-badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+.dmodal-versions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.dmodal-ver{background:#0e0b1a;border:1px solid #1e1a2e;border-radius:8px;padding:12px;}
+.dmodal-ver.up{border-color:#3a2d5a;}
+.dmodal-ver-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.dmodal-ver-label.base{color:#6a5a88;}
+.dmodal-ver-label.upgraded{color:#5db86e;}
+.dmodal-ver-cost{font-size:11px;color:#d4a84b;margin-bottom:6px;}
+.dmodal-ver-cost-change{color:#60c080;margin-left:6px;font-size:10px;}
+.dmodal-ver-desc{font-size:12px;line-height:1.6;color:#9a8aaa;font-style:italic;}
+.dmodal-ver-desc.up{color:#c4b8d8;}
+.dmodal-kw-section{margin-top:12px;}
+.dmodal-kw-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#4a3a6a;margin-bottom:6px;}
+.dmodal-kw-list{display:flex;gap:4px;flex-wrap:wrap;}
+.dmodal-add-btn{width:100%;margin-top:16px;padding:11px;border-radius:8px;border:1px solid rgba(212,168,75,0.4);background:rgba(212,168,75,0.1);color:#e8c870;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;}
+.dmodal-add-btn:hover{background:rgba(212,168,75,0.22);border-color:rgba(212,168,75,0.7);}
+.dmodal-add-btn:disabled{opacity:0.35;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -385,6 +415,39 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 
   </div><!-- /workspace -->
 </div><!-- /app -->
+
+<!-- CARD DETAIL MODAL -->
+<div id="dModalOverlay" class="dmodal-overlay" style="display:none" onclick="if(event.target===this)closeDeckModal()">
+  <div class="dmodal">
+    <button class="dmodal-close" onclick="closeDeckModal()">&#x2715;</button>
+    <div class="dmodal-bar" id="dmBar"></div>
+    <div class="dmodal-art"><img id="dmImg" src="" alt=""></div>
+    <div class="dmodal-body">
+      <div class="dmodal-head">
+        <div class="dmodal-name" id="dmName"></div>
+        <div class="dmodal-cost-badge" id="dmCost"></div>
+      </div>
+      <div class="dmodal-badges" id="dmBadges"></div>
+      <div class="dmodal-versions">
+        <div class="dmodal-ver">
+          <div class="dmodal-ver-label base">Base</div>
+          <div class="dmodal-ver-cost" id="dmBaseCost"></div>
+          <div class="dmodal-ver-desc" id="dmBaseDesc"></div>
+        </div>
+        <div class="dmodal-ver up" id="dmUpVer">
+          <div class="dmodal-ver-label upgraded">&#x2756; Upgraded</div>
+          <div class="dmodal-ver-cost" id="dmUpCost"></div>
+          <div class="dmodal-ver-desc up" id="dmUpDesc"></div>
+        </div>
+      </div>
+      <div class="dmodal-kw-section">
+        <div class="dmodal-kw-label">Keywords</div>
+        <div class="dmodal-kw-list" id="dmKws"></div>
+      </div>
+      <button class="dmodal-add-btn" id="dmAddBtn">+ Add to Deck</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ─── GLOBALS ──────────────────────────────────────────────────────────────────
@@ -658,8 +721,7 @@ function makeTile(card) {
   // Description
   const desc = document.createElement('div');
   desc.className = 'ctile-desc';
-  const d = card.desc || '';
-  desc.textContent = d.length > 80 ? d.slice(0, 80) + '…' : d;
+  desc.textContent = card.desc || '';
 
   body.appendChild(head);
   body.appendChild(bgs);
@@ -687,7 +749,7 @@ function makeTile(card) {
   tile.appendChild(overlay);
   tile.appendChild(deckBadge);
 
-  tile.addEventListener('click', () => addCard(card.name));
+  tile.addEventListener('click', () => openDeckModal(card));
   return tile;
 }
 
@@ -1953,6 +2015,73 @@ function renderRelicSuggestions() {
     panel.appendChild(tile);
   });
 }
+
+// ─── CARD DETAIL MODAL ────────────────────────────────────────────────────────
+const _CC = {ironclad:'#c0483a',silent:'#3a8a4a',defect:'#3a6ab0',watcher:'#9060c0',regent:'#c0a030',necrobinder:'#5a3a8a',colorless:'#5a5a6a',token:'#3a5a3a'};
+
+function openDeckModal(card) {
+  const imgBase = 'images/packed/card_portraits';
+  const imgSrc = (card.type === 'Curse') ? imgBase + '/curse/' + card.img + '.png'
+               : (card.type === 'Status') ? imgBase + '/status/' + card.img + '.png'
+               : imgBase + '/' + card.char + '/' + card.img + '.png';
+  document.getElementById('dmImg').src = imgSrc;
+  document.getElementById('dmImg').onerror = function(){ this.style.display='none'; };
+  document.getElementById('dmBar').style.background = _CC[card.char] || '#7050b0';
+  document.getElementById('dmName').textContent = card.name;
+  document.getElementById('dmCost').textContent = _costStr(card);
+
+  // Badges
+  const typeCls = {Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse'};
+  const rarCls = {Uncommon:'b-uncommon',Rare:'b-rare',Ancient:'b-ancient'};
+  let badges = '';
+  if (card.type) badges += `<span class="badge ${typeCls[card.type]||'b-skill'}">${card.type}</span>`;
+  if (rarCls[card.rarity]) badges += `<span class="badge ${rarCls[card.rarity]}">${card.rarity}</span>`;
+  document.getElementById('dmBadges').innerHTML = badges;
+
+  // Base version
+  document.getElementById('dmBaseCost').textContent = 'Cost: ' + _costStr(card);
+  document.getElementById('dmBaseDesc').textContent = card.desc || '—';
+
+  // Upgraded version
+  const upVer = document.getElementById('dmUpVer');
+  if (card.descUp) {
+    upVer.style.display = '';
+    const upCostVal = (card.costUp !== undefined && card.costUp !== null) ? String(card.costUp) : _costStr(card);
+    const costChange = (card.costUp !== undefined && card.costUp !== null && card.costUp !== card.cost)
+      ? `<span class="dmodal-ver-cost-change">(${card.costUp < card.cost ? '▼' : '▲'}${Math.abs(card.costUp - card.cost)})</span>` : '';
+    document.getElementById('dmUpCost').innerHTML = 'Cost: ' + upCostVal + costChange;
+    document.getElementById('dmUpDesc').textContent = card.descUp;
+  } else {
+    upVer.style.display = 'none';
+  }
+
+  // Keywords
+  document.getElementById('dmKws').innerHTML = (card.kw || []).map(k =>
+    `<span class="kw" style="font-size:11px;padding:3px 8px;">${k}</span>`
+  ).join('');
+
+  // Add button
+  const addBtn = document.getElementById('dmAddBtn');
+  const inDeck = (_deck[card.name]?.count || 0);
+  addBtn.textContent = inDeck >= 3 ? 'Max copies in deck' : '+ Add to Deck';
+  addBtn.disabled = inDeck >= 3;
+  addBtn.onclick = () => {
+    addCard(card.name);
+    const newCount = _deck[card.name]?.count || 0;
+    addBtn.textContent = newCount >= 3 ? 'Max copies in deck' : `+ Add to Deck (${newCount} in deck)`;
+    addBtn.disabled = newCount >= 3;
+  };
+
+  document.getElementById('dModalOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDeckModal() {
+  document.getElementById('dModalOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeckModal(); });
 
 // ─── DECK PANEL: COLLAPSE + RESIZE ───────────────────────────────────────────
 (function(){
