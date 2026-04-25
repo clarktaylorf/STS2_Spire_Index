@@ -14,7 +14,7 @@
 .topbar-logo img{width:30px;height:30px;image-rendering:pixelated;opacity:0.85;}
 .topbar-logo span{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#c9a04a;letter-spacing:2px;}
 .topbar-nav{display:flex;gap:18px;}
-.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:#7a6898;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
 .topbar-nav a:hover{color:var(--text);}
 .topbar-nav a.active{color:var(--gold);}
 .topbar-search{flex:1;max-width:300px;margin-left:auto;}
@@ -104,9 +104,9 @@ body>*{position:relative;z-index:1;}
 .b-uncommon{background:#201a30;color:#9a88c8;border:1px solid #302548;}
 .b-rare{background:#302010;color:#d4a848;border:1px solid #503215;}
 .b-ancient{background:#2a1f10;color:#e0b060;border:1px solid #5a3a10;}
-.upgraded-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:#2a1f48;color:#c4a8f0;border:1px solid #7050b0;letter-spacing:0.5px;}
+.upgraded-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:#152418;color:#5db86e;border:1px solid #2e6838;letter-spacing:0.5px;}
 .card.is-upgraded .card-bar{opacity:1;}
-.card.is-upgraded .card-name::after{content:'+';color:#c4a8f0;font-size:11px;margin-left:2px;}
+.card.is-upgraded .card-name::after{content:'+';color:#5db86e;font-size:11px;margin-left:2px;}
 .card-desc{font-size:11px;line-height:1.55;color:var(--text2);font-style:italic;}
 .kws{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px;}
 .kw{font-size:9px;padding:1px 5px;border-radius:3px;background:#1a1628;color:#6a5a88;border:1px solid #252038;}
@@ -129,7 +129,7 @@ body>*{position:relative;z-index:1;}
 .modal-ver.up{border-color:#3a2d5a;}
 .modal-ver-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
 .modal-ver-label.base{color:#6a5a88;}
-.modal-ver-label.upgraded{color:#c4a8f0;}
+.modal-ver-label.upgraded{color:#5db86e;}
 .modal-ver-cost{font-size:11px;color:#d4a84b;margin-bottom:6px;}
 .modal-ver-cost-change{color:#60c080;margin-left:6px;font-size:10px;}
 .modal-ver-desc{font-size:12px;line-height:1.6;color:#9a8aaa;font-style:italic;}
@@ -185,6 +185,15 @@ footer a:hover{color:var(--text);}
   <button class="fbtn" data-type="Curse" onclick="setType(this)">Curse</button>
   <button class="fbtn" data-type="Token" onclick="setType(this)">Token</button>
   <div class="fdiv"></div>
+  <span class="flabel">Cost</span>
+  <button class="fbtn active" data-cost="all" onclick="setCost(this)">All</button>
+  <button class="fbtn" data-cost="0" onclick="setCost(this)">0</button>
+  <button class="fbtn" data-cost="1" onclick="setCost(this)">1</button>
+  <button class="fbtn" data-cost="2" onclick="setCost(this)">2</button>
+  <button class="fbtn" data-cost="3" onclick="setCost(this)">3</button>
+  <button class="fbtn" data-cost="4+" onclick="setCost(this)">4+</button>
+  <button class="fbtn" data-cost="X" onclick="setCost(this)">X</button>
+  <div class="fdiv"></div>
   <span class="flabel">Keywords</span>
   <div id="kwChips" class="kw-chips"></div>
   <button class="fbtn kw-clear-btn" id="kwClearBtn" onclick="clearKws()" style="display:none">✕ Clear</button>
@@ -198,6 +207,7 @@ footer a:hover{color:var(--text);}
   <button class="fbtn" data-rarity="Ancient" onclick="setRarity(this)">Ancient</button>
   <div class="fdiv"></div>
   <button class="fbtn" id="upgradeBtn" onclick="toggleUpgrade(this)">✦ Upgraded</button>
+  <button class="fbtn" id="resetFiltersBtn" onclick="resetFilters()" style="display:none;border-color:rgba(224,96,80,0.4);color:#e06050;">✕ Reset</button>
 </div>
 
 <div class="stats">
@@ -250,8 +260,11 @@ const IMG='images/packed/card_portraits';
 const ip=(char,img)=>`${IMG}/${char}/${img}.png`;
 
 let cards=[];
-let activeChar='all',activeType='all',activeRarity='all',activeKws=new Set(),showUpgraded=false;
+let activeChar='all',activeType='all',activeRarity='all',activeKws=new Set(),showUpgraded=false,activeCost='all';
 let dataSource='static';
+
+function isXCostCard(c){return c.cost==='X'||(c.cost===0&&/\bX\b/.test(c.desc||''));}
+function getCostStr(c,desc){if(c===null||c===undefined)return'--';if(c==='X')return'X';if(c===0&&/\bX\b/.test(desc||''))return'X';return String(c);}
 
 // ── LOAD DATA ─────────────────────────────────────────────────
 async function loadCards(){
@@ -285,8 +298,11 @@ async function loadCards(){
 }
 
 // ── KEYWORD CHIPS ─────────────────────────────────────────────
+const KW_SKIP=new Set(['Ancient']); // Ancient is a rarity, not a gameplay keyword
 function buildKwChips(){
-  const allKws=[...new Set(cards.flatMap(c=>c.kw||[]))].sort();
+  // Only show keywords relevant to the active character
+  const charCards=activeChar==='all'?cards:cards.filter(c=>c.char===activeChar||c.char==='colorless');
+  const allKws=[...new Set(charCards.flatMap(c=>(c.kw||[]).filter(k=>!KW_SKIP.has(k))))].sort();
   const container=document.getElementById('kwChips');
   container.innerHTML=allKws.map(k=>
     `<button class="kw-chip${activeKws.has(k)?' active':''}" onclick="toggleKw('${k}')">${k}</button>`
@@ -309,11 +325,37 @@ function clearKws(){
 }
 
 // ── FILTER SETTERS ─────────────────────────────────────────────
-function setChar(el){activeChar=el.dataset.char;document.querySelectorAll('.class-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');render();}
-function setType(el){activeType=el.dataset.type;document.querySelectorAll('.fbtn[data-type]').forEach(b=>b.classList.remove('active'));el.classList.add('active');render();}
-function setRarity(el){activeRarity=el.dataset.rarity;document.querySelectorAll('.fbtn[data-rarity]').forEach(b=>b.classList.remove('active'));el.classList.add('active');render();}
-function toggleUpgrade(el){showUpgraded=!showUpgraded;el.classList.toggle('active',showUpgraded);render();}
-document.getElementById('search').addEventListener('input',render);
+function setChar(el){
+  activeChar=el.dataset.char;
+  document.querySelectorAll('.class-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  activeKws.clear();
+  document.getElementById('kwClearBtn').style.display='none';
+  buildKwChips();
+  render();
+}
+function setType(el){activeType=el.dataset.type;document.querySelectorAll('.fbtn[data-type]').forEach(b=>b.classList.remove('active'));el.classList.add('active');updateResetBtn();render();}
+function setRarity(el){activeRarity=el.dataset.rarity;document.querySelectorAll('.fbtn[data-rarity]').forEach(b=>b.classList.remove('active'));el.classList.add('active');updateResetBtn();render();}
+function setCost(el){activeCost=el.dataset.cost;document.querySelectorAll('.fbtn[data-cost]').forEach(b=>b.classList.remove('active'));el.classList.add('active');updateResetBtn();render();}
+function toggleUpgrade(el){showUpgraded=!showUpgraded;el.classList.toggle('active',showUpgraded);updateResetBtn();render();}
+function updateResetBtn(){
+  const active=activeType!=='all'||activeRarity!=='all'||activeCost!=='all'||showUpgraded||activeKws.size>0;
+  document.getElementById('resetFiltersBtn').style.display=active?'inline-flex':'none';
+}
+function resetFilters(){
+  activeType='all';activeRarity='all';activeCost='all';showUpgraded=false;activeKws.clear();
+  document.querySelectorAll('.fbtn[data-type]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.fbtn[data-type="all"]').classList.add('active');
+  document.querySelectorAll('.fbtn[data-rarity]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.fbtn[data-rarity="all"]').classList.add('active');
+  document.querySelectorAll('.fbtn[data-cost]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.fbtn[data-cost="all"]').classList.add('active');
+  document.getElementById('upgradeBtn').classList.remove('active');
+  document.getElementById('kwClearBtn').style.display='none';
+  document.getElementById('resetFiltersBtn').style.display='none';
+  buildKwChips();render();
+}
+document.getElementById('search').addEventListener('input',()=>{updateResetBtn();render();});
 
 // ── RENDER ─────────────────────────────────────────────────────
 function typeBadge(t){return{Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse',Token:'b-token'}[t]||'b-attack';}
@@ -343,6 +385,11 @@ function render(){
     if(activeChar!=='all'&&c.char!==activeChar)return false;
     if(activeType!=='all'&&c.type!==activeType)return false;
     if(activeRarity!=='all'&&c.rarity!==activeRarity)return false;
+    if(activeCost!=='all'){
+      if(activeCost==='X'){if(!isXCostCard(c))return false;}
+      else if(activeCost==='4+'){if(isXCostCard(c)||typeof c.cost!=='number'||c.cost<4)return false;}
+      else{if(isXCostCard(c)||c.cost!==parseInt(activeCost))return false;}
+    }
     // Multi-keyword: card must have ALL selected keywords
     if(activeKws.size>0&&![...activeKws].every(kw=>(c.kw||[]).includes(kw)))return false;
     if(q){
@@ -366,7 +413,7 @@ function render(){
     const cc=CHARS[card.char]||{hex:'#7050b0',label:'Unknown'};
     const displayCost=showUpgraded&&card.costUp!==undefined?card.costUp:card.cost;
     const displayDesc=showUpgraded&&card.descUp?card.descUp:card.desc;
-    const cost=displayCost===null?'--':displayCost==='X'?'X':displayCost;
+    const cost=getCostStr(displayCost,card.desc);
     const kws=(card.kw||[]).map(function(k){return '<span class="kw'+(activeKws.has(k)?' kw-active':'')+'">' +k+'</span>';}).join('');
     const imgPath=getImgPath(card);
     const upgClass=showUpgraded&&card.descUp?'is-upgraded':'';
@@ -384,7 +431,7 @@ function render(){
 
 // highlight active keywords in the card keyword tags
 const style=document.createElement('style');
-style.textContent='.kw.kw-active{background:#2a1f48;color:#c4a8f0;border-color:#7050b0;}';
+style.textContent='.kw.kw-active{background:#152418;color:#5db86e;border-color:#2e6838;}';
 document.head.appendChild(style);
 
 
@@ -397,14 +444,16 @@ function openModal(card){
   img.src=getImgPath(card);
   img.onerror=function(){this.style.opacity='0.1';};
   document.getElementById('mName').textContent=card.name;
-  document.getElementById('mCost').textContent=card.cost===null?'--':card.cost==='X'?'X':card.cost;
-  document.getElementById('mBaseCost').textContent=card.cost===null?'Unplayable':card.cost==='X'?'X Energy':card.cost+' Energy';
+  const mCostStr=getCostStr(card.cost,card.desc);
+  document.getElementById('mCost').textContent=mCostStr;
+  document.getElementById('mBaseCost').textContent=mCostStr==='--'?'Unplayable':mCostStr==='X'?'X Energy':mCostStr+' Energy';
   document.getElementById('mBaseDesc').textContent=card.desc||'';
   var upVer=document.getElementById('mUpVer');
   if(card.descUp){
     upVer.style.display='block';
     var upCostNum=card.costUp!==undefined?card.costUp:card.cost;
-    document.getElementById('mUpCostVal').textContent=upCostNum===null?'Unplayable':upCostNum==='X'?'X Energy':upCostNum+' Energy';
+    var upCostStr=getCostStr(upCostNum,card.descUp||card.desc);
+    document.getElementById('mUpCostVal').textContent=upCostStr==='--'?'Unplayable':upCostStr==='X'?'X Energy':upCostStr+' Energy';
     var diff='';
     if(card.costUp!==undefined&&card.costUp!==card.cost){diff=' ('+(card.costUp<card.cost?'↓':'↑')+Math.abs((card.costUp||0)-(card.cost||0))+')';}
     document.getElementById('mCostChange').textContent=diff;

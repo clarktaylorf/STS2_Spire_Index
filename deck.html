@@ -27,7 +27,7 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 .topbar-logo img{width:30px;height:30px;image-rendering:pixelated;opacity:0.85;}
 .topbar-logo span{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#c9a04a;letter-spacing:2px;}
 .topbar-nav{display:flex;gap:18px;}
-.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:#7a6898;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
 .topbar-nav a:hover{color:var(--text);}
 .topbar-nav a.active{color:var(--gold);}
 .topbar-search{flex:1;max-width:300px;margin-left:auto;}
@@ -271,6 +271,16 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
           <button class="fbtn" data-rar="Common">Common</button>
           <button class="fbtn" data-rar="Uncommon">Uncommon</button>
           <button class="fbtn" data-rar="Rare">Rare</button>
+          <div class="fdiv"></div>
+          <span class="flabel">Cost</span>
+          <button class="fbtn active" data-cost="all">All</button>
+          <button class="fbtn" data-cost="0">0</button>
+          <button class="fbtn" data-cost="1">1</button>
+          <button class="fbtn" data-cost="2">2</button>
+          <button class="fbtn" data-cost="3">3</button>
+          <button class="fbtn" data-cost="4+">4+</button>
+          <button class="fbtn" data-cost="X">X</button>
+          <button class="fbtn" id="deckResetBtn" style="display:none;border-color:rgba(224,96,80,0.4);color:#e06050;">✕ Reset</button>
         </div>
       </div>
       <div class="kw-bar" id="kwBar" style="display:none"></div>
@@ -368,8 +378,12 @@ let _cards = [];            // all cards from API
 let _activeChar = 'all';
 let _activeType = 'all';
 let _activeRar  = '';
+let _activeCost = 'all';
 let _activeKws  = new Set();
 const _deck = {};           // name -> { card, count }
+
+function _isXCost(card){return card.cost==='X'||(card.cost===0&&/\bX\b/.test(card.desc||''));}
+function _costStr(card){const c=card.cost;if(c===null||c===undefined)return'?';if(c==='X')return'X';if(c===0&&/\bX\b/.test(card.desc||''))return'X';return String(c);}
 
 const CHAR_HEX = {
   ironclad:'#e06050', silent:'#50c090', defect:'#60a0e0',
@@ -399,6 +413,9 @@ document.querySelectorAll('.class-tab').forEach(tab => {
     _activeChar = tab.dataset.char;
     document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
+    _activeKws.clear();
+    buildKwChips(); // rebuild chips for new character
+    updateDeckResetBtn();
     renderGrid();
   });
 });
@@ -424,11 +441,42 @@ document.querySelectorAll('.fbtn[data-rar]').forEach(btn => {
     renderGrid();
   });
 });
-document.getElementById('search').addEventListener('input', renderGrid);
+document.getElementById('search').addEventListener('input', () => { updateDeckResetBtn(); renderGrid(); });
+
+// Cost filter
+document.querySelectorAll('.fbtn[data-cost]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    _activeCost = btn.dataset.cost;
+    document.querySelectorAll('.fbtn[data-cost]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateDeckResetBtn();
+    renderGrid();
+  });
+});
+
+function updateDeckResetBtn() {
+  const active = _activeType !== 'all' || _activeRar !== '' || _activeCost !== 'all' ||
+    _activeKws.size > 0 || document.getElementById('search').value.trim() !== '';
+  document.getElementById('deckResetBtn').style.display = active ? 'inline-flex' : 'none';
+}
+document.getElementById('deckResetBtn').addEventListener('click', () => {
+  _activeType = 'all'; _activeRar = ''; _activeCost = 'all'; _activeKws.clear();
+  document.querySelectorAll('.fbtn[data-type]').forEach(b => b.classList.remove('active'));
+  document.querySelector('.fbtn[data-type="all"]').classList.add('active');
+  document.querySelectorAll('.fbtn[data-rar]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.fbtn[data-cost]').forEach(b => b.classList.remove('active'));
+  document.querySelector('.fbtn[data-cost="all"]').classList.add('active');
+  document.getElementById('search').value = '';
+  document.getElementById('deckResetBtn').style.display = 'none';
+  buildKwChips();
+  renderGrid();
+});
 
 // ─── KEYWORD CHIPS ────────────────────────────────────────────────────────────
+const _KW_SKIP = new Set(['Ancient']);
 function buildKwChips() {
-  const allKws = [...new Set(_cards.flatMap(c => c.kw || []))].sort();
+  const charCards = _activeChar === 'all' ? _cards : _cards.filter(c => c.char === _activeChar || c.char === 'colorless');
+  const allKws = [...new Set(charCards.flatMap(c => (c.kw || []).filter(k => !_KW_SKIP.has(k))))].sort();
   const bar = document.getElementById('kwBar');
   if (!allKws.length) return;
   bar.style.display = 'flex';
@@ -473,6 +521,11 @@ function renderGrid() {
     if (_activeChar !== 'all' && c.char !== _activeChar) return false;
     if (_activeType !== 'all' && c.type !== _activeType) return false;
     if (_activeRar && c.rarity !== _activeRar) return false;
+    if (_activeCost !== 'all') {
+      if (_activeCost === 'X') { if (!_isXCost(c)) return false; }
+      else if (_activeCost === '4+') { if (_isXCost(c) || typeof c.cost !== 'number' || c.cost < 4) return false; }
+      else { if (_isXCost(c) || c.cost !== parseInt(_activeCost)) return false; }
+    }
     if (_activeKws.size && ![..._activeKws].every(kw => (c.kw||[]).includes(kw))) return false;
     if (q && !c.name.toLowerCase().includes(q) && !(c.desc||'').toLowerCase().includes(q)) return false;
     return true;
@@ -536,7 +589,7 @@ function makeTile(card) {
   nm.textContent = card.name;
   const cs = document.createElement('div');
   cs.className = 'ctile-cost';
-  cs.textContent = card.cost != null ? card.cost : '?';
+  cs.textContent = _costStr(card);
   head.appendChild(nm);
   head.appendChild(cs);
 
@@ -684,7 +737,7 @@ function renderDeck() {
       // Cost
       const costEl = document.createElement('div');
       costEl.className = 'dr-cost';
-      costEl.textContent = card.cost != null ? card.cost : '?';
+      costEl.textContent = _costStr(card);
       row.appendChild(costEl);
 
       // Name

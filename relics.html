@@ -14,7 +14,7 @@
 .topbar-logo img{width:30px;height:30px;image-rendering:pixelated;opacity:0.85;}
 .topbar-logo span{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#c9a04a;letter-spacing:2px;}
 .topbar-nav{display:flex;gap:18px;}
-.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--text3);text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:#7a6898;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
 .topbar-nav a:hover{color:var(--text);}
 .topbar-nav a.active{color:var(--gold);}
 .topbar-search{flex:1;max-width:300px;margin-left:auto;}
@@ -139,6 +139,8 @@ footer a:hover{color:var(--text);}
   <span class="flabel">Keywords</span>
   <div id="relicKwChips" class="kw-chips"></div>
   <button class="fbtn" id="relicKwClear" onclick="clearRelicKws()" style="display:none">&#x2715; Clear</button>
+  <div class="fdiv"></div>
+  <button class="fbtn" id="relicResetBtn" onclick="resetRelicFilters()" style="display:none;border-color:rgba(224,96,80,0.4);color:#e06050;">&#x2715; Reset</button>
 </div>
 
 <div class="stats">
@@ -512,7 +514,19 @@ let activeChar='all',activeTier='all';
 let activeRelicKws=new Set();
 
 function setChar(el){activeChar=el.dataset.char;document.querySelectorAll('.class-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');render();}
-function setTier(el){activeTier=el.dataset.tier;document.querySelectorAll('.fbtn[data-tier]').forEach(b=>b.classList.remove('active'));el.classList.add('active');render();}
+function setTier(el){activeTier=el.dataset.tier;document.querySelectorAll('.fbtn[data-tier]').forEach(b=>b.classList.remove('active'));el.classList.add('active');updateRelicResetBtn();render();}
+function updateRelicResetBtn(){
+  const active=activeTier!=='all'||activeRelicKws.size>0;
+  document.getElementById('relicResetBtn').style.display=active?'inline-flex':'none';
+}
+function resetRelicFilters(){
+  activeTier='all';activeRelicKws.clear();
+  document.querySelectorAll('.fbtn[data-tier]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.fbtn[data-tier="all"]').classList.add('active');
+  document.getElementById('relicKwClear').style.display='none';
+  document.getElementById('relicResetBtn').style.display='none';
+  buildRelicKwChips();render();
+}
 document.getElementById('search').addEventListener('input',render);
 
 function tierBadgeClass(t){return{Starter:'b-starter',Common:'b-common',Uncommon:'b-uncommon',Rare:'b-rare',Shop:'b-shop',Event:'b-event',Ancient:'b-ancient'}[t]||'b-common';}
@@ -569,6 +583,7 @@ function toggleRelicKw(kw){
   if(activeRelicKws.has(kw))activeRelicKws.delete(kw);
   else activeRelicKws.add(kw);
   document.getElementById('relicKwClear').style.display=activeRelicKws.size>0?'inline-flex':'none';
+  updateRelicResetBtn();
   buildRelicKwChips();
   render();
 }
@@ -576,6 +591,7 @@ function toggleRelicKw(kw){
 function clearRelicKws(){
   activeRelicKws.clear();
   document.getElementById('relicKwClear').style.display='none';
+  updateRelicResetBtn();
   buildRelicKwChips();
   render();
 }
