@@ -181,11 +181,10 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 /* Metric tooltips */
 .metric{position:relative;}
 .metric-tip{position:absolute;top:8px;right:9px;width:15px;height:15px;border-radius:50%;background:#1e1a2e;border:1px solid var(--border2);color:var(--text3);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:default;line-height:1;}
-.metric-tip::after{
-  content:attr(data-tip);
-  position:absolute;
-  bottom:calc(100% + 8px);
-  right:0;
+.metric-tip::after{display:none;}
+/* Tooltip box — positioned by JS */
+#tipBox{
+  position:fixed;
   background:#1c1828;
   border:1px solid var(--border2);
   color:#c4b89a;
@@ -199,15 +198,12 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
   border-radius:8px;
   width:230px;
   line-height:1.55;
-  z-index:200;
-  opacity:0;
+  z-index:9999;
   pointer-events:none;
-  transition:opacity 0.15s;
   box-shadow:0 6px 24px rgba(0,0,0,0.5);
   white-space:normal;
+  display:none;
 }
-.metric-tip:hover::after{opacity:1;}
-.metric.wide .metric-tip::after{right:0;bottom:calc(100% + 8px);}
 /* Win condition score bar */
 .wincon-bar-bg{height:5px;background:#1a1628;border-radius:3px;overflow:hidden;margin:8px 0 4px;}
 .wincon-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease,background 0.4s;}
@@ -414,6 +410,8 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 
   </div><!-- /workspace -->
 </div><!-- /app -->
+
+<div id="tipBox"></div>
 
 <!-- CARD DETAIL MODAL -->
 <div id="dModalOverlay" class="dmodal-overlay" style="display:none" onclick="if(event.target===this)closeDeckModal()">
@@ -2080,6 +2078,30 @@ function closeDeckModal() {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeckModal(); });
+
+// ─── SMART TOOLTIPS ───────────────────────────────────────────────────────────
+(function(){
+  const box = document.getElementById('tipBox');
+  const GAP = 8, MARGIN = 10;
+
+  document.querySelectorAll('.metric-tip').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      box.textContent = el.dataset.tip || '';
+      box.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      const bw = 230, bh = box.offsetHeight || 120;
+      // Prefer above; flip below if not enough room
+      let top = r.top - bh - GAP;
+      if (top < MARGIN) top = r.bottom + GAP;
+      // Right-align to the ? button, clamp to viewport
+      let left = r.right - bw;
+      if (left < MARGIN) left = MARGIN;
+      box.style.top = top + 'px';
+      box.style.left = left + 'px';
+    });
+    el.addEventListener('mouseleave', () => { box.style.display = 'none'; });
+  });
+})();
 
 // ─── DECK PANEL: COLLAPSE + RESIZE ───────────────────────────────────────────
 (function(){
