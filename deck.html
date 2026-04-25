@@ -202,6 +202,25 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
 /* Win condition score bar */
 .wincon-bar-bg{height:5px;background:#1a1628;border-radius:3px;overflow:hidden;margin:8px 0 4px;}
 .wincon-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease,background 0.4s;}
+
+/* ─── RELIC SUGGESTIONS ─── */
+.relic-suggest-wrap{flex-shrink:0;background:var(--bg4);border-top:1px solid var(--border);}
+.relic-suggest-btn-row{padding:8px 16px 8px;}
+.relic-suggest-btn{width:100%;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:7px 12px;border-radius:7px;border:1px solid rgba(212,168,75,0.22);background:transparent;color:#9a8060;cursor:pointer;transition:all 0.2s;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:7px;}
+.relic-suggest-btn:hover{background:rgba(212,168,75,0.07);border-color:rgba(212,168,75,0.45);color:#d4a84b;}
+.relic-suggest-btn.open{background:rgba(212,168,75,0.07);border-color:rgba(212,168,75,0.45);color:#d4a84b;}
+.relic-suggest-panel{padding:0 16px 12px;display:flex;flex-direction:column;gap:7px;}
+.rs-empty{font-size:12px;color:var(--text3);font-style:italic;text-align:center;padding:6px 0;}
+.rs-tile{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);transition:border-color 0.15s;position:relative;cursor:default;}
+.rs-tile:hover{border-color:rgba(212,168,75,0.35);}
+.rs-art{width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.rs-art img{width:44px;height:44px;object-fit:contain;image-rendering:pixelated;}
+.rs-art-fb{font-size:22px;opacity:0.18;}
+.rs-info{flex:1;min-width:0;}
+.rs-name{font-family:'Playfair Display',serif;font-size:12px;font-weight:500;color:#e8d8b8;line-height:1.2;margin-bottom:3px;}
+.rs-meta{font-size:10px;color:var(--text3);}
+.rs-tip{position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:#1c1828;border:1px solid rgba(212,168,75,0.25);color:#c4b89a;font-family:'DM Sans',sans-serif;font-size:11.5px;font-style:italic;line-height:1.5;padding:9px 12px;border-radius:8px;z-index:300;opacity:0;pointer-events:none;transition:opacity 0.15s;box-shadow:0 8px 28px rgba(0,0,0,0.6);white-space:normal;}
+.rs-tile:hover .rs-tip{opacity:1;}
 </style>
 </head>
 <body>
@@ -327,6 +346,16 @@ body::before{content:'';position:fixed;inset:0;background:url('images/rooms/glor
           <div class="deck-empty-icon">🃏</div>
           <p>Click any card to add it to your deck.</p>
         </div>
+      </div>
+
+      <!-- RELIC SUGGESTIONS -->
+      <div class="relic-suggest-wrap">
+        <div class="relic-suggest-btn-row">
+          <button class="relic-suggest-btn" id="relicSuggestBtn" onclick="toggleRelicSuggest()">
+            <span id="relicSuggestIcon">🔮</span> Suggest Relics
+          </button>
+        </div>
+        <div class="relic-suggest-panel" id="relicSuggestPanel" style="display:none"></div>
       </div>
     </div>
 
@@ -743,6 +772,8 @@ function renderMetrics() {
     document.getElementById('consNote').textContent = 'Add cards to see a score.';
     document.getElementById('winConList').innerHTML = '';
     document.getElementById('compatOrphans').innerHTML = '';
+    _lastArchetypes = [];
+    renderRelicSuggestions();
     return;
   }
 
@@ -777,6 +808,7 @@ function renderMetrics() {
 
   // ── 3. COMPATIBILITY ──
   const { score: compatScore, orphans, archetypes, issues } = calcCompatibility(entries);
+  _lastArchetypes = archetypes; // cache for relic suggestions
   const compatEl = document.getElementById('mCompat');
   const compatSub = document.getElementById('mCompatSub');
   const compatOrphans = document.getElementById('compatOrphans');
@@ -841,6 +873,9 @@ function renderMetrics() {
   bar.style.background = color;
   pctEl.style.color = color;
   noteEl.textContent = note;
+
+  // Update relic suggestions if panel is open
+  renderRelicSuggestions();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1496,6 +1531,265 @@ function tryLoadHash() {
     renderDeck();
     renderMetrics();
   } catch(e) { /* ignore bad hash */ }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RELIC SUGGESTIONS
+// Scores a curated set of synergy relics against the deck's detected archetypes
+// and returns the top 3 best matches. No impact on compatibility score.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _lastArchetypes = []; // set by renderMetrics() — used by relic suggestions
+
+const RELICS_SUGGEST = [
+  // ── Vulnerable ──
+  {name:'Hand Drill',char:'colorless',tier:'Rare',desc:'Whenever you apply Vulnerable, it applies 1 additional stack.',img:'hand_drill'},
+  {name:'Bag of Marbles',char:'colorless',tier:'Common',desc:'At the start of each combat, apply 1 Vulnerable to ALL enemies.',img:'bag_of_marbles'},
+  {name:'Paper Phrog',char:'ironclad',tier:'Uncommon',desc:'Enemies with Vulnerable take 75% more damage rather than 50%.',img:'paper_phrog'},
+  {name:'Louder Horn',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, apply 2 Vulnerable to ALL enemies.',img:'bag_of_marbles'},
+  {name:'Undulating Mass',char:'colorless',tier:'Rare',desc:'At the start of each combat, apply 2 Vulnerable and 2 Weak to ALL enemies.',img:'undulating_mass'},
+  // ── Exhaust Engine ──
+  {name:"Charon's Ashes",char:'ironclad',tier:'Rare',desc:'Whenever you Exhaust a card, deal 3 damage to ALL enemies.',img:'charons_ashes'},
+  {name:'Ghost Seed',char:'colorless',tier:'Rare',desc:'Whenever you Exhaust a card, add a copy of it to your Hand. It costs 0.',img:'ghost_seed'},
+  {name:'Parrying Dagger',char:'colorless',tier:'Uncommon',desc:'Whenever you Exhaust a card, gain 4 Block.',img:'parrying_dagger'},
+  {name:'Joss Paper',char:'colorless',tier:'Uncommon',desc:'Whenever you Exhaust a card, gain 3 Gold.',img:'joss_paper'},
+  // ── Strength Scaling ──
+  {name:'Demon Tongue',char:'ironclad',tier:'Rare',desc:'The first time you gain Strength each combat, double the amount gained.',img:'demon_tongue'},
+  {name:'Vajra',char:'colorless',tier:'Common',desc:'At the start of each combat, gain 1 Strength.',img:'vajra'},
+  {name:'Girya',char:'colorless',tier:'Rare',desc:'You may gain Strength at Rest Sites up to 3 times per run.',img:'girya'},
+  {name:'Shuriken',char:'colorless',tier:'Uncommon',desc:'Every 3 Attacks you play each turn, gain 1 Strength.',img:'shuriken'},
+  {name:'Cloak Clasp',char:'colorless',tier:'Rare',desc:'At the end of your turn, gain 1 Strength for each card in your Hand.',img:'cloak_clasp'},
+  // ── Poison ──
+  {name:'Twisted Funnel',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, apply 4 Poison to ALL enemies.',img:'twisted_funnel'},
+  {name:'Snecko Skull',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Poison, apply 1 additional stack.',img:'snecko_skull'},
+  {name:'Razor Tooth',char:'colorless',tier:'Uncommon',desc:'Whenever you apply Poison, deal 1 additional damage.',img:'razor_tooth'},
+  // ── Shiv Burst ──
+  {name:'Ninja Scroll',char:'silent',tier:'Uncommon',desc:'Start each combat with 3 Shivs in your Hand.',img:'ninja_scroll'},
+  {name:'Letter Opener',char:'colorless',tier:'Uncommon',desc:'Whenever you play 3 Skills in a turn, deal 5 damage to ALL enemies.',img:'letter_opener'},
+  // ── Discard Engine ──
+  {name:'Tingsha',char:'colorless',tier:'Uncommon',desc:'Whenever you discard a card outside of your turn, deal 3 damage to ALL enemies.',img:'tingsha'},
+  {name:'Tough Bandages',char:'colorless',tier:'Uncommon',desc:'Whenever you discard a card outside of your turn, gain 3 Block.',img:'tough_bandages'},
+  {name:'Sea Glass',char:'colorless',tier:'Uncommon',desc:'Whenever you discard a card outside of your turn, gain 1 Dexterity for the rest of combat.',img:'sea_glass'},
+  // ── Orb Build ──
+  {name:'Tuning Fork',char:'colorless',tier:'Uncommon',desc:'Whenever you Channel an Orb, it triggers once immediately.',img:'tuning_fork'},
+  {name:'Ripple Basin',char:'defect',tier:'Rare',desc:'Whenever you Channel an Orb, trigger it once immediately.',img:'ripple_basin'},
+  {name:'Data Disk',char:'defect',tier:'Common',desc:'At the start of each combat, gain 1 Focus.',img:'data_disk'},
+  {name:'Runic Capacitor',char:'defect',tier:'Uncommon',desc:'Start each combat with 3 additional Orb Slots.',img:'runic_capacitor'},
+  {name:'Chandelier',char:'colorless',tier:'Rare',desc:'Whenever you trigger an Orb Passive, deal 1 extra damage.',img:'chandelier'},
+  // ── Barricade ──
+  {name:'Orichalcum',char:'colorless',tier:'Uncommon',desc:'If you end your turn with 0 Block, gain 6 Block.',img:'orichalcum'},
+  {name:'Stone Cracker',char:'colorless',tier:'Uncommon',desc:'Whenever you would gain Plated Armor, gain twice as much.',img:'stone_cracker'},
+  // ── Self-Damage ──
+  {name:'Runic Cube',char:'colorless',tier:'Rare',desc:'Whenever you lose HP, draw 1 card.',img:'runic_cube'},
+  {name:'Tungsten Rod',char:'colorless',tier:'Uncommon',desc:'Whenever you would lose HP, lose 1 less.',img:'tungsten_rod'},
+  // ── Necrobinder ──
+  {name:'Bookmark',char:'necrobinder',tier:'Rare',desc:"Whenever Osty's HP changes, draw 1 card.",img:'bookmark'},
+  {name:'Undying Sigil',char:'necrobinder',tier:'Shop',desc:'Enemies with at least as much Doom as HP deal 50% less damage.',img:'undying_sigil'},
+  {name:'Big Hat',char:'necrobinder',tier:'Rare',desc:'At the start of each combat, add 2 random Ethereal cards into your Hand.',img:'big_hat'},
+  // ── Regent ──
+  {name:'Royal Scepter',char:'regent',tier:'Rare',desc:'Whenever you gain Stars, gain 1 additional Star.',img:'royal_scepter'},
+  {name:'Galactic Dust',char:'colorless',tier:'Rare',desc:'Gain 1 additional Star at the start of each combat.',img:'galactic_dust'},
+  {name:'Fencing Manual',char:'regent',tier:'Common',desc:'The Sovereign Blade costs 1 less Energy.',img:'fencing_manual'},
+  {name:'Mini Regent',char:'regent',tier:'Rare',desc:'Whenever you spend Stars, gain 1 Strength.',img:'mini_regent'},
+  // ── General / attack-heavy ──
+  {name:'Akabeko',char:'colorless',tier:'Uncommon',desc:'At the start of each combat, gain 8 Vigor.',img:'akabeko'},
+  {name:'Nunchaku',char:'colorless',tier:'Uncommon',desc:'Every 10 Attacks you play, gain 1 Energy.',img:'nunchaku'},
+  {name:'Pen Nib',char:'colorless',tier:'Rare',desc:'Every 10 Attacks you play, your next Attack deals double damage.',img:'pen_nib'},
+  {name:'Ornamental Fan',char:'colorless',tier:'Uncommon',desc:'Every 3 Attacks you play, gain 4 Block.',img:'ornamental_fan'},
+  {name:'Kunai',char:'colorless',tier:'Rare',desc:'Every 3 Attacks you play each turn, gain 1 Dexterity.',img:'kunai'},
+  {name:'Anchor',char:'colorless',tier:'Common',desc:'Start each combat with 10 Block.',img:'anchor'},
+  {name:'Bag of Preparation',char:'colorless',tier:'Common',desc:'At the start of each combat, draw 2 additional cards.',img:'bag_of_preparation'},
+  {name:'Lantern',char:'colorless',tier:'Common',desc:'Gain 1 Energy on the first turn of each combat.',img:'lantern'},
+];
+
+function suggestRelics(entries, archetypes) {
+  if (!entries.length) return [];
+
+  const archNames = archetypes.map(a => a.name);
+
+  // Dominant character detection (ignore colorless cards)
+  const charCounts = {};
+  entries.forEach(e => {
+    if (e.card.char !== 'colorless') charCounts[e.card.char] = (charCounts[e.card.char] || 0) + e.count;
+  });
+  const deckChar = Object.keys(charCounts).sort((a,b) => charCounts[b]-charCounts[a])[0] || 'colorless';
+
+  // Attack-heavy check
+  let attacks = 0, total = 0;
+  entries.forEach(e => { total += e.count; if (e.card.type === 'Attack') attacks += e.count; });
+  const attackHeavy = attacks > total * 0.4;
+
+  // Build score map for each relic by name
+  const S = {}; // name → points
+  const add = (name, pts) => { S[name] = (S[name] || 0) + pts; };
+
+  if (archNames.includes('Vulnerable')) {
+    add('Hand Drill', 95);
+    add('Paper Phrog', 88);
+    add('Bag of Marbles', 82);
+    add('Louder Horn', 75);
+    add('Undulating Mass', 62);
+  }
+  if (archNames.includes('Exhaust Engine')) {
+    add("Charon's Ashes", 92);
+    add('Ghost Seed', 87);
+    add('Parrying Dagger', 75);
+    add('Joss Paper', 60);
+  }
+  if (archNames.includes('Strength Scaling')) {
+    add('Demon Tongue', 95);
+    add('Vajra', 78);
+    add('Girya', 74);
+    add('Shuriken', 66);
+    add('Cloak Clasp', 60);
+  }
+  if (archNames.includes('Poison')) {
+    add('Twisted Funnel', 92);
+    add('Snecko Skull', 88);
+    add('Razor Tooth', 70);
+  }
+  if (archNames.includes('Shiv Burst')) {
+    add('Ninja Scroll', 95);
+    add('Letter Opener', 72);
+  }
+  if (archNames.includes('Discard Engine')) {
+    add('Tingsha', 90);
+    add('Tough Bandages', 80);
+    add('Sea Glass', 74);
+  }
+  if (archNames.includes('Orb Build')) {
+    add('Tuning Fork', 90);
+    add('Ripple Basin', 85);
+    add('Data Disk', 80);
+    add('Runic Capacitor', 74);
+    add('Chandelier', 68);
+  }
+  if (archNames.includes('Barricade')) {
+    add('Orichalcum', 80);
+    add('Stone Cracker', 65);
+  }
+  if (archNames.includes('Self-Damage')) {
+    add('Runic Cube', 85);
+    add('Tungsten Rod', 68);
+  }
+  if (archNames.includes('Osty / Summon')) {
+    add('Bookmark', 88);
+    add('Big Hat', 72);
+  }
+  if (archNames.includes('Doom')) {
+    add('Undying Sigil', 88);
+  }
+  if (archNames.includes('Stars')) {
+    add('Royal Scepter', 92);
+    add('Galactic Dust', 82);
+    add('Mini Regent', 72);
+  }
+  if (archNames.includes('Forge')) {
+    add('Fencing Manual', 92);
+    add('Mini Regent', 70);
+  }
+  if (attackHeavy) {
+    add('Akabeko', 58);
+    add('Nunchaku', 55);
+    add('Pen Nib', 54);
+    add('Ornamental Fan', 50);
+    add('Kunai', 50);
+  }
+  // Fallback: nothing detected, offer generic staples
+  if (archNames.length === 0) {
+    add('Anchor', 45);
+    add('Bag of Preparation', 42);
+    add('Vajra', 38);
+    add('Lantern', 35);
+    add('Akabeko', 35);
+  }
+
+  // Filter to class-compatible relics that have a score > 0, deduplicate by name
+  const seen = new Set();
+  return RELICS_SUGGEST
+    .filter(r => {
+      if (r.char !== 'colorless' && r.char !== deckChar) return false;
+      if (!S[r.name]) return false;
+      if (seen.has(r.name)) return false;
+      seen.add(r.name);
+      return true;
+    })
+    .map(r => ({ relic: r, score: S[r.name] }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(c => c.relic);
+}
+
+let _relicPanelOpen = false;
+
+function toggleRelicSuggest() {
+  _relicPanelOpen = !_relicPanelOpen;
+  const panel = document.getElementById('relicSuggestPanel');
+  const btn   = document.getElementById('relicSuggestBtn');
+  panel.style.display = _relicPanelOpen ? 'flex' : 'none';
+  btn.classList.toggle('open', _relicPanelOpen);
+  const icon = document.getElementById('relicSuggestIcon');
+  if (icon) icon.textContent = _relicPanelOpen ? '▲' : '🔮';
+  if (_relicPanelOpen) renderRelicSuggestions();
+}
+
+function renderRelicSuggestions() {
+  if (!_relicPanelOpen) return;
+  const panel = document.getElementById('relicSuggestPanel');
+  const entries = Object.values(_deck);
+
+  if (!entries.length) {
+    panel.innerHTML = '<div class="rs-empty">Add cards to get relic suggestions.</div>';
+    return;
+  }
+
+  const suggestions = suggestRelics(entries, _lastArchetypes);
+  if (!suggestions.length) {
+    panel.innerHTML = '<div class="rs-empty">No strong relic matches detected yet.</div>';
+    return;
+  }
+
+  panel.innerHTML = '';
+  suggestions.forEach(r => {
+    const tile = document.createElement('div');
+    tile.className = 'rs-tile';
+
+    // Art
+    const artWrap = document.createElement('div');
+    artWrap.className = 'rs-art';
+    const img = document.createElement('img');
+    img.src = 'images/relics/' + r.img + '.png';
+    img.alt = r.name;
+    const fb = document.createElement('div');
+    fb.className = 'rs-art-fb';
+    fb.textContent = '🔮';
+    fb.style.display = 'none';
+    img.onerror = () => { img.style.display = 'none'; fb.style.display = 'flex'; };
+    artWrap.appendChild(img);
+    artWrap.appendChild(fb);
+
+    // Info
+    const info = document.createElement('div');
+    info.className = 'rs-info';
+    const nm = document.createElement('div');
+    nm.className = 'rs-name';
+    nm.textContent = r.name;
+    const meta = document.createElement('div');
+    meta.className = 'rs-meta';
+    meta.textContent = r.tier + (r.char !== 'colorless' ? ' · ' + r.char.charAt(0).toUpperCase() + r.char.slice(1) : '');
+    info.appendChild(nm);
+    info.appendChild(meta);
+
+    // Tooltip
+    const tip = document.createElement('div');
+    tip.className = 'rs-tip';
+    tip.textContent = r.desc;
+
+    tile.appendChild(artWrap);
+    tile.appendChild(info);
+    tile.appendChild(tip);
+    panel.appendChild(tile);
+  });
 }
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
