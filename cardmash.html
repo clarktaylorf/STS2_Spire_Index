@@ -282,14 +282,29 @@ function pickTwo(pool) {
 }
 
 // ─── CARD RENDER ──────────────────────────────────────────────────────────────
+const IMG_BASE = 'images/packed/card_portraits';
+const IMG_FALLBACK_DIRS = ['event','colorless','ironclad','silent','defect','regent','necrobinder','token','quest','curse'];
+
 function cardImgSrc(card) {
   if (!card.img) return null;
-  const IMG = 'images/packed/card_portraits';
-  if (card.type === 'Curse') return `${IMG}/curse/${card.img}.png`;
-  if (card.type === 'Status') return `${IMG}/status/${card.img}.png`;
-  if (card.char === 'token') return `${IMG}/token/${card.img}.png`;
-  if (card.char === 'event') return `${IMG}/event/${card.img}.png`;
-  return `${IMG}/${card.char}/${card.img}.png`;
+  if (card.type === 'Curse') return `${IMG_BASE}/curse/${card.img}.png`;
+  if (card.type === 'Status') return `${IMG_BASE}/status/${card.img}.png`;
+  return `${IMG_BASE}/${card.char}/${card.img}.png`;
+}
+
+function imgFallback(el) {
+  const imgName = el.dataset.imgname;
+  const tried = el.dataset.tried ? el.dataset.tried.split(',') : [];
+  const currentDir = (el.src.match(/card_portraits\/([^/]+)\//) || [])[1];
+  if (currentDir) tried.push(currentDir);
+  const next = IMG_FALLBACK_DIRS.find(d => !tried.includes(d));
+  if (next) {
+    el.dataset.tried = tried.join(',');
+    el.src = `${IMG_BASE}/${next}/${imgName}.png`;
+  } else {
+    el.style.display = 'none';
+    if (el.nextElementSibling) el.nextElementSibling.style.display = 'flex';
+  }
 }
 
 function renderMashCard(card, side) {
@@ -301,7 +316,7 @@ function renderMashCard(card, side) {
     <div class="mash-card" id="card-${side}" onclick="castVote('${side}')">
       <div class="card-img-wrap">
         ${img
-          ? `<img src="${img}" alt="${card.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          ? `<img src="${img}" alt="${card.name}" data-imgname="${card.img}" onerror="imgFallback(this)">
              <div class="no-img" style="display:none">🃏</div>`
           : `<div class="no-img">🃏</div>`
         }
