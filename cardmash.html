@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardMash — SpireIndex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#07050f;--deep:#0d0b18;--mid:#13101f;
+  --gold:#c9933a;--gold2:#e8b86d;--pale:#e8dccc;--muted:#6a5a4a;--border:rgba(201,147,58,0.12);
+  --ironclad:#e06050;--silent:#50c090;--defect:#60a0e0;--regent:#c070e0;--necrobinder:#70b060;--colorless:#a09898;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--pale);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:52px;background:rgba(7,5,15,0.96);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0;padding:0 20px;}
+.topbar-logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--gold2);font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:2px;margin-right:28px;flex-shrink:0;}
+.topbar-logo img{width:24px;height:24px;image-rendering:pixelated;}
+.topbar-nav{display:flex;gap:20px;align-items:center;flex:1;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#6a5a6a;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a:hover{color:var(--pale);}
+.topbar-nav a.active{color:var(--gold);}
+
+/* MAIN */
+main{padding-top:52px;min-height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+.mash-header{text-align:center;padding:40px 24px 24px;}
+.mash-title{font-family:'Cinzel',serif;font-size:32px;font-weight:700;color:var(--pale);letter-spacing:2px;margin-bottom:6px;}
+.mash-title span{color:var(--gold);}
+.mash-sub{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+
+/* CLASS TABS */
+.class-tabs{display:flex;justify-content:center;gap:8px;padding:0 24px 28px;flex-wrap:wrap;}
+.class-tab{display:flex;align-items:center;gap:7px;padding:8px 18px;border:1px solid rgba(201,147,58,0.15);background:rgba(13,11,24,0.8);border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);transition:all 0.2s;position:relative;}
+.class-tab:hover{border-color:rgba(201,147,58,0.3);color:var(--pale);}
+.class-tab.active{color:var(--pale);border-color:currentColor;}
+.class-tab[data-char="ironclad"].active{color:var(--ironclad);border-color:var(--ironclad);background:rgba(224,96,80,0.08);}
+.class-tab[data-char="silent"].active{color:var(--silent);border-color:var(--silent);background:rgba(80,192,144,0.08);}
+.class-tab[data-char="defect"].active{color:var(--defect);border-color:var(--defect);background:rgba(96,160,224,0.08);}
+.class-tab[data-char="regent"].active{color:var(--regent);border-color:var(--regent);background:rgba(192,112,224,0.08);}
+.class-tab[data-char="necrobinder"].active{color:var(--necrobinder);border-color:var(--necrobinder);background:rgba(112,176,96,0.08);}
+.tab-dot{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:0.7;}
+.vote-badge{position:absolute;top:-6px;right:-6px;background:var(--gold);color:#07050f;font-size:8px;font-weight:700;letter-spacing:0;padding:1px 5px;border-radius:8px;min-width:18px;text-align:center;}
+
+/* ARENA */
+.arena{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;padding:0 24px 60px;}
+
+/* VIEW SWITCHER */
+.view-switch{display:flex;gap:0;margin-bottom:32px;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.view-btn{padding:8px 24px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.2s;}
+.view-btn.active{background:rgba(201,147,58,0.12);color:var(--gold);}
+
+/* VOTE VIEW */
+.vote-view{width:100%;max-width:900px;}
+.matchup{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;}
+.vs-divider{display:flex;flex-direction:column;align-items:center;gap:8px;user-select:none;}
+.vs-text{font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:rgba(201,147,58,0.3);letter-spacing:2px;}
+.vs-line{width:1px;height:40px;background:linear-gradient(to bottom,transparent,rgba(201,147,58,0.2),transparent);}
+
+/* CARD TILE */
+.mash-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;display:flex;flex-direction:column;}
+.mash-card:hover{transform:translateY(-4px) scale(1.02);border-color:rgba(201,147,58,0.4);box-shadow:0 12px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(201,147,58,0.2);}
+.mash-card.winner{animation:winPulse 0.5s ease-out forwards;}
+.mash-card.loser{animation:loseFade 0.4s ease-out forwards;}
+@keyframes winPulse{0%{transform:scale(1);}40%{transform:scale(1.04);box-shadow:0 0 0 3px var(--gold),0 16px 48px rgba(201,147,58,0.3);}100%{transform:scale(1);}}
+@keyframes loseFade{0%{opacity:1;}100%{opacity:0.15;filter:grayscale(0.6);}}
+
+.card-img-wrap{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:9px 9px 0 0;background:#0a0818;}
+.card-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s;}
+.mash-card:hover .card-img-wrap img{transform:scale(1.04);}
+.card-img-wrap .no-img{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:0.15;}
+
+.card-bar{padding:12px 14px 6px;background:var(--mid);}
+.card-name{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--pale);margin-bottom:6px;line-height:1.2;}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tag{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
+.tag-type-Attack{background:rgba(224,96,80,0.15);color:#e08070;}
+.tag-type-Skill{background:rgba(96,160,224,0.15);color:#80b0e0;}
+.tag-type-Power{background:rgba(192,112,224,0.15);color:#c090e0;}
+.tag-rarity-Common{background:rgba(150,150,150,0.1);color:#888;}
+.tag-rarity-Uncommon{background:rgba(96,160,224,0.1);color:#60a0c0;}
+.tag-rarity-Rare{background:rgba(201,147,58,0.1);color:var(--gold);}
+.card-desc{font-size:11px;line-height:1.5;color:#7a6a5a;padding:0 14px 12px;font-style:italic;}
+
+.pick-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(201,147,58,0.0);border-radius:10px;opacity:0;transition:opacity 0.2s;pointer-events:none;}
+.mash-card:hover .pick-hint{opacity:1;}
+.pick-hint-inner{font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);background:rgba(7,5,15,0.85);padding:10px 20px;border:1px solid rgba(201,147,58,0.4);border-radius:4px;}
+
+/* VOTE STATUS */
+.vote-status{margin-top:24px;text-align:center;min-height:32px;}
+.votes-left{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.votes-left span{color:var(--gold2);font-weight:600;}
+.vote-limit-msg{font-size:12px;color:var(--muted);letter-spacing:1px;}
+.skip-btn{margin-top:12px;background:transparent;border:1px solid rgba(201,147,58,0.2);color:var(--muted);font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:7px 20px;cursor:pointer;border-radius:3px;transition:all 0.2s;}
+.skip-btn:hover{border-color:rgba(201,147,58,0.4);color:var(--pale);}
+
+/* LOADING / EMPTY */
+.arena-msg{text-align:center;padding:60px 24px;color:var(--muted);font-size:14px;}
+.arena-msg .big{font-family:'Cinzel',serif;font-size:24px;color:rgba(201,147,58,0.3);margin-bottom:12px;}
+
+/* LEADERBOARD VIEW */
+.board-view{width:100%;max-width:700px;}
+.board-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.board-title{font-family:'Cinzel',serif;font-size:16px;font-weight:600;color:var(--pale);letter-spacing:1px;}
+.board-meta{font-size:11px;color:var(--muted);letter-spacing:1px;}
+.board-list{display:flex;flex-direction:column;gap:3px;}
+.board-row{display:grid;grid-template-columns:28px 1fr 100px 80px;align-items:center;gap:12px;padding:10px 14px;background:var(--mid);border:1px solid var(--border);border-radius:6px;transition:background 0.15s;}
+.board-row:hover{background:#15121f;}
+.board-rank{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:var(--muted);text-align:center;}
+.board-rank.gold{color:var(--gold);}
+.board-rank.silver{color:#aaa;}
+.board-rank.bronze{color:#c87040;}
+.board-card-name{font-size:13px;font-weight:500;color:var(--pale);}
+.board-card-type{font-size:10px;color:var(--muted);margin-top:2px;}
+.board-bar-wrap{background:rgba(201,147,58,0.08);border-radius:3px;height:6px;overflow:hidden;}
+.board-bar{height:100%;background:linear-gradient(to right,var(--gold),var(--gold2));border-radius:3px;transition:width 0.6s ease-out;}
+.board-wr{font-size:12px;font-weight:600;text-align:right;}
+.board-wr.high{color:#5dc888;}
+.board-wr.mid{color:var(--gold);}
+.board-wr.low{color:#c07070;}
+.board-votes{font-size:10px;color:var(--muted);text-align:right;}
+.board-empty{text-align:center;padding:48px;color:var(--muted);font-size:13px;}
+.board-loading{text-align:center;padding:48px;color:var(--muted);}
+
+/* FOOTER */
+footer{text-align:center;padding:18px 24px;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(201,147,58,0.22);border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <img src="images/icon_1024.png" alt="SpireIndex">
+    <span>SpireIndex</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="cards.html">Card Library</a>
+    <a href="relics.html">Relics</a>
+    <a href="deck.html">Deck Builder</a>
+    <a href="cardmash.html" class="active">CardMash</a>
+    <a href="gallery.html">Build Gallery</a>
+    <a href="patches.html">Patches</a>
+  </nav>
+</div>
+
+<main>
+  <div class="mash-header">
+    <h1 class="mash-title">Card<span>Mash</span></h1>
+    <p class="mash-sub">Head-to-head · Which card wins?</p>
+  </div>
+
+  <div class="class-tabs" id="classTabs">
+    <button class="class-tab" data-char="ironclad">
+      <span class="tab-dot"></span>Ironclad
+      <span class="vote-badge" id="badge-ironclad"></span>
+    </button>
+    <button class="class-tab" data-char="silent">
+      <span class="tab-dot"></span>Silent
+      <span class="vote-badge" id="badge-silent"></span>
+    </button>
+    <button class="class-tab" data-char="defect">
+      <span class="tab-dot"></span>Defect
+      <span class="vote-badge" id="badge-defect"></span>
+    </button>
+    <button class="class-tab" data-char="regent">
+      <span class="tab-dot"></span>Regent
+      <span class="vote-badge" id="badge-regent"></span>
+    </button>
+    <button class="class-tab" data-char="necrobinder">
+      <span class="tab-dot"></span>Necrobinder
+      <span class="vote-badge" id="badge-necrobinder"></span>
+    </button>
+  </div>
+
+  <div class="arena">
+    <div class="view-switch">
+      <button class="view-btn active" id="btnVote" onclick="switchView('vote')">⚔ Vote</button>
+      <button class="view-btn" id="btnBoard" onclick="switchView('board')">🏆 Leaderboard</button>
+    </div>
+
+    <!-- VOTE VIEW -->
+    <div class="vote-view" id="voteView">
+      <div id="arenaContent">
+        <div class="arena-msg"><div class="big">⚔</div>Select a class above to begin</div>
+      </div>
+      <div class="vote-status" id="voteStatus"></div>
+    </div>
+
+    <!-- BOARD VIEW -->
+    <div class="board-view" id="boardView" style="display:none;">
+      <div class="board-header">
+        <div class="board-title" id="boardTitle">Leaderboard</div>
+        <div class="board-meta" id="boardMeta"></div>
+      </div>
+      <div class="board-list" id="boardList">
+        <div class="board-empty">Select a class to see rankings.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>An SDS Games Production</footer>
+
+<script>
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://wgdnlukobrguespohvog.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnZG5sdWtvYnJndWVzcG9odm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNDg0OTIsImV4cCI6MjA5MjcyNDQ5Mn0.1vm67910OpSYUXrGl1S_0ZCrEN-e6mUnAdbulf1Y9y8';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const DAILY_LIMIT = 1;   // votes per class per day
+const CHARS = ['ironclad','silent','defect','regent','necrobinder'];
+const CHAR_LABELS = {ironclad:'Ironclad',silent:'Silent',defect:'Defect',regent:'Regent',necrobinder:'Necrobinder'};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let _allCards = [];
+let _activeChar = null;
+let _cardA = null;
+let _cardB = null;
+let _voting = false;
+let _view = 'vote';
+
+// ─── VOTE TRACKING (localStorage) ────────────────────────────────────────────
+function todayKey(char) {
+  const d = new Date();
+  return `cm_votes_${char}_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+}
+function getVotesLeft(char) {
+  const used = parseInt(localStorage.getItem(todayKey(char)) || '0');
+  return Math.max(0, DAILY_LIMIT - used);
+}
+function recordVote(char) {
+  const key = todayKey(char);
+  const used = parseInt(localStorage.getItem(key) || '0');
+  localStorage.setItem(key, used + 1);
+}
+function refreshBadges() {
+  CHARS.forEach(char => {
+    const left = getVotesLeft(char);
+    const badge = document.getElementById('badge-' + char);
+    if (!badge) return;
+    if (left < DAILY_LIMIT) {
+      badge.textContent = left;
+      badge.style.display = 'inline-block';
+      badge.style.background = left === 0 ? '#555' : 'var(--gold)';
+    } else {
+      badge.style.display = 'none';
+    }
+  });
+}
+
+// ─── CARD LOADING ─────────────────────────────────────────────────────────────
+async function loadCards() {
+  try {
+    const res = await fetch('/api/cards');
+    const data = await res.json();
+    _allCards = (data.cards || []).filter(c =>
+      c.type !== 'Status' && c.type !== 'Curse' && c.type !== 'Token' && c.rarity !== 'Starter'
+    );
+  } catch(e) {
+    console.error('Card load failed:', e);
+  }
+}
+
+function getPoolForChar(char) {
+  // class cards + colorless cards (universally available)
+  return _allCards.filter(c => c.char === char || c.char === 'colorless');
+}
+
+function pickTwo(pool) {
+  if (pool.length < 2) return [null, null];
+  const a = Math.floor(Math.random() * pool.length);
+  let b;
+  do { b = Math.floor(Math.random() * pool.length); } while (b === a);
+  return [pool[a], pool[b]];
+}
+
+// ─── CARD RENDER ──────────────────────────────────────────────────────────────
+function cardImgSrc(card) {
+  if (!card.img) return null;
+  return `images/cards/${card.img}.png`;
+}
+
+function renderMashCard(card, side) {
+  const img = cardImgSrc(card);
+  const typeClass = `tag-type-${card.type}`;
+  const rarityClass = `tag-rarity-${card.rarity}`;
+  const desc = card.desc || '';
+  return `
+    <div class="mash-card" id="card-${side}" onclick="castVote('${side}')">
+      <div class="card-img-wrap">
+        ${img
+          ? `<img src="${img}" alt="${card.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+             <div class="no-img" style="display:none">🃏</div>`
+          : `<div class="no-img">🃏</div>`
+        }
+      </div>
+      <div class="card-bar">
+        <div class="card-name">${card.name}</div>
+        <div class="card-tags">
+          <span class="tag ${typeClass}">${card.type}</span>
+          ${card.rarity ? `<span class="tag ${rarityClass}">${card.rarity}</span>` : ''}
+          ${card.cost !== undefined ? `<span class="tag" style="background:rgba(201,147,58,0.1);color:var(--gold2);">Cost ${card.cost}</span>` : ''}
+        </div>
+      </div>
+      <div class="card-desc">${desc}</div>
+      <div class="pick-hint"><div class="pick-hint-inner">Pick this</div></div>
+    </div>`;
+}
+
+function renderMatchup() {
+  if (!_activeChar) return;
+  const left = getVotesLeft(_activeChar);
+  if (left === 0) {
+    document.getElementById('arenaContent').innerHTML = `
+      <div class="arena-msg">
+        <div class="big">⏳</div>
+        <div>You've used all ${DAILY_LIMIT} votes for ${CHAR_LABELS[_activeChar]} today.</div>
+        <div style="margin-top:8px;font-size:11px;">Come back tomorrow — or switch to another class!</div>
+      </div>`;
+    document.getElementById('voteStatus').innerHTML = '';
+    return;
+  }
+
+  const pool = getPoolForChar(_activeChar);
+  if (pool.length < 2) {
+    document.getElementById('arenaContent').innerHTML = `<div class="arena-msg">Not enough cards loaded.</div>`;
+    return;
+  }
+
+  [_cardA, _cardB] = pickTwo(pool);
+  document.getElementById('arenaContent').innerHTML = `
+    <div class="matchup">
+      ${renderMashCard(_cardA, 'a')}
+      <div class="vs-divider">
+        <div class="vs-line"></div>
+        <div class="vs-text">VS</div>
+        <div class="vs-line"></div>
+      </div>
+      ${renderMashCard(_cardB, 'b')}
+    </div>`;
+
+  renderVoteStatus();
+}
+
+function renderVoteStatus() {
+  const left = getVotesLeft(_activeChar);
+  document.getElementById('voteStatus').innerHTML = `
+    <div class="votes-left"><span>${left}</span> vote${left !== 1 ? 's' : ''} remaining today</div>
+    <button class="skip-btn" onclick="renderMatchup()">Skip this matchup ↻</button>`;
+}
+
+// ─── VOTING ───────────────────────────────────────────────────────────────────
+async function castVote(side) {
+  if (_voting || !_cardA || !_cardB || !_activeChar) return;
+  if (getVotesLeft(_activeChar) <= 0) return;
+  _voting = true;
+
+  const winner = side === 'a' ? _cardA : _cardB;
+  const loser  = side === 'a' ? _cardB : _cardA;
+
+  // Animate
+  document.getElementById('card-' + side).classList.add('winner');
+  document.getElementById('card-' + (side === 'a' ? 'b' : 'a')).classList.add('loser');
+
+  // Record locally
+  recordVote(_activeChar);
+  refreshBadges();
+
+  // Record to Supabase (fire and forget — don't block UX on network)
+  sb.from('cardmash_votes').insert({
+    winner: winner.name,
+    loser: loser.name,
+    winner_char: winner.char,
+    loser_char: loser.char,
+  }).then(({ error }) => {
+    if (error) console.warn('Vote not saved:', error.message);
+  });
+
+  // Load next pair after brief pause
+  await new Promise(r => setTimeout(r, 520));
+  _voting = false;
+  renderMatchup();
+}
+
+// ─── LEADERBOARD ─────────────────────────────────────────────────────────────
+async function loadLeaderboard() {
+  if (!_activeChar) return;
+  const list = document.getElementById('boardList');
+  list.innerHTML = '<div class="board-loading">Loading…</div>';
+  document.getElementById('boardTitle').textContent = `${CHAR_LABELS[_activeChar]} Rankings`;
+
+  // Fetch all votes for this character
+  const { data, error } = await sb
+    .from('cardmash_votes')
+    .select('winner, loser, winner_char, loser_char')
+    .or(`winner_char.eq.${_activeChar},loser_char.eq.${_activeChar}`);
+
+  if (error) {
+    list.innerHTML = `<div class="board-empty">Could not load rankings: ${error.message}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div class="board-empty">No votes yet — be the first to vote!</div>';
+    document.getElementById('boardMeta').textContent = '';
+    return;
+  }
+
+  // Tally wins and losses per card
+  const stats = {};
+  const ensure = name => { if (!stats[name]) stats[name] = { wins: 0, losses: 0, type: '', rarity: '' }; };
+
+  data.forEach(row => {
+    ensure(row.winner);
+    ensure(row.loser);
+    stats[row.winner].wins++;
+    stats[row.loser].losses++;
+  });
+
+  // Enrich with card data
+  const pool = getPoolForChar(_activeChar);
+  pool.forEach(c => {
+    if (stats[c.name]) {
+      stats[c.name].type = c.type;
+      stats[c.name].rarity = c.rarity;
+    }
+  });
+
+  // Sort by win rate (min 3 votes to rank)
+  const ranked = Object.entries(stats)
+    .map(([name, s]) => ({ name, ...s, total: s.wins + s.losses, wr: s.wins / (s.wins + s.losses) }))
+    .filter(r => r.total >= 3)
+    .sort((a, b) => b.wr - a.wr || b.total - a.total);
+
+  document.getElementById('boardMeta').textContent = `${data.length} total votes`;
+
+  if (!ranked.length) {
+    list.innerHTML = '<div class="board-empty">Need at least 3 votes per card to appear. Keep voting!</div>';
+    return;
+  }
+
+  list.innerHTML = ranked.slice(0, 20).map((r, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const pct = Math.round(r.wr * 100);
+    const wrClass = pct >= 60 ? 'high' : pct >= 45 ? 'mid' : 'low';
+    return `
+      <div class="board-row">
+        <div class="board-rank ${rankClass}">${rank}</div>
+        <div>
+          <div class="board-card-name">${r.name}</div>
+          <div class="board-card-type">${r.type || ''}${r.rarity ? ' · ' + r.rarity : ''}</div>
+        </div>
+        <div>
+          <div class="board-bar-wrap"><div class="board-bar" style="width:${pct}%"></div></div>
+        </div>
+        <div>
+          <div class="board-wr ${wrClass}">${pct}%</div>
+          <div class="board-votes">${r.total} votes</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── CLASS TABS ───────────────────────────────────────────────────────────────
+document.getElementById('classTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.class-tab');
+  if (!tab) return;
+  document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  _activeChar = tab.dataset.char;
+  if (_view === 'vote') renderMatchup();
+  else loadLeaderboard();
+});
+
+// ─── VIEW SWITCH ──────────────────────────────────────────────────────────────
+function switchView(v) {
+  _view = v;
+  document.getElementById('voteView').style.display = v === 'vote' ? 'block' : 'none';
+  document.getElementById('boardView').style.display = v === 'board' ? 'block' : 'none';
+  document.getElementById('btnVote').classList.toggle('active', v === 'vote');
+  document.getElementById('btnBoard').classList.toggle('active', v === 'board');
+  if (v === 'board') loadLeaderboard();
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+(async () => {
+  refreshBadges();
+  await loadCards();
+})();
+</script>
+</body>
+</html>
