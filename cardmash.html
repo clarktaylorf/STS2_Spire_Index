@@ -284,7 +284,12 @@ function pickTwo(pool) {
 // ─── CARD RENDER ──────────────────────────────────────────────────────────────
 function cardImgSrc(card) {
   if (!card.img) return null;
-  return `images/cards/${card.img}.png`;
+  const IMG = 'images/packed/card_portraits';
+  if (card.type === 'Curse') return `${IMG}/curse/${card.img}.png`;
+  if (card.type === 'Status') return `${IMG}/status/${card.img}.png`;
+  if (card.char === 'token') return `${IMG}/token/${card.img}.png`;
+  if (card.char === 'event') return `${IMG}/event/${card.img}.png`;
+  return `${IMG}/${card.char}/${card.img}.png`;
 }
 
 function renderMashCard(card, side) {
