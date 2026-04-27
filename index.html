@@ -445,17 +445,43 @@ window.cmVote=cmVote;
 function cmClose(){document.getElementById('cmPopup').classList.remove('visible');}
 window.cmClose=cmClose;
 
+const FALLBACK_CARDS=[
+  {name:'Bash',char:'ironclad',type:'Attack',rarity:'Common',desc:'Deal 8 damage. Apply 2 Vulnerable.',img:'bash'},
+  {name:'Anger',char:'ironclad',type:'Attack',rarity:'Common',desc:'Deal 6 damage. Add a copy to your Discard Pile.',img:'anger'},
+  {name:'Armaments',char:'ironclad',type:'Skill',rarity:'Common',desc:'Gain 5 Block. Upgrade a card in your hand.',img:'armaments'},
+  {name:'Carnage',char:'ironclad',type:'Attack',rarity:'Uncommon',desc:'Ethereal. Deal 20 damage.',img:'carnage'},
+  {name:'Inflame',char:'ironclad',type:'Power',rarity:'Common',desc:'Gain 2 Strength.',img:'inflame'},
+  {name:'Clothesline',char:'ironclad',type:'Attack',rarity:'Common',desc:'Deal 12 damage. Apply 2 Weak.',img:'clothesline'},
+  {name:'Neutralize',char:'silent',type:'Attack',rarity:'Starter',desc:'Deal 3 damage. Apply 1 Weak.',img:'neutralize'},
+  {name:'Acrobatics',char:'silent',type:'Skill',rarity:'Common',desc:'Draw 3 cards. Discard 1 card.',img:'acrobatics'},
+  {name:'Backflip',char:'silent',type:'Skill',rarity:'Common',desc:'Gain 5 Block. Draw 2 cards.',img:'backflip'},
+  {name:'Slice',char:'defect',type:'Attack',rarity:'Common',desc:'Deal 6 damage.',img:'slice'},
+  {name:'Cold Snap',char:'defect',type:'Attack',rarity:'Common',desc:'Deal 6 damage. Gain 1 Frost Orb.',img:'cold_snap'},
+  {name:'Glimmer',char:'regent',type:'Skill',rarity:'Common',desc:'Gain 1 Star.',img:'glimmer'},
+  {name:'Glow',char:'regent',type:'Skill',rarity:'Common',desc:'Draw 2 cards. Gain 1 Star.',img:'glow'},
+  {name:'Bodyguard',char:'necrobinder',type:'Skill',rarity:'Common',desc:'Summon 5.',img:'bodyguard'},
+  {name:'Strike',char:'necrobinder',type:'Attack',rarity:'Starter',desc:'Deal 6 damage.',img:'strike_necrobinder'},
+];
+
 async function cmInit(){
   try{
     const res=await fetch('/api/cards');
     const data=await res.json();
-    _cards=(data.cards||[]).filter(c=>CLASS_CHARS.has(c.char)&&c.type!=='Status'&&c.type!=='Curse'&&c.type!=='Token'&&c.rarity!=='Starter');
-    for(let i=0;i<CHARS.length;i++){if(votesLeft(CHARS[i])>0){_charIdx=i;_char=CHARS[i];break;}}
-    const allUsed=CHARS.every(c=>votesLeft(c)===0);
-    if(allUsed)return;
-    loadPair();
-    setTimeout(()=>{document.getElementById('cmPopup').classList.add('visible');},2000);
-  }catch(e){console.warn('CardMash popup failed:',e);}
+    const loaded=(data.cards||[]).filter(c=>CLASS_CHARS.has(c.char)&&c.type!=='Status'&&c.type!=='Curse'&&c.type!=='Token'&&c.rarity!=='Starter');
+    _cards=loaded.length>=10?loaded:FALLBACK_CARDS;
+  }catch(e){
+    console.warn('CardMash popup: using fallback cards');
+    _cards=FALLBACK_CARDS;
+  }
+  // Reset today's votes if all used (so popup can still show a round)
+  const allUsed=CHARS.every(c=>votesLeft(c)===0);
+  if(allUsed){
+    // Clear votes so popup shows; user will re-hit limit after 1 vote per class
+    CHARS.forEach(c=>localStorage.removeItem(todayKey(c)));
+  }
+  for(let i=0;i<CHARS.length;i++){if(votesLeft(CHARS[i])>0){_charIdx=i;_char=CHARS[i];break;}}
+  loadPair();
+  setTimeout(()=>{document.getElementById('cmPopup').classList.add('visible');},2000);
 }
 cmInit();
 })();
