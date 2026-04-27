@@ -260,7 +260,9 @@ async function loadCards() {
   try {
     const res = await fetch('/api/cards');
     const data = await res.json();
+    const CLASS_CHARS = new Set(['ironclad','silent','defect','regent','necrobinder']);
     _allCards = (data.cards || []).filter(c =>
+      CLASS_CHARS.has(c.char) &&
       c.type !== 'Status' && c.type !== 'Curse' && c.type !== 'Token' && c.rarity !== 'Starter'
     );
   } catch(e) {
@@ -269,8 +271,8 @@ async function loadCards() {
 }
 
 function getPoolForChar(char) {
-  // class cards + colorless cards (universally available)
-  return _allCards.filter(c => c.char === char || c.char === 'colorless');
+  // class-specific cards only — no colorless, event, or legacy cards
+  return _allCards.filter(c => c.char === char);
 }
 
 function pickTwo(pool) {
