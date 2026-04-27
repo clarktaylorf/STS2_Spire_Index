@@ -6,6 +6,7 @@
 <title>SpireIndex — Slay the Spire 2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 .home-logo{position:fixed;top:14px;left:16px;z-index:200;opacity:0.8;transition:opacity 0.2s;}
@@ -129,6 +130,45 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .anc-thumb-name{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(232,220,204,0.4);transition:color 0.3s;}
 .anc-thumb:hover .anc-thumb-name{color:var(--gold2);}
 
+/* CARDMASH POPUP */
+.cm-popup{position:fixed;bottom:24px;right:24px;z-index:500;width:360px;background:#0d0b18;border:1px solid rgba(201,147,58,0.28);border-radius:12px;overflow:hidden;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.7),0 0 0 1px rgba(201,147,58,0.06);}
+.cm-popup.visible{display:block;animation:cmUp 0.5s cubic-bezier(0.16,1,0.3,1) both;}
+@keyframes cmUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.cm-hdr{padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(201,147,58,0.1);}
+.cm-title{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#e8dccc;letter-spacing:2px;}
+.cm-title span{color:#c9933a;}
+.cm-sub{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#6a5a4a;margin-top:2px;}
+.cm-right{display:flex;align-items:center;gap:8px;}
+.cm-pill{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 9px;border-radius:10px;border:1px solid rgba(201,147,58,0.25);background:rgba(201,147,58,0.1);color:#c9933a;transition:all 0.3s;}
+.cm-x{width:24px;height:24px;border-radius:50%;background:transparent;border:1px solid rgba(201,147,58,0.15);color:#6a5a4a;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+.cm-x:hover{border-color:rgba(201,147,58,0.4);color:#e8dccc;}
+.cm-arena{display:grid;grid-template-columns:1fr 28px 1fr;gap:8px;padding:12px;}
+.cm-card{background:#13101f;border:1px solid rgba(201,147,58,0.1);border-radius:8px;cursor:pointer;transition:all 0.2s;overflow:hidden;}
+.cm-card:hover:not(.cm-locked){border-color:rgba(201,147,58,0.4);transform:translateY(-2px);}
+.cm-card.cm-win{border-color:rgba(201,147,58,0.7);background:rgba(201,147,58,0.05);}
+.cm-card.cm-lose{opacity:0.25;}
+.cm-card.cm-locked{cursor:default;}
+.cm-img{position:relative;height:80px;background:#080614;overflow:hidden;border-radius:7px 7px 0 0;}
+.cm-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.cm-img .cm-noimg{width:100%;height:100%;display:none;align-items:center;justify-content:center;font-size:28px;opacity:0.12;}
+.cm-body{padding:9px 10px 10px;}
+.cm-name{font-family:'Cinzel',serif;font-size:10px;font-weight:600;color:#e8dccc;margin-bottom:5px;line-height:1.2;}
+.cm-tags{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;}
+.cm-tag{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:1px 5px;border-radius:2px;}
+.cm-tag-a{background:rgba(224,96,80,0.15);color:#e08070;}
+.cm-tag-s{background:rgba(96,160,224,0.15);color:#80b0e0;}
+.cm-tag-p{background:rgba(192,112,224,0.15);color:#c090e0;}
+.cm-tag-c{background:rgba(150,150,150,0.1);color:#777;}
+.cm-tag-u{background:rgba(96,160,224,0.1);color:#60a0c0;}
+.cm-tag-r{background:rgba(201,147,58,0.12);color:#c9933a;}
+.cm-desc{font-size:9px;line-height:1.5;color:#5a4a5a;font-style:italic;}
+.cm-vs{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+.cm-vs-line{width:1px;height:24px;background:rgba(201,147,58,0.12);}
+.cm-vs-text{font-family:'Cinzel',serif;font-size:11px;font-weight:900;color:rgba(201,147,58,0.2);}
+.cm-result{text-align:center;padding:0 12px 4px;font-size:10px;min-height:22px;color:rgba(201,147,58,0.65);letter-spacing:1px;}
+.cm-skip{display:block;width:100%;padding:10px;background:transparent;border:none;border-top:1px solid rgba(201,147,58,0.08);color:rgba(106,90,74,0.5);font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:color 0.2s;font-family:inherit;}
+.cm-skip:hover{color:#6a5a4a;}
+
 /* FOOTER */
 footer{position:relative;overflow:hidden;padding:56px 48px 36px;text-align:center;}
 .foot-dock{position:absolute;bottom:0;left:0;right:0;height:100px;background:url('images/rooms/underdocks/underdocks_04_a.png') center bottom / cover no-repeat;opacity:0.1;mask-image:linear-gradient(to bottom,transparent,rgba(0,0,0,0.7));-webkit-mask-image:linear-gradient(to bottom,transparent,rgba(0,0,0,0.7));}
@@ -160,7 +200,6 @@ footer{position:relative;overflow:hidden;padding:56px 48px 36px;text-align:cente
     <a href="gallery.html">Build Gallery</a>
     <a href="patches.html">Patches</a>
     <a href="cardmash.html">CardMash</a>
-    <a href="#">Run Advisor</a>
   </div>
 </nav>
 
@@ -286,5 +325,140 @@ footer{position:relative;overflow:hidden;padding:56px 48px 36px;text-align:cente
   </div>
 </footer>
 
+<!-- CARDMASH POPUP -->
+<div class="cm-popup" id="cmPopup">
+  <div class="cm-hdr">
+    <div>
+      <div class="cm-title">Card<span>Mash</span></div>
+      <div class="cm-sub">Which would you pick?</div>
+    </div>
+    <div class="cm-right">
+      <span class="cm-pill" id="cmPill">Ironclad</span>
+      <button class="cm-x" onclick="cmClose()">✕</button>
+    </div>
+  </div>
+  <div class="cm-arena">
+    <div class="cm-card" id="cmA" onclick="cmVote('A')">
+      <div class="cm-img"><img id="cmImgA" alt="" data-imgname=""><div class="cm-noimg">⚔</div></div>
+      <div class="cm-body"><div class="cm-name" id="cmNameA"></div><div class="cm-tags" id="cmTagsA"></div><div class="cm-desc" id="cmDescA"></div></div>
+    </div>
+    <div class="cm-vs"><div class="cm-vs-line"></div><div class="cm-vs-text">VS</div><div class="cm-vs-line"></div></div>
+    <div class="cm-card" id="cmB" onclick="cmVote('B')">
+      <div class="cm-img"><img id="cmImgB" alt="" data-imgname=""><div class="cm-noimg">⚔</div></div>
+      <div class="cm-body"><div class="cm-name" id="cmNameB"></div><div class="cm-tags" id="cmTagsB"></div><div class="cm-desc" id="cmDescB"></div></div>
+    </div>
+  </div>
+  <div class="cm-result" id="cmResult"></div>
+  <button class="cm-skip" onclick="cmClose()">Not now</button>
+</div>
+
+<script>
+(function(){
+const SUPABASE_URL='https://wgdnlukobrguespohvog.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnZG5sdWtvYnJndWVzcG9odm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNDg0OTIsImV4cCI6MjA5MjcyNDQ5Mn0.1vm67910OpSYUXrGl1S_0ZCrEN-e6mUnAdbulf1Y9y8';
+const IMG_BASE='images/packed/card_portraits';
+const IMG_DIRS=['event','colorless','ironclad','silent','defect','regent','necrobinder','token','quest','curse'];
+const CHARS=['ironclad','silent','defect','regent','necrobinder'];
+const LABELS={ironclad:'Ironclad',silent:'Silent',defect:'Defect',regent:'Regent',necrobinder:'Necrobinder'};
+const PILL_BG={ironclad:'rgba(224,96,80,0.12)',silent:'rgba(80,192,144,0.12)',defect:'rgba(96,160,224,0.12)',regent:'rgba(192,112,224,0.12)',necrobinder:'rgba(112,176,96,0.12)'};
+const PILL_BD={ironclad:'rgba(224,96,80,0.28)',silent:'rgba(80,192,144,0.28)',defect:'rgba(96,160,224,0.28)',regent:'rgba(192,112,224,0.28)',necrobinder:'rgba(112,176,96,0.28)'};
+const PILL_TX={ironclad:'#e09080',silent:'#60c090',defect:'#80b0e0',regent:'#c090e0',necrobinder:'#80b070'};
+const CLASS_CHARS=new Set(CHARS);
+const DAILY_LIMIT=1;
+
+let _cards=[],_char='ironclad',_charIdx=0,_cardA=null,_cardB=null,_voting=false;
+
+function todayKey(c){const d=new Date();return`cm_votes_${c}_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;}
+function votesLeft(c){return Math.max(0,DAILY_LIMIT-parseInt(localStorage.getItem(todayKey(c))||'0'));}
+function recordVote(c){const k=todayKey(c);localStorage.setItem(k,parseInt(localStorage.getItem(k)||'0')+1);}
+
+function imgFb(el){
+  const name=el.dataset.imgname;
+  const tried=el.dataset.tried?el.dataset.tried.split(','):[];
+  const cur=(el.src.match(/card_portraits\/([^/]+)\//)||[])[1];
+  if(cur)tried.push(cur);
+  const next=IMG_DIRS.find(d=>!tried.includes(d));
+  if(next){el.dataset.tried=tried.join(',');el.src=`${IMG_BASE}/${next}/${name}.png`;}
+  else{el.style.display='none';if(el.nextElementSibling)el.nextElementSibling.style.display='flex';}
+}
+window.cmImgFb=imgFb;
+
+function typeTag(t){const m={Attack:'cm-tag-a',Skill:'cm-tag-s',Power:'cm-tag-p'};return`<span class="cm-tag ${m[t]||''}">${t}</span>`;}
+function rarTag(r){const m={Common:'cm-tag-c',Uncommon:'cm-tag-u',Rare:'cm-tag-r'};return`<span class="cm-tag ${m[r]||''}">${r}</span>`;}
+
+function renderCard(card,side){
+  const src=card.img?`${IMG_BASE}/${card.char}/${card.img}.png`:'';
+  const img=document.getElementById('cmImg'+side);
+  const noImg=img.nextElementSibling;
+  if(src){img.src=src;img.alt=card.name;img.dataset.imgname=card.img;img.dataset.tried='';img.style.display='block';img.onerror=function(){cmImgFb(this);};noImg.style.display='none';}
+  else{img.style.display='none';noImg.style.display='flex';}
+  document.getElementById('cmName'+side).textContent=card.name;
+  document.getElementById('cmTags'+side).innerHTML=typeTag(card.type)+rarTag(card.rarity);
+  document.getElementById('cmDesc'+side).textContent=card.desc||'';
+}
+
+function getPool(){return _cards.filter(c=>c.char===_char);}
+
+function loadPair(){
+  const pool=getPool();
+  if(pool.length<2)return;
+  const a=Math.floor(Math.random()*pool.length);
+  let b;do{b=Math.floor(Math.random()*pool.length);}while(b===a);
+  _cardA=pool[a];_cardB=pool[b];_voting=false;
+  const pill=document.getElementById('cmPill');
+  pill.textContent=LABELS[_char];pill.style.background=PILL_BG[_char];pill.style.borderColor=PILL_BD[_char];pill.style.color=PILL_TX[_char];
+  const elA=document.getElementById('cmA'),elB=document.getElementById('cmB');
+  elA.className='cm-card';elB.className='cm-card';
+  elA.onclick=()=>cmVote('A');elB.onclick=()=>cmVote('B');
+  renderCard(_cardA,'A');renderCard(_cardB,'B');
+  document.getElementById('cmResult').textContent='';
+}
+
+function nextChar(){
+  for(let i=1;i<=CHARS.length;i++){
+    const idx=(_charIdx+i)%CHARS.length;
+    if(votesLeft(CHARS[idx])>0){_charIdx=idx;_char=CHARS[idx];return true;}
+  }
+  return false;
+}
+
+async function cmVote(side){
+  if(_voting)return;_voting=true;
+  const winner=side==='A'?_cardA:_cardB;
+  const loser=side==='A'?_cardB:_cardA;
+  document.getElementById('cm'+side).className='cm-card cm-win cm-locked';
+  document.getElementById('cm'+(side==='A'?'B':'A')).className='cm-card cm-lose cm-locked';
+  document.getElementById('cmA').onclick=null;document.getElementById('cmB').onclick=null;
+  document.getElementById('cmResult').textContent=winner.name+' wins!';
+  try{
+    const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+    await sb.from('card_matchups').insert({winner_id:winner.id||winner.name,loser_id:loser.id||loser.name,char:_char});
+  }catch(e){}
+  recordVote(_char);
+  setTimeout(()=>{
+    if(nextChar()){loadPair();}
+    else{document.getElementById('cmResult').textContent='All votes cast for today — come back tomorrow!';document.querySelector('.cm-skip').textContent='Close';}
+  },1300);
+}
+
+window.cmVote=cmVote;
+function cmClose(){document.getElementById('cmPopup').classList.remove('visible');}
+window.cmClose=cmClose;
+
+async function cmInit(){
+  try{
+    const res=await fetch('/api/cards');
+    const data=await res.json();
+    _cards=(data.cards||[]).filter(c=>CLASS_CHARS.has(c.char)&&c.type!=='Status'&&c.type!=='Curse'&&c.type!=='Token'&&c.rarity!=='Starter');
+    for(let i=0;i<CHARS.length;i++){if(votesLeft(CHARS[i])>0){_charIdx=i;_char=CHARS[i];break;}}
+    const allUsed=CHARS.every(c=>votesLeft(c)===0);
+    if(allUsed)return;
+    loadPair();
+    setTimeout(()=>{document.getElementById('cmPopup').classList.add('visible');},2000);
+  }catch(e){console.warn('CardMash popup failed:',e);}
+}
+cmInit();
+})();
+</script>
 </body>
 </html>
