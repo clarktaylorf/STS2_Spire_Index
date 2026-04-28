@@ -152,7 +152,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .cm-img img{width:100%;height:100%;object-fit:cover;display:block;}
 .cm-img .cm-noimg{width:100%;height:100%;display:none;align-items:center;justify-content:center;font-size:28px;opacity:0.12;}
 .cm-body{padding:9px 10px 10px;}
-.cm-name{font-family:'Cinzel',serif;font-size:10px;font-weight:600;color:#e8dccc;margin-bottom:5px;line-height:1.2;}
+.cm-name-row{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:5px;}
+.cm-name{font-family:'Cinzel',serif;font-size:10px;font-weight:600;color:#e8dccc;line-height:1.2;}
+.cm-cost{min-width:20px;height:20px;border-radius:10px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#c9933a;flex-shrink:0;padding:0 3px;}
 .cm-tags{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;}
 .cm-tag{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:1px 5px;border-radius:2px;}
 .cm-tag-a{background:rgba(224,96,80,0.15);color:#e08070;}
@@ -342,12 +344,12 @@ footer{position:relative;overflow:hidden;padding:56px 48px 36px;text-align:cente
   <div class="cm-arena">
     <div class="cm-card" id="cmA" onclick="cmVote('A')">
       <div class="cm-img"><img id="cmImgA" alt="" data-imgname=""><div class="cm-noimg">⚔</div></div>
-      <div class="cm-body"><div class="cm-name" id="cmNameA"></div><div class="cm-tags" id="cmTagsA"></div><div class="cm-desc" id="cmDescA"></div></div>
+      <div class="cm-body"><div class="cm-name-row"><div class="cm-name" id="cmNameA"></div><div class="cm-cost" id="cmCostA"></div></div><div class="cm-tags" id="cmTagsA"></div><div class="cm-desc" id="cmDescA"></div></div>
     </div>
     <div class="cm-vs"><div class="cm-vs-line"></div><div class="cm-vs-text">VS</div><div class="cm-vs-line"></div></div>
     <div class="cm-card" id="cmB" onclick="cmVote('B')">
       <div class="cm-img"><img id="cmImgB" alt="" data-imgname=""><div class="cm-noimg">⚔</div></div>
-      <div class="cm-body"><div class="cm-name" id="cmNameB"></div><div class="cm-tags" id="cmTagsB"></div><div class="cm-desc" id="cmDescB"></div></div>
+      <div class="cm-body"><div class="cm-name-row"><div class="cm-name" id="cmNameB"></div><div class="cm-cost" id="cmCostB"></div></div><div class="cm-tags" id="cmTagsB"></div><div class="cm-desc" id="cmDescB"></div></div>
     </div>
   </div>
   <div class="cm-result" id="cmResult"></div>
@@ -398,6 +400,7 @@ function renderCard(card,side){
   if(src){img.src=src;img.alt=card.name;img.dataset.imgname=card.img;img.dataset.tried='';img.style.display='block';img.onerror=function(){cmImgFb(this);};noImg.style.display='none';}
   else{img.style.display='none';noImg.style.display='flex';}
   document.getElementById('cmName'+side).textContent=card.name;
+  document.getElementById('cmCost'+side).textContent=card.cost!=null?card.cost:'?';
   document.getElementById('cmTags'+side).innerHTML=typeTag(card.type)+rarTag(card.rarity);
   document.getElementById('cmDesc'+side).textContent=card.desc||'';
 }
