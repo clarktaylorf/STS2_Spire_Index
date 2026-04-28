@@ -24,3 +24,11 @@
 4. Show live rankings immediately, or only after you've voted?
 
 **Status:** Idea only — no action yet. Revisit when tier list page is on deck.
+
+---
+
+## 🦎 Bestiary
+
+A reference/glossary page for enemies, elites, and bosses encountered in the Spire. Could include HP ranges, notable attack patterns, and tips for each class. Useful companion to the Card Library.
+
+**Status:** Idea only — no action yet.

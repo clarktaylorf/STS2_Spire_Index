@@ -11,7 +11,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --ink:#07050f;--deep:#0d0b18;--mid:#13101f;
-  --gold:#c9933a;--gold2:#e8b86d;--pale:#e8dccc;--muted:#6a5a4a;--border:rgba(201,147,58,0.12);
+  --gold:#c9933a;--gold2:#e8b86d;--pale:#e8dccc;--muted:#9a8878;--border:rgba(201,147,58,0.12);
   --ironclad:#e06050;--silent:#50c090;--defect:#60a0e0;--regent:#c070e0;--necrobinder:#70b060;--colorless:#a09898;
 }
 html{scroll-behavior:smooth;}
@@ -53,7 +53,7 @@ main{padding-top:52px;min-height:100vh;display:flex;flex-direction:column;}
 
 /* VIEW SWITCHER */
 .view-switch{display:flex;gap:0;margin-bottom:32px;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
-.view-btn{padding:8px 24px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.2s;}
+.view-btn{padding:8px 24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.2s;}
 .view-btn.active{background:rgba(201,147,58,0.12);color:var(--gold);}
 
 /* VOTE VIEW */
@@ -79,7 +79,7 @@ main{padding-top:52px;min-height:100vh;display:flex;flex-direction:column;}
 .card-bar{padding:12px 14px 6px;background:var(--mid);}
 .card-name{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--pale);margin-bottom:6px;line-height:1.2;}
 .card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
-.tag{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
+.tag{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
 .tag-type-Attack{background:rgba(224,96,80,0.15);color:#e08070;}
 .tag-type-Skill{background:rgba(96,160,224,0.15);color:#80b0e0;}
 .tag-type-Power{background:rgba(192,112,224,0.15);color:#c090e0;}
@@ -117,19 +117,38 @@ main{padding-top:52px;min-height:100vh;display:flex;flex-direction:column;}
 .board-rank.silver{color:#aaa;}
 .board-rank.bronze{color:#c87040;}
 .board-card-name{font-size:13px;font-weight:500;color:var(--pale);}
-.board-card-type{font-size:10px;color:var(--muted);margin-top:2px;}
+.board-card-type{font-size:11px;color:var(--muted);margin-top:2px;}
 .board-bar-wrap{background:rgba(201,147,58,0.08);border-radius:3px;height:6px;overflow:hidden;}
 .board-bar{height:100%;background:linear-gradient(to right,var(--gold),var(--gold2));border-radius:3px;transition:width 0.6s ease-out;}
 .board-wr{font-size:12px;font-weight:600;text-align:right;}
 .board-wr.high{color:#5dc888;}
 .board-wr.mid{color:var(--gold);}
 .board-wr.low{color:#c07070;}
-.board-votes{font-size:10px;color:var(--muted);text-align:right;}
+.board-votes{font-size:11px;color:var(--muted);text-align:right;}
 .board-empty{text-align:center;padding:48px;color:var(--muted);font-size:13px;}
 .board-loading{text-align:center;padding:48px;color:var(--muted);}
 
 /* FOOTER */
-footer{text-align:center;padding:18px 24px;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(201,147,58,0.22);border-top:1px solid var(--border);}
+footer{text-align:center;padding:18px 24px;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:rgba(201,147,58,0.22);border-top:1px solid var(--border);}
+
+/* MOBILE */
+@media(max-width:640px){
+  .topbar-nav{gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-right:8px;}
+  .topbar-nav a{font-size:10px;letter-spacing:1px;white-space:nowrap;}
+  .mash-header{padding:28px 16px 16px;}
+  .mash-title{font-size:26px;}
+  .class-tabs{padding:0 12px 20px;gap:5px;}
+  .class-tab{padding:6px 12px;font-size:10px;letter-spacing:1px;}
+  .arena{padding:0 12px 40px;}
+  .view-switch{margin-bottom:20px;}
+  .matchup{grid-template-columns:1fr;gap:8px;}
+  .vs-divider{flex-direction:row;gap:10px;justify-content:center;padding:2px 0;}
+  .vs-line{width:48px;height:1px;}
+  .vs-text{font-size:14px;}
+  .board-row{grid-template-columns:24px 1fr 70px;gap:8px;padding:8px 10px;}
+  .board-bar-wrap{display:none;}
+  .board-card-type{display:none;}
+}
 </style>
 </head>
 <body>
