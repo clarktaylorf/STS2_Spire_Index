@@ -146,6 +146,12 @@ main{padding-top:52px;min-height:100vh;display:flex;flex-direction:column;}
 .board-empty{text-align:center;padding:48px;color:var(--muted);font-size:13px;}
 .board-loading{text-align:center;padding:48px;color:var(--muted);}
 
+/* TOAST */
+#voteToast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(13,11,24,0.97);border:1px solid rgba(201,147,58,0.25);color:var(--muted);font-size:11px;letter-spacing:1px;padding:10px 20px;border-radius:6px;z-index:999;transition:transform 0.3s ease;pointer-events:none;white-space:nowrap;}
+#voteToast.show{transform:translateX(-50%) translateY(0);}
+#voteToast.error{border-color:rgba(192,80,80,0.5);color:#c07070;}
+#voteToast.ok{border-color:rgba(93,200,136,0.4);color:#5dc888;}
+
 /* FOOTER */
 footer{text-align:center;padding:18px 24px;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:rgba(201,147,58,0.22);border-top:1px solid var(--border);}
 
@@ -243,8 +249,19 @@ footer{text-align:center;padding:18px 24px;font-size:10px;letter-spacing:4px;tex
 </main>
 
 <footer>An SDS Games Production</footer>
+<div id="voteToast"></div>
 
 <script>
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('voteToast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+}
+
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://wgdnlukobrguespohvog.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnZG5sdWtvYnJndWVzcG9odm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNDg0OTIsImV4cCI6MjA5MjcyNDQ5Mn0.1vm67910OpSYUXrGl1S_0ZCrEN-e6mUnAdbulf1Y9y8';
@@ -432,14 +449,22 @@ async function castVote(side) {
   recordVote(_activeChar);
   refreshBadges();
 
-  // Record to Supabase (fire and forget — don't block UX on network)
+  // Record to Supabase
   sb.from('cardmash_votes').insert({
     winner: winner.name,
     loser: loser.name,
     winner_char: winner.char,
     loser_char: loser.char,
   }).then(({ error }) => {
-    if (error) console.warn('Vote not saved:', error.message);
+    if (error) {
+      console.error('Vote not saved:', error.code, error.message, error.details);
+      showToast('⚠ Vote not saved: ' + error.message, 'error');
+    }
+    // Uncomment below to confirm successful saves:
+    // else { showToast('✓ Vote saved', 'ok'); }
+  }).catch(err => {
+    console.error('Vote insert threw:', err);
+    showToast('⚠ Network error — vote not saved', 'error');
   });
 
   // Load next pair after brief pause
