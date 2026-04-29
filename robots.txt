@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://spire2.sds-games.com/sitemap.xml
