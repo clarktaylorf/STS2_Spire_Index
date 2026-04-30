@@ -42,10 +42,20 @@ body{background:var(--ink);color:var(--pale);font-family:'DM Sans',sans-serif;ov
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:linear-gradient(to bottom,rgba(7,5,15,0.96) 0%,transparent 100%);}
 .nav-logo{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--gold2);letter-spacing:3px;text-decoration:none;display:flex;align-items:center;gap:10px;}
-.nav-links{display:flex;gap:36px;}
+.nav-links{display:flex;gap:36px;align-items:center;}
 .nav-links a{font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
 .nav-links a:hover{color:var(--pale);}
 .nav-links a.live{color:var(--gold);}
+.nav-dd{position:relative;display:flex;align-items:center;}
+.nav-links-style{font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;cursor:default;user-select:none;transition:color 0.2s;}
+.nav-dd:hover .nav-links-style{color:var(--pale);}
+.nav-dd-menu{display:none;position:absolute;top:calc(100% + 12px);left:-10px;background:rgba(7,5,15,0.98);border:1px solid rgba(201,147,58,0.18);border-radius:5px;min-width:155px;padding:4px 0;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,0.6);}
+.nav-dd:hover .nav-dd-menu{display:block;}
+.nav-dd-menu a{display:block;padding:9px 15px;font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:#8a7a68;text-decoration:none;white-space:nowrap;transition:color 0.15s;}
+.nav-dd-menu a:hover{color:var(--pale);}
+.nav-dd-menu a.active{color:var(--gold);}
+.nav-dd-soon{display:block;padding:9px 15px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#3a2f4a;cursor:not-allowed;}
+.nav-dd-divider{height:1px;background:rgba(201,147,58,0.08);margin:4px 0;}
 
 /* HERO */
 .hero{position:relative;height:100vh;min-height:700px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
@@ -166,9 +176,17 @@ footer{position:relative;overflow:hidden;padding:56px 48px 36px;text-align:cente
     SpireIndex
   </a>
   <div class="nav-links">
-    <a href="cards.html" class="live">Card Library</a>
-    <a href="#">Relics</a>
-    <a href="#">Deck Builder</a>
+    <div class="nav-dd">
+      <span class="nav-dd-trigger nav-links-style">Libraries</span>
+      <div class="nav-dd-menu">
+        <a href="cards.html">Cards</a>
+        <a href="relics.html">Relics</a>
+        <a href="seeds.html">Seeds</a>
+        <div class="nav-dd-divider"></div>
+        <span class="nav-dd-soon">Bestiary — Soon</span>
+      </div>
+    </div>
+    <a href="deck.html">Deck Builder</a>
     <a href="cardmash.html">CardMash</a>
   </div>
 </nav>

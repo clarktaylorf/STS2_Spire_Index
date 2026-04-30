@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9W7YQ12XJE"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9W7YQ12XJE');
+</script>
+<meta charset="UTF-8">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SpireIndex">
+<meta property="og:title" content="Seeds — SpireIndex">
+<meta property="og:description" content="Community seed library for Slay the Spire 2. Discover and share seeds for broken starts, high scores, challenge runs, and more.">
+<meta property="og:url" content="https://spire2.sds-games.com/seeds.html">
+<meta property="og:image" content="https://spire2.sds-games.com/images/icon_1024.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Seeds — SpireIndex">
+<meta name="twitter:description" content="Community seed library for Slay the Spire 2. Discover and share seeds for broken starts, high scores, challenge runs, and more.">
+<meta name="twitter:image" content="https://spire2.sds-games.com/images/icon_1024.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seeds — SpireIndex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!--
+  SUPABASE SETUP REQUIRED:
+  Create a "seeds" table with these columns:
+    id          uuid    DEFAULT gen_random_uuid() PRIMARY KEY
+    created_at  timestamptz DEFAULT now()
+    seed_code   text    NOT NULL
+    character   text    NOT NULL  (ironclad / silent / defect / regent / necrobinder / any)
+    category    text    NOT NULL  (broken_start / high_score / learning / cursed)
+    title       text    NOT NULL
+    description text
+    ascension   int     DEFAULT 0
+    upvotes     int     DEFAULT 0
+
+  RLS Policies needed:
+    SELECT: allow for all (true)
+    INSERT: allow for anon (true)
+    UPDATE: allow for anon, only upvotes column (true)
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#07050f;--deep:#0d0b18;--mid:#13101f;
+  --gold:#c9933a;--gold2:#e8b86d;--pale:#e8dccc;--muted:#9a8878;--border:rgba(201,147,58,0.12);
+  --ironclad:#e06050;--silent:#50c090;--defect:#60a0e0;--regent:#c070e0;--necrobinder:#70b060;--colorless:#a09898;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--pale);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:52px;background:rgba(7,5,15,0.96);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0;padding:0 20px;}
+.topbar-logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--gold2);font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:2px;margin-right:28px;flex-shrink:0;}
+.topbar-logo img{width:24px;height:24px;image-rendering:pixelated;}
+.topbar-nav{display:flex;gap:20px;align-items:center;flex:1;}
+.topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#6a5a6a;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
+.topbar-nav a:hover{color:var(--pale);}
+.topbar-nav a.active{color:var(--gold);}
+
+/* NAV DROPDOWN */
+.nav-dd{position:relative;display:flex;align-items:center;}
+.nav-dd-trigger{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);white-space:nowrap;cursor:default;user-select:none;}
+.nav-dd-menu{display:none;position:absolute;top:calc(100% + 10px);left:-10px;background:rgba(7,5,15,0.98);border:1px solid rgba(201,147,58,0.18);border-radius:5px;min-width:155px;padding:4px 0;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,0.6);}
+.nav-dd:hover .nav-dd-menu{display:block;}
+.nav-dd-menu a{display:block;padding:9px 15px;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#6a5a6a;text-decoration:none;white-space:nowrap;transition:color 0.15s;}
+.nav-dd-menu a:hover{color:var(--pale);}
+.nav-dd-menu a.active{color:var(--gold);}
+.nav-dd-soon{display:block;padding:9px 15px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#3a2f4a;cursor:not-allowed;}
+.nav-dd-divider{height:1px;background:rgba(201,147,58,0.08);margin:4px 0;}
+
+/* MAIN */
+main{padding-top:52px;min-height:100vh;}
+
+/* PAGE HEADER */
+.seeds-header{text-align:center;padding:40px 24px 28px;}
+.seeds-title{font-family:'Cinzel',serif;font-size:32px;font-weight:700;color:var(--pale);letter-spacing:2px;margin-bottom:6px;}
+.seeds-title span{color:var(--gold);}
+.seeds-sub{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+
+/* CONTROLS */
+.seeds-controls{max-width:1000px;margin:0 auto;padding:0 24px 24px;}
+.seeds-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.filter-group{display:flex;gap:6px;flex-wrap:wrap;}
+.filter-btn{padding:6px 14px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:1px solid rgba(201,147,58,0.15);background:transparent;color:var(--muted);border-radius:4px;cursor:pointer;transition:all 0.2s;}
+.filter-btn:hover{border-color:rgba(201,147,58,0.3);color:var(--pale);}
+.filter-btn.active{color:var(--pale);border-color:currentColor;}
+.filter-btn.f-ironclad.active{color:var(--ironclad);border-color:var(--ironclad);background:rgba(224,96,80,0.08);}
+.filter-btn.f-silent.active{color:var(--silent);border-color:var(--silent);background:rgba(80,192,144,0.08);}
+.filter-btn.f-defect.active{color:var(--defect);border-color:var(--defect);background:rgba(96,160,224,0.08);}
+.filter-btn.f-regent.active{color:var(--regent);border-color:var(--regent);background:rgba(192,112,224,0.08);}
+.filter-btn.f-necrobinder.active{color:var(--necrobinder);border-color:var(--necrobinder);background:rgba(112,176,96,0.08);}
+.filter-btn.f-any.active{color:var(--pale);border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.05);}
+.filter-btn.f-broken_start.active{color:#e8806a;border-color:#e8806a;background:rgba(232,128,106,0.08);}
+.filter-btn.f-high_score.active{color:var(--gold2);border-color:var(--gold2);background:rgba(232,184,109,0.08);}
+.filter-btn.f-learning.active{color:#80c0e0;border-color:#80c0e0;background:rgba(128,192,224,0.08);}
+.filter-btn.f-cursed.active{color:#b070c0;border-color:#b070c0;background:rgba(176,112,192,0.08);}
+.divider-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#4a3a5a;flex-shrink:0;}
+
+.submit-btn{margin-left:auto;padding:8px 20px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:rgba(201,147,58,0.12);border:1px solid rgba(201,147,58,0.35);color:var(--gold2);border-radius:4px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.submit-btn:hover{background:rgba(201,147,58,0.2);border-color:var(--gold);}
+
+/* SORT */
+.seeds-meta{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.sort-group{display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.sort-btn{padding:6px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.2s;}
+.sort-btn.active{background:rgba(201,147,58,0.1);color:var(--gold);}
+.seed-count{font-size:11px;letter-spacing:1px;color:var(--muted);margin-left:auto;}
+
+/* SEED GRID */
+.seeds-grid{max-width:1000px;margin:0 auto;padding:0 24px 60px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.seed-card{background:var(--mid);border:1px solid var(--border);border-radius:8px;padding:18px;transition:border-color 0.2s;}
+.seed-card:hover{border-color:rgba(201,147,58,0.25);}
+.seed-top{display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.seed-badges{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.char-badge{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;}
+.char-ironclad{background:rgba(224,96,80,0.15);color:var(--ironclad);}
+.char-silent{background:rgba(80,192,144,0.15);color:var(--silent);}
+.char-defect{background:rgba(96,160,224,0.15);color:var(--defect);}
+.char-regent{background:rgba(192,112,224,0.15);color:var(--regent);}
+.char-necrobinder{background:rgba(112,176,96,0.15);color:var(--necrobinder);}
+.char-any{background:rgba(255,255,255,0.07);color:var(--pale);}
+.cat-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:3px;}
+.cat-broken_start{background:rgba(232,128,106,0.15);color:#e8806a;}
+.cat-high_score{background:rgba(232,184,109,0.15);color:var(--gold2);}
+.cat-learning{background:rgba(128,192,224,0.15);color:#80c0e0;}
+.cat-cursed{background:rgba(176,112,192,0.15);color:#b070c0;}
+.asc-badge{font-size:9px;letter-spacing:1px;color:var(--muted);padding:3px 6px;border-radius:3px;background:rgba(255,255,255,0.04);}
+
+.seed-code-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.seed-code{font-family:'Courier New',monospace;font-size:14px;font-weight:700;color:var(--gold2);letter-spacing:2px;flex:1;background:rgba(201,147,58,0.06);border:1px solid rgba(201,147,58,0.12);border-radius:4px;padding:7px 10px;user-select:all;}
+.copy-btn{padding:7px 11px;background:rgba(201,147,58,0.1);border:1px solid rgba(201,147,58,0.2);color:var(--gold);border-radius:4px;cursor:pointer;font-size:12px;transition:all 0.2s;flex-shrink:0;}
+.copy-btn:hover{background:rgba(201,147,58,0.2);}
+.copy-btn.copied{color:#5dc888;border-color:rgba(93,200,136,0.3);background:rgba(93,200,136,0.08);}
+
+.seed-title{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--pale);margin-bottom:5px;line-height:1.3;}
+.seed-desc{font-size:12px;line-height:1.6;color:var(--muted);}
+
+.seed-footer{display:flex;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid rgba(201,147,58,0.07);}
+.upvote-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid rgba(201,147,58,0.15);color:var(--muted);border-radius:4px;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:500;transition:all 0.2s;}
+.upvote-btn:hover{border-color:rgba(201,147,58,0.3);color:var(--gold);}
+.upvote-btn.voted{color:var(--gold);border-color:rgba(201,147,58,0.35);background:rgba(201,147,58,0.06);}
+.seed-date{margin-left:auto;font-size:10px;color:#4a3a5a;letter-spacing:1px;}
+
+/* EMPTY STATE */
+.seeds-empty{text-align:center;padding:64px 24px;color:var(--muted);}
+.seeds-empty .big{font-size:52px;margin-bottom:16px;}
+.seeds-empty p{font-size:13px;line-height:1.7;max-width:380px;margin:0 auto 20px;}
+.seeds-loading{text-align:center;padding:48px;color:var(--muted);font-size:13px;}
+
+/* MODAL OVERLAY */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--deep);border:1px solid rgba(201,147,58,0.2);border-radius:10px;width:100%;max-width:480px;padding:28px;position:relative;}
+.modal-title{font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--pale);margin-bottom:4px;}
+.modal-sub{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:22px;}
+.modal-close{position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;}
+.modal-close:hover{color:var(--pale);}
+
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+.form-input,.form-select,.form-textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(201,147,58,0.15);border-radius:5px;color:var(--pale);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 12px;outline:none;transition:border-color 0.15s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:rgba(201,147,58,0.4);}
+.form-select{cursor:pointer;}
+.form-select option{background:#13101f;}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.5;}
+.seed-code-input{font-family:'Courier New',monospace;font-size:14px;letter-spacing:2px;text-transform:uppercase;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-hint{font-size:11px;color:#4a3a5a;margin-top:5px;}
+.form-submit{width:100%;margin-top:4px;padding:12px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;background:rgba(201,147,58,0.15);border:1px solid rgba(201,147,58,0.4);color:var(--gold2);border-radius:5px;cursor:pointer;transition:all 0.2s;}
+.form-submit:hover{background:rgba(201,147,58,0.25);}
+.form-submit:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* TOAST */
+#seedToast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(13,11,24,0.97);border:1px solid rgba(201,147,58,0.25);color:var(--muted);font-size:11px;letter-spacing:1px;padding:10px 20px;border-radius:6px;z-index:999;transition:transform 0.3s ease;pointer-events:none;white-space:nowrap;}
+#seedToast.show{transform:translateX(-50%) translateY(0);}
+#seedToast.error{border-color:rgba(192,80,80,0.5);color:#c07070;}
+#seedToast.ok{border-color:rgba(93,200,136,0.4);color:#5dc888;}
+
+/* MOBILE */
+@media(max-width:640px){
+  .topbar-nav{gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-right:8px;}
+  .topbar-nav a{font-size:10px;letter-spacing:1px;}
+  .seeds-header{padding:28px 16px 20px;}
+  .seeds-title{font-size:24px;}
+  .seeds-controls{padding:0 12px 16px;}
+  .seeds-grid{padding:0 12px 40px;grid-template-columns:1fr;}
+  .seeds-row{gap:8px;}
+  .submit-btn{margin-left:0;}
+  .form-row{grid-template-columns:1fr;}
+}
+
+footer{text-align:center;padding:18px 24px;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:rgba(201,147,58,0.22);border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <img src="images/icon_1024.png" alt="SpireIndex">
+    <span>SpireIndex</span>
+  </a>
+  <nav class="topbar-nav">
+    <div class="nav-dd">
+      <span class="nav-dd-trigger">Libraries</span>
+      <div class="nav-dd-menu">
+        <a href="cards.html">Cards</a>
+        <a href="relics.html">Relics</a>
+        <a href="seeds.html" class="active">Seeds</a>
+        <div class="nav-dd-divider"></div>
+        <span class="nav-dd-soon">Bestiary — Soon</span>
+      </div>
+    </div>
+    <a href="deck.html">Deck Builder</a>
+    <a href="cardmash.html">CardMash</a>
+    <a href="gallery.html">Build Gallery</a>
+    <a href="patches.html">Patches</a>
+  </nav>
+</div>
+
+<main>
+  <div class="seeds-header">
+    <div class="seeds-title">Seed <span>Library</span></div>
+    <div class="seeds-sub">Community-submitted seeds for Slay the Spire 2 · Copy, run, discover</div>
+  </div>
+
+  <div class="seeds-controls">
+    <div class="seeds-row">
+      <div class="filter-group" id="charFilters">
+        <button class="filter-btn f-any active" data-char="all">All Classes</button>
+        <button class="filter-btn f-ironclad" data-char="ironclad">Ironclad</button>
+        <button class="filter-btn f-silent" data-char="silent">Silent</button>
+        <button class="filter-btn f-defect" data-char="defect">Defect</button>
+        <button class="filter-btn f-regent" data-char="regent">Regent</button>
+        <button class="filter-btn f-necrobinder" data-char="necrobinder">Necrobinder</button>
+        <button class="filter-btn f-any" data-char="any">Any Class</button>
+      </div>
+      <button class="submit-btn" onclick="openSubmit()">+ Submit a Seed</button>
+    </div>
+    <div class="seeds-row">
+      <span class="divider-label">Category</span>
+      <div class="filter-group" id="catFilters">
+        <button class="filter-btn active" data-cat="all">All</button>
+        <button class="filter-btn f-broken_start" data-cat="broken_start">🔥 Broken Start</button>
+        <button class="filter-btn f-high_score" data-cat="high_score">🏆 High Score</button>
+        <button class="filter-btn f-learning" data-cat="learning">🎓 Learning</button>
+        <button class="filter-btn f-cursed" data-cat="cursed">💀 Cursed</button>
+      </div>
+    </div>
+    <div class="seeds-meta">
+      <div class="sort-group">
+        <button class="sort-btn active" data-sort="newest">Newest</button>
+        <button class="sort-btn" data-sort="top">Top Voted</button>
+      </div>
+      <span class="seed-count" id="seedCount"></span>
+    </div>
+  </div>
+
+  <div class="seeds-grid" id="seedsGrid">
+    <div class="seeds-loading">Loading seeds…</div>
+  </div>
+</main>
+
+<footer>An SDS Games Production</footer>
+
+<!-- SUBMIT MODAL -->
+<div class="modal-overlay" id="submitModal">
+  <div class="modal">
+    <div class="modal-title">Submit a Seed</div>
+    <div class="modal-sub">STS2 seeds only — Early Access builds</div>
+    <button class="modal-close" onclick="closeSubmit()">✕</button>
+
+    <div class="form-group">
+      <label class="form-label">Seed Code *</label>
+      <input type="text" class="form-input seed-code-input" id="fCode" placeholder="E.g. 3DFKJ29A..." autocomplete="off" spellcheck="false">
+      <div class="form-hint">Enter exactly as shown in-game (Settings → Seed)</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Character *</label>
+        <select class="form-select" id="fChar">
+          <option value="ironclad">Ironclad</option>
+          <option value="silent">Silent</option>
+          <option value="defect">Defect</option>
+          <option value="regent">Regent</option>
+          <option value="necrobinder">Necrobinder</option>
+          <option value="any">Any / Class-Agnostic</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ascension</label>
+        <select class="form-select" id="fAsc">
+          <option value="0">0 (Base)</option>
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+          <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+          <option value="16">16</option><option value="17">17</option><option value="18">18</option>
+          <option value="19">19</option><option value="20">20</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category *</label>
+      <select class="form-select" id="fCat">
+        <option value="broken_start">🔥 Broken Start — game-breakingly good early rewards</option>
+        <option value="high_score">🏆 High Score — optimal for high score or boss kills</option>
+        <option value="learning">🎓 Learning — great for practicing a specific build</option>
+        <option value="cursed">💀 Cursed — hilariously bad, good luck</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Title *</label>
+      <input type="text" class="form-input" id="fTitle" placeholder="E.g. Floor 1 Snecko Eye + 3 Rares" maxlength="80">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="fDesc" placeholder="What makes this seed special? What should the player look for?" maxlength="500"></textarea>
+    </div>
+    <button class="form-submit" id="submitSeedBtn" onclick="submitSeed()">Submit Seed</button>
+  </div>
+</div>
+
+<div id="seedToast"></div>
+
+<script>
+const SUPABASE_URL = 'https://wgdnlukobrguespohvog.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnZG5sdWtvYnJndWVzcG9odm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNDg0OTIsImV4cCI6MjA5MjcyNDQ5Mn0.1vm67910OpSYUXrGl1S_0ZCrEN-e6mUnAdbulf1Y9y8';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let _allSeeds = [];
+let _charFilter = 'all';
+let _catFilter = 'all';
+let _sort = 'newest';
+let _upvoted = JSON.parse(localStorage.getItem('seed_upvotes') || '[]');
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let _toastTimer;
+function toast(msg, type = '') {
+  const t = document.getElementById('seedToast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+}
+
+// ─── FILTERS ─────────────────────────────────────────────────────────────────
+document.getElementById('charFilters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#charFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _charFilter = btn.dataset.char;
+  render();
+});
+
+document.getElementById('catFilters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#catFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _catFilter = btn.dataset.cat;
+  render();
+});
+
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _sort = btn.dataset.sort;
+    render();
+  });
+});
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+async function loadSeeds() {
+  const { data, error } = await sb.from('seeds').select('*').order('created_at', { ascending: false });
+  if (error) {
+    document.getElementById('seedsGrid').innerHTML = `<div class="seeds-empty"><div class="big">⚠</div><p>Could not load seeds. The database table may not be set up yet.</p></div>`;
+    return;
+  }
+  _allSeeds = data || [];
+  render();
+}
+
+function filtered() {
+  return _allSeeds.filter(s => {
+    if (_charFilter !== 'all' && s.character !== _charFilter) return false;
+    if (_catFilter !== 'all' && s.category !== _catFilter) return false;
+    return true;
+  });
+}
+
+function sorted(arr) {
+  if (_sort === 'top') return [...arr].sort((a,b) => b.upvotes - a.upvotes);
+  return [...arr].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function render() {
+  const seeds = sorted(filtered());
+  const grid = document.getElementById('seedsGrid');
+  document.getElementById('seedCount').textContent = seeds.length + ' seed' + (seeds.length !== 1 ? 's' : '');
+
+  if (!seeds.length) {
+    grid.innerHTML = `
+      <div class="seeds-empty" style="grid-column:1/-1">
+        <div class="big">🌱</div>
+        <p>No seeds here yet. Be the first to submit one!</p>
+        <button class="submit-btn" onclick="openSubmit()">+ Submit a Seed</button>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = seeds.map(s => seedCard(s)).join('');
+}
+
+const CAT_LABELS = { broken_start: '🔥 Broken Start', high_score: '🏆 High Score', learning: '🎓 Learning', cursed: '💀 Cursed' };
+const CHAR_LABELS = { ironclad: 'Ironclad', silent: 'Silent', defect: 'Defect', regent: 'Regent', necrobinder: 'Necrobinder', any: 'Any Class' };
+
+function seedCard(s) {
+  const dateStr = new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const voted = _upvoted.includes(s.id);
+  const asc = s.ascension > 0 ? `<span class="asc-badge">A${s.ascension}</span>` : '';
+  return `
+    <div class="seed-card">
+      <div class="seed-top">
+        <div class="seed-badges">
+          <span class="char-badge char-${s.character}">${CHAR_LABELS[s.character] || s.character}</span>
+          <span class="cat-badge cat-${s.category}">${CAT_LABELS[s.category] || s.category}</span>
+          ${asc}
+        </div>
+      </div>
+      <div class="seed-code-row">
+        <div class="seed-code">${s.seed_code}</div>
+        <button class="copy-btn" onclick="copySeed(this,'${s.seed_code}')">Copy</button>
+      </div>
+      <div class="seed-title">${s.title}</div>
+      ${s.description ? `<div class="seed-desc">${s.description}</div>` : ''}
+      <div class="seed-footer">
+        <button class="upvote-btn ${voted ? 'voted' : ''}" id="up-${s.id}" onclick="upvote('${s.id}',${s.upvotes})">
+          ▲ <span id="upc-${s.id}">${s.upvotes || 0}</span>
+        </button>
+        <span class="seed-date">${dateStr}</span>
+      </div>
+    </div>`;
+}
+
+// ─── COPY ─────────────────────────────────────────────────────────────────────
+function copySeed(btn, code) {
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ─── UPVOTE ───────────────────────────────────────────────────────────────────
+async function upvote(id, currentCount) {
+  if (_upvoted.includes(id)) { toast('Already voted on this seed'); return; }
+  // Optimistic UI
+  _upvoted.push(id);
+  localStorage.setItem('seed_upvotes', JSON.stringify(_upvoted));
+  const btn = document.getElementById('up-' + id);
+  const cnt = document.getElementById('upc-' + id);
+  if (btn) btn.classList.add('voted');
+  if (cnt) cnt.textContent = (parseInt(cnt.textContent) || 0) + 1;
+
+  const { error } = await sb.from('seeds').update({ upvotes: (currentCount || 0) + 1 }).eq('id', id);
+  if (error) {
+    toast('⚠ Upvote not saved: ' + error.message, 'error');
+    // Rollback
+    _upvoted = _upvoted.filter(x => x !== id);
+    localStorage.setItem('seed_upvotes', JSON.stringify(_upvoted));
+    if (btn) btn.classList.remove('voted');
+    if (cnt) cnt.textContent = currentCount || 0;
+  }
+}
+
+// ─── SUBMIT ───────────────────────────────────────────────────────────────────
+function openSubmit() {
+  document.getElementById('submitModal').classList.add('open');
+}
+function closeSubmit() {
+  document.getElementById('submitModal').classList.remove('open');
+}
+document.getElementById('submitModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeSubmit();
+});
+
+async function submitSeed() {
+  const code = document.getElementById('fCode').value.trim().toUpperCase();
+  const char = document.getElementById('fChar').value;
+  const asc = parseInt(document.getElementById('fAsc').value) || 0;
+  const cat = document.getElementById('fCat').value;
+  const title = document.getElementById('fTitle').value.trim();
+  const desc = document.getElementById('fDesc').value.trim();
+
+  if (!code) { toast('⚠ Seed code is required', 'error'); return; }
+  if (!title) { toast('⚠ Title is required', 'error'); return; }
+  if (code.length < 4) { toast('⚠ That seed code looks too short', 'error'); return; }
+
+  const btn = document.getElementById('submitSeedBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const { error } = await sb.from('seeds').insert({
+    seed_code: code, character: char, ascension: asc,
+    category: cat, title, description: desc || null, upvotes: 0
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Submit Seed';
+
+  if (error) {
+    toast('⚠ Submit failed: ' + error.message, 'error');
+    return;
+  }
+
+  toast('✓ Seed submitted!', 'ok');
+  closeSubmit();
+  // Clear form
+  document.getElementById('fCode').value = '';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fDesc').value = '';
+  // Reload
+  await loadSeeds();
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+loadSeeds();
+</script>
+</body>
+</html>

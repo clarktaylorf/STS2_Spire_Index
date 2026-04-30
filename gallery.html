@@ -45,6 +45,17 @@ body>*{position:relative;z-index:1;}
 .topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:#7a6898;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
 .topbar-nav a:hover{color:var(--text);}
 .topbar-nav a.active{color:var(--gold);}
+.nav-dd{position:relative;display:flex;align-items:center;}
+.nav-dd-trigger{font-size:11px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:#7a6898;white-space:nowrap;cursor:default;user-select:none;}
+.nav-dd-trigger.active{color:var(--gold);}
+.nav-dd-trigger:hover{color:var(--text,var(--pale));}
+.nav-dd-menu{display:none;position:absolute;top:calc(100% + 10px);left:-10px;background:rgba(7,5,15,0.98);border:1px solid rgba(201,147,58,0.18);border-radius:5px;min-width:155px;padding:4px 0;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,0.6);}
+.nav-dd:hover .nav-dd-menu{display:block;}
+.nav-dd-menu a{display:block;padding:9px 15px;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#6a5a6a;text-decoration:none;white-space:nowrap;transition:color 0.15s;}
+.nav-dd-menu a:hover{color:var(--pale,var(--text));}
+.nav-dd-menu a.active{color:var(--gold);}
+.nav-dd-soon{display:block;padding:9px 15px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#3a2f4a;cursor:not-allowed;}
+.nav-dd-divider{height:1px;background:rgba(201,147,58,0.08);margin:4px 0;}
 .topbar-search{flex:1;max-width:300px;margin-left:auto;}
 .topbar-search input{width:100%;background:#1c1826;border:1px solid var(--border2);border-radius:7px;color:#ddd0b8;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px 7px 34px;outline:none;transition:border-color 0.15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23665580' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center;}
 .topbar-search input::placeholder{color:#504870;}
@@ -101,8 +112,16 @@ footer a{color:var(--gold);text-decoration:none;}
     <span>SpireIndex</span>
   </a>
   <nav class="topbar-nav">
-    <a href="cards.html">Card Library</a>
-    <a href="relics.html">Relics</a>
+    <div class="nav-dd">
+      <span class="nav-dd-trigger">Libraries</span>
+      <div class="nav-dd-menu">
+        <a href="cards.html">Cards</a>
+        <a href="relics.html">Relics</a>
+        <a href="seeds.html">Seeds</a>
+        <div class="nav-dd-divider"></div>
+        <span class="nav-dd-soon">Bestiary — Soon</span>
+      </div>
+    </div>
     <a href="deck.html">Deck Builder</a>
     <a href="gallery.html" class="active">Build Gallery</a>
     <a href="patches.html">Patches</a>

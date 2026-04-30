@@ -43,6 +43,16 @@ body{background:var(--ink);color:var(--pale);font-family:'DM Sans',sans-serif;mi
 .topbar-nav a{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#6a5a6a;text-decoration:none;transition:color 0.2s;white-space:nowrap;}
 .topbar-nav a:hover{color:var(--pale);}
 .topbar-nav a.active{color:var(--gold);}
+.nav-dd{position:relative;display:flex;align-items:center;}
+.nav-dd-trigger{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#6a5a6a;white-space:nowrap;cursor:default;user-select:none;}
+.nav-dd-trigger.active{color:var(--gold);}
+.nav-dd-menu{display:none;position:absolute;top:calc(100% + 10px);left:-10px;background:rgba(7,5,15,0.98);border:1px solid rgba(201,147,58,0.18);border-radius:5px;min-width:155px;padding:4px 0;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,0.6);}
+.nav-dd:hover .nav-dd-menu{display:block;}
+.nav-dd-menu a{display:block;padding:9px 15px;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#6a5a6a;text-decoration:none;white-space:nowrap;transition:color 0.15s;}
+.nav-dd-menu a:hover{color:var(--pale);}
+.nav-dd-menu a.active{color:var(--gold);}
+.nav-dd-soon{display:block;padding:9px 15px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#3a2f4a;cursor:not-allowed;}
+.nav-dd-divider{height:1px;background:rgba(201,147,58,0.08);margin:4px 0;}
 
 /* MAIN */
 main{padding-top:52px;min-height:100vh;display:flex;flex-direction:column;}
@@ -183,8 +193,16 @@ footer{text-align:center;padding:18px 24px;font-size:10px;letter-spacing:4px;tex
     <span>SpireIndex</span>
   </a>
   <nav class="topbar-nav">
-    <a href="cards.html">Card Library</a>
-    <a href="relics.html">Relics</a>
+    <div class="nav-dd">
+      <span class="nav-dd-trigger">Libraries</span>
+      <div class="nav-dd-menu">
+        <a href="cards.html">Cards</a>
+        <a href="relics.html">Relics</a>
+        <a href="seeds.html">Seeds</a>
+        <div class="nav-dd-divider"></div>
+        <span class="nav-dd-soon">Bestiary — Soon</span>
+      </div>
+    </div>
     <a href="deck.html">Deck Builder</a>
     <a href="cardmash.html" class="active">CardMash</a>
     <a href="gallery.html">Build Gallery</a>
@@ -268,7 +286,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const DAILY_LIMIT = 1;   // votes per class per day
+const DAILY_LIMIT = 10;  // votes per class per day
 const CHARS = ['ironclad','silent','defect','regent','necrobinder'];
 const CHAR_LABELS = {ironclad:'Ironclad',silent:'Silent',defect:'Defect',regent:'Regent',necrobinder:'Necrobinder'};
 
@@ -351,7 +369,7 @@ function cardImgSrc(card) {
 function imgFallback(el) {
   const imgName = el.dataset.imgname;
   const tried = el.dataset.tried ? el.dataset.tried.split(',') : [];
-  const currentDir = (el.src.match(/card_portraits\/([^/]+)\//) || [])[1];
+  const currentDir = (el.src.match(/card_portraits\/(.+?)\/[^/]+\.png/) || [])[1];
   if (currentDir) tried.push(currentDir);
   const next = IMG_FALLBACK_DIRS.find(d => !tried.includes(d));
   if (next) {
