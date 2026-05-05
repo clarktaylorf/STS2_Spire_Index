@@ -26,6 +26,10 @@ export default async function handler(req, res) {
       'Glimmer':{desc:'Draw 4 cards. Put 1 card from your Hand on top of your Draw Pile.'},
       'Slice':{char:'silent'},
       'Rainbow':{desc:'Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark. Exhaust.'},
+      'Abrasive':{desc:'Sly. Gain 1 Dexterity. Gain 4 Thorns.'},
+      'Snakebite':{desc:'Apply 7 Poison. Retain.'},
+      'Untouchable':{desc:'Sly. Gain 6 Block.'},
+      'Feed':{desc:'Deal 10 damage. If Fatal, raise your Max HP by 3. Exhaust.'},
       'Alignment':{stars:2},
       'Astral Pulse':{stars:3},
       'Cosmic Indifference':{stars:3},
@@ -61,7 +65,7 @@ export default async function handler(req, res) {
     }).filter(c=>c.name&&c.desc).filter(c=>!DENYLIST.has(c.name)).map(c=>{
       const fix=CORRECTIONS[c.name];
       // Only apply star correction if no star cost was already parsed from description
-      if(fix){const merged={...c};if(fix.stars!==undefined&&c.stars==null)merged.stars=fix.stars;Object.keys(fix).forEach(k=>{if(k!=='stars')merged[k]=fix[k];});return merged;}
+      if(fix){const merged={...c};if(fix.stars!==undefined&&c.stars==null)merged.stars=fix.stars;Object.keys(fix).forEach(k=>{if(k!=='stars')merged[k]=fix[k];});if(fix.desc||fix.descUp)merged.kw=kw(merged.desc,merged.descUp,merged.type);return merged;}
       return c;
     });
     return res.status(200).json({source:'spire-codex.com',version:new Date().toISOString().split('T')[0],count:cards.length,cards});

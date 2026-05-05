@@ -443,12 +443,16 @@ document.getElementById('search').addEventListener('input',()=>{updateResetBtn()
 function typeBadge(t){return{Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse',Token:'b-token'}[t]||'b-attack';}
 function rarityBadge(r){if(r==='Ancient')return`<span class="badge b-ancient">Ancient</span>`;if(r==='Rare')return`<span class="badge b-rare">Rare</span>`;if(r==='Uncommon')return`<span class="badge b-uncommon">Uncommon</span>`;return '';}
 
-function getImgPath(c){
+function getImgPath(c,beta){
   if(c.type==='Curse')return ip('curse',c.img);
   if(c.type==='Status')return ip('status',c.img);
   if(c.char==='token')return ip('token',c.img);
   if(c.char==='event')return ip('event',c.img);
-  return ip(c.char,c.img);
+  return beta===false?ip(c.char,c.img):ip(c.char+'/beta',c.img);
+}
+function cardImgFb(el){
+  if(el.src.includes('/beta/')){el.src=IMG+'/'+el.dataset.char+'/'+el.dataset.img+'.png';}
+  else{el.style.display='none';if(el.nextElementSibling)el.nextElementSibling.style.display='flex';}
 }
 
 function render(){
@@ -509,7 +513,7 @@ function render(){
     const div=document.createElement('div');
     div.className='card '+upgClass;
     div.style.cssText='--cc:'+cc.hex;
-    div.innerHTML='<div class="card-bar"></div><div class="card-art"><img src="'+imgPath+'" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-art-fallback" style="display:none">?</div><div class="char-wm">'+cc.label+'</div></div><div class="card-body"><div class="card-head"><div class="card-name">'+card.name+'</div>'+costHtml+'</div><div class="badges"><span class="badge '+(typeBadges[card.type]||'b-attack')+'">'+card.type+'</span>'+rareBadge+upgBadge+'</div><div class="card-desc">'+displayDesc+'</div><div class="kws">'+kws+'</div></div>';
+    div.innerHTML='<div class="card-bar"></div><div class="card-art"><img src="'+imgPath+'" data-char="'+card.char+'" data-img="'+card.img+'" alt="" onerror="cardImgFb(this)"><div class="card-art-fallback" style="display:none">?</div><div class="char-wm">'+cc.label+'</div></div><div class="card-body"><div class="card-head"><div class="card-name">'+card.name+'</div>'+costHtml+'</div><div class="badges"><span class="badge '+(typeBadges[card.type]||'b-attack')+'">'+card.type+'</span>'+rareBadge+upgBadge+'</div><div class="card-desc">'+displayDesc+'</div><div class="kws">'+kws+'</div></div>';
     div.addEventListener('click',function(){openModal(card);});
     grid.appendChild(div);
   });
@@ -528,7 +532,8 @@ function openModal(card){
   document.getElementById('mArtBg').style.background='radial-gradient(ellipse 60% 80% at 50% 50%,'+cc.hex+'44 0%,transparent 70%)';
   var img=document.getElementById('mImg');
   img.src=getImgPath(card);
-  img.onerror=function(){this.style.opacity='0.1';};
+  img.dataset.char=card.char;img.dataset.img=card.img;
+  img.onerror=function(){if(this.src.includes('/beta/')){this.src=IMG+'/'+this.dataset.char+'/'+this.dataset.img+'.png';}else{this.style.opacity='0.1';}};
   document.getElementById('mName').textContent=card.name;
   const mCostStr=getCostStr(card.cost,card.desc);
   // Build cost group badge: energy + optional star cost
@@ -613,7 +618,7 @@ const STATIC_CARDS=[
 {name:'Drum of Battle',char:'ironclad',type:'Power',cost:2,rarity:'Uncommon',desc:'Whenever you play an Attack, gain 1 Strength.',descUp:'Whenever you play an Attack, gain 1 Strength.',costUp:1,kw:['Strength','Power'],img:'drum_of_battle'},
 {name:'Evil Eye',char:'ironclad',type:'Skill',cost:1,rarity:'Uncommon',desc:'Gain 16 Block. If you Exhaust a card this turn, it costs 0.',descUp:'Gain 20 Block. If you Exhaust a card this turn, it costs 0.',kw:['Block','Exhaust'],img:'evil_eye'},
 {name:'Expect a Fight',char:'ironclad',type:'Skill',cost:0,rarity:'Common',desc:'Gain 4 Block. Draw 1 card.',descUp:'Gain 6 Block. Draw 1 card.',kw:['Block','Draw'],img:'expect_a_fight'},
-{name:'Feed',char:'ironclad',type:'Attack',cost:1,rarity:'Rare',desc:'Deal 10 damage. If this kills an enemy, gain 3 Max HP.',descUp:'Deal 12 damage. If this kills an enemy, gain 4 Max HP.',kw:['Damage'],img:'feed'},
+{name:'Feed',char:'ironclad',type:'Attack',cost:1,rarity:'Rare',desc:'Deal 10 damage. If Fatal, raise your Max HP by 3. Exhaust.',descUp:'Deal 10 damage. If Fatal, raise your Max HP by 5. Exhaust.',kw:['Exhaust'],img:'feed'},
 {name:'Feel No Pain',char:'ironclad',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever a card is Exhausted, gain 3 Block.',descUp:'Whenever a card is Exhausted, gain 5 Block.',kw:['Exhaust','Block','Power'],img:'feel_no_pain'},
 {name:'Fiend Fire',char:'ironclad',type:'Attack',cost:2,rarity:'Rare',desc:'Exhaust your hand. Deal 7 damage for each card Exhausted.',descUp:'Exhaust your hand. Deal 10 damage for each card Exhausted.',kw:['Exhaust','Damage'],img:'fiend_fire'},
 {name:'Fight Me',char:'ironclad',type:'Skill',cost:0,rarity:'Common',desc:'Apply 2 Vulnerable to yourself. Gain 2 Strength.',descUp:'Apply 2 Vulnerable to yourself. Gain 3 Strength.',kw:['Strength','Vulnerable'],img:'fight_me'},
@@ -742,7 +747,7 @@ const STATIC_CARDS=[
 {name:'Shadowmeld',char:'silent',type:'Skill',cost:1,rarity:'Rare',desc:'Gain 6 Block. Double your Block.',descUp:'Gain 8 Block. Double your Block.',kw:['Block'],img:'shadowmeld'},
 {name:'Skewer',char:'silent',type:'Attack',cost:'X',rarity:'Common',desc:'Deal 7 damage X times.',descUp:'Deal 10 damage X times.',kw:['Damage'],img:'skewer'},
 {name:'Slice',char:'silent',type:'Attack',cost:0,rarity:'Common',desc:'Deal 6 damage.',descUp:'Deal 9 damage.',kw:['Damage'],img:'slice'},
-{name:'Snakebite',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 6 damage. Apply 3 Poison.',descUp:'Deal 8 damage. Apply 3 Poison.',kw:['Poison'],img:'snakebite'},
+{name:'Snakebite',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Apply 7 Poison. Retain.',descUp:'Apply 10 Poison. Retain.',kw:['Poison','Retain'],img:'snakebite'},
 {name:'Sneaky',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Sly. Deal 10 damage.',descUp:'Sly. Deal 14 damage.',kw:['Sly'],img:'sneaky'},
 {name:'Speedster',char:'silent',type:'Skill',cost:0,rarity:'Uncommon',desc:'Gain 1 Dexterity. Gain 1 Energy.',descUp:'Gain 2 Dexterity. Gain 1 Energy.',kw:['Dexterity','Energy'],img:'speedster'},
 {name:'Storm of Steel',char:'silent',type:'Skill',cost:1,rarity:'Rare',desc:'Discard your hand. Add 1 Shiv to your hand for each card discarded.',descUp:'Discard your hand. Add 1 Shiv to your hand for each card discarded.',costUp:0,kw:['Shiv','Discard'],img:'storm_of_steel'},
@@ -754,7 +759,7 @@ const STATIC_CARDS=[
 {name:'The Hunt',char:'silent',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 6 damage. Deals 3 additional damage for each time you have played this card this combat.',descUp:'Deal 6 damage. Deals 4 additional damage for each time you have played this card this combat.',kw:['Scaling'],img:'the_hunt'},
 {name:'Tools of the Trade',char:'silent',type:'Power',cost:1,rarity:'Rare',desc:'At the start of each turn, draw 1 card and discard 1 card.',descUp:'At the start of each turn, draw 1 card and discard 1 card.',costUp:0,kw:['Draw','Discard','Power'],img:'tools_of_the_trade'},
 {name:'Tracking',char:'silent',type:'Skill',cost:0,rarity:'Common',desc:'Look at the top 3 cards of your Draw Pile. Put 1 into your Hand.',descUp:'Look at the top 4 cards of your Draw Pile. Put 1 into your Hand.',kw:['Draw'],img:'tracking'},
-{name:'Untouchable',char:'silent',type:'Skill',cost:2,rarity:'Rare',desc:'Gain 1 Intangible.',descUp:'Gain 2 Intangible.',kw:['Intangible'],img:'untouchable'},
+{name:'Untouchable',char:'silent',type:'Skill',cost:2,rarity:'Rare',desc:'Sly. Gain 6 Block.',descUp:'Sly. Gain 9 Block.',kw:['Sly','Block'],img:'untouchable'},
 {name:'Up My Sleeve',char:'silent',type:'Skill',cost:0,rarity:'Uncommon',desc:'Add a random Shiv-type card into your hand.',descUp:'Add 2 random Shiv-type cards into your hand.',kw:['Shiv'],img:'up_my_sleeve'},
 {name:'Well Laid Plans',char:'silent',type:'Power',cost:1,rarity:'Uncommon',desc:'At the end of your turn, Retain up to 1 card.',descUp:'At the end of your turn, Retain up to 2 cards.',kw:['Retain','Power'],img:'well_laid_plans'},
 {name:'Wraith Form',char:'silent',type:'Power',cost:3,rarity:'Rare',desc:'Gain 3 Intangible. At the start of each turn, lose 1 Intangible.',descUp:'Gain 3 Intangible. At the start of each turn, lose 1 Intangible.',costUp:2,kw:['Intangible','Power'],img:'wraith_form'},
@@ -828,7 +833,7 @@ const STATIC_CARDS=[
 {name:'Shadowmeld',char:'silent',type:'Skill',cost:1,rarity:'Rare',desc:'Gain 6 Block. Double your Block.',kw:['Block'],img:'shadowmeld'},
 {name:'Skewer',char:'silent',type:'Attack',cost:'X',rarity:'Common',desc:'Deal 7 damage X times.',kw:['Damage'],img:'skewer'},
 {name:'Slice',char:'silent',type:'Attack',cost:0,rarity:'Common',desc:'Deal 6 damage.',kw:['Damage'],img:'slice'},
-{name:'Snakebite',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 6 damage. Apply 3 Poison.',kw:['Poison'],img:'snakebite'},
+{name:'Snakebite',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Apply 7 Poison. Retain.',kw:['Poison','Retain'],img:'snakebite'},
 {name:'Sneaky',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Sly. Deal 10 damage.',kw:['Sly'],img:'sneaky'},
 {name:'Speedster',char:'silent',type:'Skill',cost:0,rarity:'Uncommon',desc:'Gain 1 Dexterity. Gain 1 Energy.',kw:['Dexterity','Energy'],img:'speedster'},
 {name:'Storm of Steel',char:'silent',type:'Skill',cost:1,rarity:'Rare',desc:'Discard your hand. Add 1 Shiv to your hand for each card discarded.',kw:['Shiv','Discard'],img:'storm_of_steel'},
@@ -840,7 +845,7 @@ const STATIC_CARDS=[
 {name:'The Hunt',char:'silent',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 6 damage. Deals 3 additional damage for each time you have played this card this combat.',kw:['Scaling'],img:'the_hunt'},
 {name:'Tools of the Trade',char:'silent',type:'Power',cost:1,rarity:'Rare',desc:'At the start of each turn, draw 1 card and discard 1 card.',kw:['Draw','Discard','Power'],img:'tools_of_the_trade'},
 {name:'Tracking',char:'silent',type:'Skill',cost:0,rarity:'Common',desc:'Look at the top 3 cards of your Draw Pile. Put 1 into your Hand.',kw:['Draw'],img:'tracking'},
-{name:'Untouchable',char:'silent',type:'Skill',cost:2,rarity:'Rare',desc:'Gain 1 Intangible.',kw:['Intangible'],img:'untouchable'},
+{name:'Untouchable',char:'silent',type:'Skill',cost:2,rarity:'Rare',desc:'Sly. Gain 6 Block.',kw:['Sly','Block'],img:'untouchable'},
 {name:'Up My Sleeve',char:'silent',type:'Skill',cost:0,rarity:'Uncommon',desc:'Add a random Shiv-type card into your hand.',kw:['Shiv'],img:'up_my_sleeve'},
 {name:'Well Laid Plans',char:'silent',type:'Power',cost:1,rarity:'Uncommon',desc:'At the end of your turn, Retain up to 1 card.',kw:['Retain','Power'],img:'well_laid_plans'},
 {name:'Wraith Form',char:'silent',type:'Power',cost:3,rarity:'Rare',desc:'Gain 3 Intangible. At the start of each turn, lose 1 Intangible.',kw:['Intangible','Power'],img:'wraith_form'},
