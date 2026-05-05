@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const pc=v=>{if(v==='X'||v===-1)return'X';if(v==null)return null;const n=parseInt(v);return isNaN(n)?v:n;};
     const COLOR_TAGS=new Set(['gold','blue','red','green','purple','white','yellow','orange','gray','grey','teal','cyan','silver','brown','black']);
     // Strip "Costs X Stars." from display descriptions; also strips energy bracket tags
-    const clean=s=>(s||'').replace(/<[^>]*>/g,'').replace(/\[energy:(\d+)\]/gi,'$1 Energy').replace(/\[([^\]]*)\]/g,(_,g)=>{if(g.startsWith('/')||COLOR_TAGS.has(g.toLowerCase()))return'';return g;}).replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').replace(/\s+/g,' ').trim();
+    const clean=s=>(s||'').replace(/<[^>]*>/g,'').replace(/\[energy:(\d+)\]/gi,'$1 Energy').replace(/\[\d+\]/g,'').replace(/\[([^\]]*)\]/g,(_,g)=>{if(g.startsWith('/')||COLOR_TAGS.has(g.toLowerCase()))return'';return g;}).replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').replace(/\s+/g,' ').trim();
     // Parse star cost out of raw description text before cleaning
     const extractStars=s=>{const m=(s||'').match(/[Cc]osts?\s+(\d+|X)\s+[Ss]tars?/i);if(!m)return undefined;const v=m[1];return v.toLowerCase()==='x'?'X':parseInt(v);};
     const toImg=n=>(n||'').toLowerCase().replace(/['''!?]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
