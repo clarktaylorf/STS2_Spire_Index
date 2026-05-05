@@ -667,6 +667,8 @@ function render(){
   });
 }
 buildRelicKwChips();
+const _sq=sessionStorage.getItem('spire_search');
+if(_sq){sessionStorage.removeItem('spire_search');document.getElementById('search').value=_sq;}
 render();
 </script>
 </body>
