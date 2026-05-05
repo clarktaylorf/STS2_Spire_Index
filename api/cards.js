@@ -25,6 +25,10 @@ export default async function handler(req, res) {
     const CORRECTIONS={
       'Glimmer':{desc:'Draw 4 cards. Put 1 card from your Hand on top of your Draw Pile.'},
       'Slice':{char:'silent'},
+      'Alignment':{stars:2},
+      'Astral Pulse':{stars:3},
+      'Cosmic Indifference':{stars:3},
+      'Decisions Decisions':{stars:4,starsUp:3},
       'Reflect':{stars:3,desc:'Gain 18 Block. Blocked attack damage is reflected to your attacker this turn.'},
       'Guiding Star':{stars:2},
       'Shining Strike':{stars:2},
