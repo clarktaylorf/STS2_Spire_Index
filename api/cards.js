@@ -20,23 +20,37 @@ export default async function handler(req, res) {
     const toImg=n=>(n||'').toLowerCase().replace(/['''!?]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
     const kw=(desc,descUp,type)=>{const kws=new Set(),d=((desc||'')+(descUp||'')).toLowerCase();[['Exhaust','exhaust'],['Block','block'],['Draw','draw'],['Discard','discard'],['Strength','strength'],['Vulnerable','vulnerable'],['Weak','\\bweak\\b'],['Poison','poison'],['Energy','energy'],['Innate','innate'],['Retain','retain'],['Ethereal','ethereal'],['Sly','\\bsly\\b'],['Doom','doom'],['Summon','summon'],['Soul','\\bsoul\\b'],['Stars','\\bstar'],['Forge','forge'],['Orb','\\borb\\b'],['Lightning','lightning'],['Frost','frost'],['Plasma','plasma'],['Focus','focus'],['Evoke','evoke'],['Shiv','shiv'],['AoE','all enemies'],['Self-Damage','lose.*hp'],['Osty','osty'],['Minion','minion'],['Dexterity','dexterity'],['Intangible','intangible'],['Scaling','additional damage'],['Thorns','damage back']].forEach(([k,p])=>{if(new RegExp(p).test(d))kws.add(k);});if(type==='Power')kws.add('Power');return[...kws];};
     const DENYLIST=new Set(['Clothesline']);
+    // Inject mechanic keywords from API keywords[] into description text if absent.
+    // Some cards have Exhaust/Innate/Sly/Retain applied as flags in code, not in the
+    // static description string — so spire-codex omits them. This reinserts them.
+    const PREPEND_KWS=['Innate','Sly','Ethereal']; // appear at start of desc
+    const APPEND_KWS=['Retain','Exhaust','Eternal']; // appear at end of desc
+    const injectKws=(desc,apiKws)=>{
+      if(!apiKws||!apiKws.length)return desc;
+      const dl=desc.toLowerCase();
+      const pre=PREPEND_KWS.filter(k=>apiKws.includes(k)&&!dl.includes(k.toLowerCase()));
+      const app=APPEND_KWS.filter(k=>apiKws.includes(k)&&!dl.includes(k.toLowerCase()));
+      let d=desc;
+      if(pre.length)d=pre.join('. ')+'. '+d;
+      if(app.length)d=d.replace(/\.?\s*$/,'')+'. '+app.join('. ')+'.';
+      return d.trim();
+    };
     // Star cost corrections sourced from OutputLag guide (updated March 15, 2026)
     // Only applied when the live API description does not already encode the cost
     const CORRECTIONS={
       'Glimmer':{desc:'Draw 4 cards. Put 1 card from your Hand on top of your Draw Pile.'},
       'Slice':{char:'silent'},
-      'Rainbow':{desc:'Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark. Exhaust.'},
-      'Abrasive':{desc:'Sly. Gain 1 Dexterity. Gain 4 Thorns.'},
-      'Blade Dance':{desc:'Add 3 Shivs into your Hand. Exhaust.'},
-      'Boot Sequence':{desc:'Innate. Gain 10 Block.'},
-      'Demonic Shield':{cost:0,desc:'Lose 1 HP. Give another player Block equal to your Block. Exhaust.'},
-      'Dominate':{cost:1,type:'Skill',desc:'Apply 1 Vulnerable. Gain 1 Strength for each Vulnerable on the enemy. Exhaust.'},
-      'Flick Flack':{desc:'Sly. Deal 6 damage to ALL enemies.'},
-      'Flick-Flack':{desc:'Sly. Deal 6 damage to ALL enemies.'},
-      'Haze':{cost:3,desc:'Sly. Apply 4 Poison to ALL enemies.'},
-      'Snakebite':{desc:'Apply 7 Poison. Retain.'},
-      'Untouchable':{desc:'Sly. Gain 6 Block.'},
-      'Feed':{desc:'Deal 10 damage. If Fatal, raise your Max HP by 3. Exhaust.'},
+      // Description reworks (wrong content, not just missing mechanics — injectKws handles mechanic-only gaps)
+      'Rainbow':{desc:'Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark.'},
+      'Demonic Shield':{cost:0,desc:'Lose 1 HP. Give another player Block equal to your Block.'},
+      'Dominate':{cost:1,type:'Skill',desc:'Apply 1 Vulnerable. Gain 1 Strength for each Vulnerable on the enemy.'},
+      'Flick Flack':{desc:'Deal 6 damage to ALL enemies.'},
+      'Flick-Flack':{desc:'Deal 6 damage to ALL enemies.'},
+      'Haze':{cost:3,desc:'Apply 4 Poison to ALL enemies.'},
+      'Snakebite':{desc:'Apply 7 Poison.'},
+      'Untouchable':{desc:'Gain 6 Block.'},
+      'Feed':{desc:'Deal 10 damage. If Fatal, raise your Max HP by 3.'},
+      'Subroutine':{desc:'Whenever you play a Power, gain 1 Energy.'},
       'Alignment':{stars:2},
       'Astral Pulse':{stars:3},
       'Cosmic Indifference':{stars:3},
@@ -60,20 +74,21 @@ export default async function handler(req, res) {
       const rarity=nr(c.rarity||'');
       const raw=c.description||c.desc||'';
       const rawUp=c.upgraded_description||c.upgrade_description||'';
-      const desc=clean(raw);
-      const descUp=rawUp?clean(rawUp):null;
+      const apiKws=Array.isArray(c.keywords)?c.keywords:[];
+      const desc=injectKws(clean(raw),apiKws);
+      const descUp=rawUp?injectKws(clean(rawUp),apiKws):null;
       const cost=pc(c.cost??c.energy);
       const costUp=c.upgraded_cost!=null?pc(c.upgraded_cost):undefined;
       // Star cost: prefer dedicated API field, fall back to parsing description text
       const stars=c.star_cost!=null?pc(c.star_cost):extractStars(raw);
       const starsUp=rawUp?(c.upgraded_star_cost!=null?pc(c.upgraded_star_cost):extractStars(rawUp)):undefined;
       const name=c.name||'';
-      return{name,char,type,cost,costUp,rarity,desc,descUp,stars,starsUp,kw:kw(desc,descUp,type),img:toImg(name)};
+      return{name,char,type,cost,costUp,rarity,desc,descUp,stars,starsUp,kw:kw(desc,descUp,type),img:toImg(name),_apiKws:apiKws};
     }).filter(c=>c.name&&c.desc).filter(c=>!DENYLIST.has(c.name)).map(c=>{
       const fix=CORRECTIONS[c.name];
       // Only apply star correction if no star cost was already parsed from description
-      if(fix){const merged={...c};if(fix.stars!==undefined&&c.stars==null)merged.stars=fix.stars;Object.keys(fix).forEach(k=>{if(k!=='stars')merged[k]=fix[k];});if(fix.desc||fix.descUp)merged.kw=kw(merged.desc,merged.descUp,merged.type);return merged;}
-      return c;
+      if(fix){const merged={...c};if(fix.stars!==undefined&&c.stars==null)merged.stars=fix.stars;Object.keys(fix).forEach(k=>{if(k!=='stars')merged[k]=fix[k];});if(fix.desc||fix.descUp){merged.desc=injectKws(merged.desc,c._apiKws||[]);if(merged.descUp)merged.descUp=injectKws(merged.descUp,c._apiKws||[]);merged.kw=kw(merged.desc,merged.descUp,merged.type);}delete merged._apiKws;return merged;}
+      const{_apiKws:_,...rest}=c;return rest;
     });
     return res.status(200).json({source:'spire-codex.com',version:new Date().toISOString().split('T')[0],count:cards.length,cards});
   } catch(e) {
