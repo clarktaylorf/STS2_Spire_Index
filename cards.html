@@ -122,6 +122,8 @@ body>*{position:relative;z-index:1;}
 .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:6px;}
 .card-name{font-family:'Playfair Display',serif;font-size:12.5px;font-weight:500;color:#e8d8b8;line-height:1.25;}
 .cost{min-width:22px;height:22px;border-radius:11px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--gold);flex-shrink:0;padding:0 4px;}
+.cost-group{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.star-cost{min-width:22px;height:22px;border-radius:11px;background:#1e1530;border:1px solid #5a2d8a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#c070e0;flex-shrink:0;padding:0 4px;letter-spacing:-0.3px;}
 .badges{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;}
 .badge{font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;padding:2px 6px;border-radius:10px;}
 .b-attack{background:#3a1212;color:#e08080;border:1px solid #5a1e1e;}
@@ -152,6 +154,8 @@ body>*{position:relative;z-index:1;}
 .modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
 .modal-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#efe0c0;}
 .modal-cost-badge{min-width:30px;height:30px;border-radius:15px;background:#1e1830;border:1px solid #3a2d5a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#d4a84b;padding:0 6px;}
+.modal-cost-group{display:flex;align-items:center;gap:5px;}
+.modal-star-badge{min-width:30px;height:30px;border-radius:15px;background:#1e1530;border:1px solid #5a2d8a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#c070e0;padding:0 6px;}
 .modal-badges2{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
 .modal-versions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
 .modal-ver{background:#0e0b1a;border:1px solid #1e1a2e;border-radius:8px;padding:12px;}
@@ -490,8 +494,12 @@ function render(){
   filtered.forEach(function(card){
     const cc=CHARS[card.char]||{hex:'#7050b0',label:'Unknown'};
     const displayCost=showUpgraded&&card.costUp!==undefined?card.costUp:card.cost;
-    const displayDesc=showUpgraded&&card.descUp?card.descUp:card.desc;
+    const displayStars=showUpgraded&&card.starsUp!==undefined?card.starsUp:card.stars;
+    const rawDisplayDesc=showUpgraded&&card.descUp?card.descUp:card.desc;
+    const displayDesc=rawDisplayDesc.replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').trim();
     const cost=getCostStr(displayCost,card.desc);
+    const starBadge=displayStars!=null?'<div class="star-cost">★'+displayStars+'</div>':'';
+    const costHtml=starBadge?'<div class="cost-group"><div class="cost">'+cost+'</div>'+starBadge+'</div>':'<div class="cost">'+cost+'</div>';
     const kws=(card.kw||[]).map(function(k){return '<span class="kw'+(activeKws.has(k)?' kw-active':'')+'">' +k+'</span>';}).join('');
     const imgPath=getImgPath(card);
     const upgClass=showUpgraded&&card.descUp?'is-upgraded':'';
@@ -501,7 +509,7 @@ function render(){
     const div=document.createElement('div');
     div.className='card '+upgClass;
     div.style.cssText='--cc:'+cc.hex;
-    div.innerHTML='<div class="card-bar"></div><div class="card-art"><img src="'+imgPath+'" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-art-fallback" style="display:none">?</div><div class="char-wm">'+cc.label+'</div></div><div class="card-body"><div class="card-head"><div class="card-name">'+card.name+'</div><div class="cost">'+cost+'</div></div><div class="badges"><span class="badge '+(typeBadges[card.type]||'b-attack')+'">'+card.type+'</span>'+rareBadge+upgBadge+'</div><div class="card-desc">'+displayDesc+'</div><div class="kws">'+kws+'</div></div>';
+    div.innerHTML='<div class="card-bar"></div><div class="card-art"><img src="'+imgPath+'" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-art-fallback" style="display:none">?</div><div class="char-wm">'+cc.label+'</div></div><div class="card-body"><div class="card-head"><div class="card-name">'+card.name+'</div>'+costHtml+'</div><div class="badges"><span class="badge '+(typeBadges[card.type]||'b-attack')+'">'+card.type+'</span>'+rareBadge+upgBadge+'</div><div class="card-desc">'+displayDesc+'</div><div class="kws">'+kws+'</div></div>';
     div.addEventListener('click',function(){openModal(card);});
     grid.appendChild(div);
   });
@@ -523,19 +531,29 @@ function openModal(card){
   img.onerror=function(){this.style.opacity='0.1';};
   document.getElementById('mName').textContent=card.name;
   const mCostStr=getCostStr(card.cost,card.desc);
-  document.getElementById('mCost').textContent=mCostStr;
-  document.getElementById('mBaseCost').textContent=mCostStr==='--'?'Unplayable':mCostStr==='X'?'X Energy':mCostStr+' Energy';
-  document.getElementById('mBaseDesc').textContent=card.desc||'';
+  // Build cost group badge: energy + optional star cost
+  const mCostEl=document.getElementById('mCost');
+  if(card.stars!=null){
+    mCostEl.outerHTML='<div class="modal-cost-group" id="mCost"><div class="modal-cost-badge">'+mCostStr+'</div><div class="modal-star-badge">★'+card.stars+'</div></div>';
+  } else {
+    mCostEl.outerHTML='<div class="modal-cost-badge" id="mCost">'+mCostStr+'</div>';
+  }
+  const starLabel=card.stars!=null?' + ★'+card.stars+' Stars':''
+  document.getElementById('mBaseCost').textContent=(mCostStr==='--'?'Unplayable':mCostStr==='X'?'X Energy':mCostStr+' Energy')+starLabel;
+  document.getElementById('mBaseDesc').textContent=(card.desc||'').replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').trim();
   var upVer=document.getElementById('mUpVer');
   if(card.descUp){
     upVer.style.display='block';
     var upCostNum=card.costUp!==undefined?card.costUp:card.cost;
     var upCostStr=getCostStr(upCostNum,card.descUp||card.desc);
-    document.getElementById('mUpCostVal').textContent=upCostStr==='--'?'Unplayable':upCostStr==='X'?'X Energy':upCostStr+' Energy';
+    var upStars=card.starsUp!==undefined?card.starsUp:card.stars;
+    var upStarLabel=upStars!=null?' + ★'+upStars+' Stars':'';
+    document.getElementById('mUpCostVal').textContent=(upCostStr==='--'?'Unplayable':upCostStr==='X'?'X Energy':upCostStr+' Energy')+upStarLabel;
     var diff='';
     if(card.costUp!==undefined&&card.costUp!==card.cost){diff=' ('+(card.costUp<card.cost?'↓':'↑')+Math.abs((card.costUp||0)-(card.cost||0))+')';}
+    if(card.starsUp!==undefined&&card.starsUp!==card.stars){diff+=' (★'+(card.starsUp<card.stars?'↓':'↑')+')';}
     document.getElementById('mCostChange').textContent=diff;
-    document.getElementById('mUpDesc').textContent=card.descUp;
+    document.getElementById('mUpDesc').textContent=(card.descUp||'').replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').trim();
   } else {
     upVer.style.display='none';
   }
@@ -1004,9 +1022,9 @@ const STATIC_CARDS=[
 // ── REGENT ──────────────────────────────────────────────
 {name:'Strike',char:'regent',type:'Attack',cost:1,rarity:'Starter',desc:'Deal 6 damage.',descUp:'Deal 9 damage.',kw:['Damage'],img:'strike_regent'},
 {name:'Defend',char:'regent',type:'Skill',cost:1,rarity:'Starter',desc:'Gain 5 Block.',descUp:'Gain 8 Block.',kw:['Block'],img:'defend_regent'},
-{name:'Alignment',char:'regent',type:'Skill',cost:0,rarity:'Common',desc:'Gain 2 Energy. Costs 2 Stars.',descUp:'Gain 2 Energy. Costs 2 Stars.',kw:['Stars','Energy'],img:'alignment'},
+{name:'Alignment',char:'regent',type:'Skill',cost:0,stars:2,rarity:'Common',desc:'Gain 2 Energy.',descUp:'Gain 2 Energy.',kw:['Stars','Energy'],img:'alignment'},
 {name:'Arsenal',char:'regent',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever you play a Colorless card, gain 1 Strength.',descUp:'Innate. Whenever you play a Colorless card, gain 1 Strength.',kw:['Strength','Colorless','Power'],img:'arsenal'},
-{name:'Astral Pulse',char:'regent',type:'Attack',cost:0,rarity:'Uncommon',desc:'Deal 14 damage to ALL enemies. Costs 3 Stars.',descUp:'Deal 21 damage to ALL enemies. Costs 3 Stars.',kw:['Stars','AoE'],img:'astral_pulse'},
+{name:'Astral Pulse',char:'regent',type:'Attack',cost:0,stars:3,rarity:'Uncommon',desc:'Deal 14 damage to ALL enemies.',descUp:'Deal 21 damage to ALL enemies.',kw:['Stars','AoE'],img:'astral_pulse'},
 {name:'Beat into Shape',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 5 damage. Forge 5.',descUp:'Deal 7 damage. Forge 7. Forges an additional 7 for every other time you\'ve hit the enemy this turn.',kw:['Forge'],img:'beat_into_shape'},
 {name:'BEGONE!',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 4 damage. Choose a card to Transform into Minion Dive Bomb.',descUp:'Deal 6 damage. Choose 2 cards to Transform into Minion Dive Bombs.',kw:['Minion'],img:'begone'},
 {name:'Big Bang',char:'regent',type:'Skill',cost:0,rarity:'Rare',desc:'Draw 1 card. Gain 1 Energy. Gain 1 Star. Forge 5. Exhaust.',descUp:'Innate. Draw 1 card. Gain 1 Energy. Gain 1 Star. Forge 5. Exhaust.',kw:['Stars','Energy','Forge','Exhaust','Draw'],img:'big_bang'},
@@ -1022,11 +1040,11 @@ const STATIC_CARDS=[
 {name:'Comet',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 8 damage. Gain 1 Star.',descUp:'Deal 11 damage. Gain 2 Stars.',kw:['Stars'],img:'comet'},
 {name:'Conqueror',char:'regent',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever you kill an enemy, gain 1 Star.',descUp:'Whenever you kill an enemy, gain 2 Stars.',kw:['Stars','Power'],img:'conqueror'},
 {name:'Convergence',char:'regent',type:'Skill',cost:1,rarity:'Uncommon',desc:'Retain your entire hand until your next turn.',descUp:'Retain your entire hand until your next turn. Next turn gain 1 Energy.',kw:['Retain'],img:'convergence'},
-{name:'Cosmic Indifference',char:'regent',type:'Skill',cost:2,rarity:'Rare',desc:'Gain 1 Intangible. Costs 3 Stars.',descUp:'Gain 2 Intangible. Costs 3 Stars.',kw:['Stars','Intangible'],img:'cosmic_indifference'},
+{name:'Cosmic Indifference',char:'regent',type:'Skill',cost:2,stars:3,rarity:'Rare',desc:'Gain 1 Intangible.',descUp:'Gain 2 Intangible.',kw:['Stars','Intangible'],img:'cosmic_indifference'},
 {name:'Crash Landing',char:'regent',type:'Attack',cost:2,rarity:'Uncommon',desc:'Deal 14 damage. Apply 3 Vulnerable.',descUp:'Deal 18 damage. Apply 4 Vulnerable.',kw:['Vulnerable'],img:'crash_landing'},
 {name:'Crescent Spear',char:'regent',type:'Attack',cost:2,rarity:'Common',desc:'Deal 8 damage. Gain 2 Stars.',descUp:'Deal 11 damage. Gain 3 Stars.',kw:['Stars'],img:'crescent_spear'},
 {name:'Crush Under',char:'regent',type:'Attack',cost:3,rarity:'Uncommon',desc:'Deal 3 damage for each card in your hand.',descUp:'Deal 4 damage for each card in your hand.',kw:['Scaling'],img:'crush_under'},
-{name:'Decisions Decisions',char:'regent',type:'Skill',cost:2,rarity:'Rare',desc:'Choose a card to play from your Draw Pile. Costs 4 Stars.',descUp:'Choose a card to play from your Draw Pile. Costs 3 Stars.',kw:['Stars','Draw'],img:'decisions_decisions'},
+{name:'Decisions Decisions',char:'regent',type:'Skill',cost:2,stars:4,starsUp:3,rarity:'Rare',desc:'Choose a card to play from your Draw Pile.',descUp:'Choose a card to play from your Draw Pile.',kw:['Stars','Draw'],img:'decisions_decisions'},
 {name:'Devastate',char:'regent',type:'Attack',cost:2,rarity:'Uncommon',desc:'Deal 14 damage. If you spent Stars this turn, deal 14 additional damage.',descUp:'Deal 18 damage. If you spent Stars this turn, deal 18 additional damage.',kw:['Stars'],img:'devastate'},
 {name:'Dying Star',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 10 damage. Lose 1 Star.',descUp:'Deal 14 damage. Lose 1 Star.',kw:['Stars'],img:'dying_star'},
 {name:'Falling Star',char:'regent',type:'Attack',cost:0,rarity:'Common',desc:'Deal 5 damage. Gain 1 Star.',descUp:'Deal 7 damage. Gain 1 Star.',kw:['Stars'],img:'falling_star'},
@@ -1093,9 +1111,9 @@ const STATIC_CARDS=[
 {name:'Venerate',char:'regent',type:'Skill',cost:1,rarity:'Common',desc:'Gain 2 Stars. Gain 5 Block.',descUp:'Gain 3 Stars. Gain 7 Block.',kw:['Stars','Block'],img:'venerate'},
 {name:'Void Form',char:'regent',type:'Power',cost:2,rarity:'Rare',desc:'End your turn. Your first 2 cards next turn cost 0.',descUp:'End your turn. Your first 3 cards next turn cost 0.',kw:['Energy','Power'],img:'void_form'},
 {name:'Wrought in War',char:'regent',type:'Skill',cost:1,rarity:'Uncommon',desc:'Forge 10. Exhaust.',descUp:'Forge 15. Exhaust.',kw:['Forge','Exhaust'],img:'wrought_in_war'},
-{name:'Alignment',char:'regent',type:'Skill',cost:0,rarity:'Common',desc:'Gain 2 Energy. Costs 2 Stars.',kw:['Stars','Energy'],img:'alignment'},
+{name:'Alignment',char:'regent',type:'Skill',cost:0,stars:2,rarity:'Common',desc:'Gain 2 Energy.',kw:['Stars','Energy'],img:'alignment'},
 {name:'Arsenal',char:'regent',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever you play a Colorless card, gain 1 Strength.',kw:['Strength','Colorless','Power'],img:'arsenal'},
-{name:'Astral Pulse',char:'regent',type:'Attack',cost:0,rarity:'Uncommon',desc:'Deal 14 damage to ALL enemies. Costs 3 Stars.',kw:['Stars','AoE'],img:'astral_pulse'},
+{name:'Astral Pulse',char:'regent',type:'Attack',cost:0,stars:3,rarity:'Uncommon',desc:'Deal 14 damage to ALL enemies.',kw:['Stars','AoE'],img:'astral_pulse'},
 {name:'Beat into Shape',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 5 damage. Forge 5.',kw:['Forge'],img:'beat_into_shape'},
 {name:'BEGONE!',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 4 damage. Choose a card to Transform into Minion Dive Bomb.',kw:['Minion'],img:'begone'},
 {name:'Big Bang',char:'regent',type:'Skill',cost:0,rarity:'Rare',desc:'Draw 1 card. Gain 1 Energy. Gain 1 Star. Forge 5. Exhaust.',kw:['Stars','Energy','Forge','Exhaust','Draw'],img:'big_bang'},
@@ -1111,11 +1129,11 @@ const STATIC_CARDS=[
 {name:'Comet',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 8 damage. Gain 1 Star.',kw:['Stars'],img:'comet'},
 {name:'Conqueror',char:'regent',type:'Power',cost:1,rarity:'Uncommon',desc:'Whenever you kill an enemy, gain 1 Star.',kw:['Stars','Power'],img:'conqueror'},
 {name:'Convergence',char:'regent',type:'Skill',cost:1,rarity:'Uncommon',desc:'Retain your entire hand until your next turn.',kw:['Retain'],img:'convergence'},
-{name:'Cosmic Indifference',char:'regent',type:'Skill',cost:2,rarity:'Rare',desc:'Gain 1 Intangible. Costs 3 Stars.',kw:['Stars','Intangible'],img:'cosmic_indifference'},
+{name:'Cosmic Indifference',char:'regent',type:'Skill',cost:2,stars:3,rarity:'Rare',desc:'Gain 1 Intangible.',kw:['Stars','Intangible'],img:'cosmic_indifference'},
 {name:'Crash Landing',char:'regent',type:'Attack',cost:2,rarity:'Uncommon',desc:'Deal 14 damage. Apply 3 Vulnerable.',kw:['Vulnerable'],img:'crash_landing'},
 {name:'Crescent Spear',char:'regent',type:'Attack',cost:2,rarity:'Common',desc:'Deal 8 damage. Gain 2 Stars.',kw:['Stars'],img:'crescent_spear'},
 {name:'Crush Under',char:'regent',type:'Attack',cost:3,rarity:'Uncommon',desc:'Deal 3 damage for each card in your hand.',kw:['Scaling'],img:'crush_under'},
-{name:'Decisions Decisions',char:'regent',type:'Skill',cost:2,rarity:'Rare',desc:'Choose a card to play from your Draw Pile. Costs 4 Stars.',kw:['Stars','Draw'],img:'decisions_decisions'},
+{name:'Decisions Decisions',char:'regent',type:'Skill',cost:2,stars:4,starsUp:3,rarity:'Rare',desc:'Choose a card to play from your Draw Pile.',kw:['Stars','Draw'],img:'decisions_decisions'},
 {name:'Devastate',char:'regent',type:'Attack',cost:2,rarity:'Uncommon',desc:'Deal 14 damage. If you spent Stars this turn, deal 14 additional damage.',kw:['Stars'],img:'devastate'},
 {name:'Dying Star',char:'regent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 10 damage. Lose 1 Star.',kw:['Stars'],img:'dying_star'},
 {name:'Falling Star',char:'regent',type:'Attack',cost:0,rarity:'Common',desc:'Deal 5 damage. Gain 1 Star.',kw:['Stars'],img:'falling_star'},
