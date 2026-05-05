@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const pc=v=>{if(v==='X'||v===-1)return'X';if(v==null)return null;const n=parseInt(v);return isNaN(n)?v:n;};
     const COLOR_TAGS=new Set(['gold','blue','red','green','purple','white','yellow','orange','gray','grey','teal','cyan','silver','brown','black']);
     // Strip "Costs X Stars." from display descriptions; also strips energy bracket tags
-    const clean=s=>(s||'').replace(/<[^>]*>/g,'').replace(/\[energy:(\d+)\]/gi,'$1 Energy').replace(/\[\d+\]/g,'').replace(/\[stars?:\d+\]/gi,'Star').replace(/\[([^\]]*)\]/g,(_,g)=>{if(g.startsWith('/')||COLOR_TAGS.has(g.toLowerCase()))return'';return g;}).replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').replace(/\s+/g,' ').trim();
+    const clean=s=>(s||'').replace(/<[^>]*>/g,'').replace(/\[energy:(\d+)\]/gi,(_,n)=>parseInt(n,10)+' Energy').replace(/\[\d+\]/g,'').replace(/\[stars?:\d+\]/gi,'Star').replace(/\[([^\]]*)\]/g,(_,g)=>{if(g.startsWith('/')||COLOR_TAGS.has(g.toLowerCase()))return'';return g;}).replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').replace(/\s+/g,' ').trim();
     // Parse star cost out of raw description text before cleaning
     const extractStars=s=>{const m=(s||'').match(/[Cc]osts?\s+(\d+|X)\s+[Ss]tars?/i);if(!m)return undefined;const v=m[1];return v.toLowerCase()==='x'?'X':parseInt(v);};
     const toImg=n=>(n||'').toLowerCase().replace(/['''!?]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
@@ -27,6 +27,10 @@ export default async function handler(req, res) {
       'Slice':{char:'silent'},
       'Rainbow':{desc:'Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark. Exhaust.'},
       'Abrasive':{desc:'Sly. Gain 1 Dexterity. Gain 4 Thorns.'},
+      'Blade Dance':{desc:'Add 3 Shivs into your Hand. Exhaust.'},
+      'Boot Sequence':{desc:'Innate. Gain 10 Block.'},
+      'Flick Flack':{desc:'Sly. Deal 6 damage to ALL enemies.'},
+      'Flick-Flack':{desc:'Sly. Deal 6 damage to ALL enemies.'},
       'Snakebite':{desc:'Apply 7 Poison. Retain.'},
       'Untouchable':{desc:'Sly. Gain 6 Block.'},
       'Feed':{desc:'Deal 10 damage. If Fatal, raise your Max HP by 3. Exhaust.'},

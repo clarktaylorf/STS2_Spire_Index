@@ -443,15 +443,16 @@ document.getElementById('search').addEventListener('input',()=>{updateResetBtn()
 function typeBadge(t){return{Attack:'b-attack',Skill:'b-skill',Power:'b-power',Status:'b-status',Curse:'b-curse',Token:'b-token'}[t]||'b-attack';}
 function rarityBadge(r){if(r==='Ancient')return`<span class="badge b-ancient">Ancient</span>`;if(r==='Rare')return`<span class="badge b-rare">Rare</span>`;if(r==='Uncommon')return`<span class="badge b-uncommon">Uncommon</span>`;return '';}
 
-function getImgPath(c,beta){
+function getImgPath(c){
   if(c.type==='Curse')return ip('curse',c.img);
   if(c.type==='Status')return ip('status',c.img);
   if(c.char==='token')return ip('token',c.img);
   if(c.char==='event')return ip('event',c.img);
-  return beta===false?ip(c.char,c.img):ip(c.char+'/beta',c.img);
+  return ip(c.char,c.img);
 }
+// Fallback chain: non-beta → beta → placeholder
 function cardImgFb(el){
-  if(el.src.includes('/beta/')){el.src=IMG+'/'+el.dataset.char+'/'+el.dataset.img+'.png';}
+  if(!el.src.includes('/beta/')){el.src=IMG+'/'+el.dataset.char+'/beta/'+el.dataset.img+'.png';}
   else{el.style.display='none';if(el.nextElementSibling)el.nextElementSibling.style.display='flex';}
 }
 
@@ -533,7 +534,7 @@ function openModal(card){
   var img=document.getElementById('mImg');
   img.src=getImgPath(card);
   img.dataset.char=card.char;img.dataset.img=card.img;
-  img.onerror=function(){if(this.src.includes('/beta/')){this.src=IMG+'/'+this.dataset.char+'/'+this.dataset.img+'.png';}else{this.style.opacity='0.1';}};
+  img.onerror=function(){if(!this.src.includes('/beta/')){this.src=IMG+'/'+this.dataset.char+'/beta/'+this.dataset.img+'.png';}else{this.style.opacity='0.1';}};
   document.getElementById('mName').textContent=card.name;
   const mCostStr=getCostStr(card.cost,card.desc);
   // Build cost group badge: energy + optional star cost
@@ -712,7 +713,7 @@ const STATIC_CARDS=[
 {name:'Fan of Knives',char:'silent',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 4 damage to ALL enemies. Add a Shiv to your hand.',descUp:'Deal 6 damage to ALL enemies. Add a Shiv to your hand.',kw:['AoE','Shiv'],img:'fan_of_knives'},
 {name:'Finisher',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 6 damage for each Attack played this turn.',descUp:'Deal 8 damage for each Attack played this turn.',kw:['Scaling'],img:'finisher'},
 {name:'Flanking',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 12 damage. If the enemy is Vulnerable, deal 6 additional damage.',descUp:'Deal 14 damage. If the enemy is Vulnerable, deal 8 additional damage.',kw:['Vulnerable'],img:'flanking'},
-{name:'Flick Flack',char:'silent',type:'Skill',cost:0,rarity:'Common',desc:'Sly. Gain 3 Block.',descUp:'Sly. Gain 5 Block.',kw:['Sly','Block'],img:'flick_flack'},
+{name:'Flick Flack',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Sly. Deal 6 damage to ALL enemies.',descUp:'Sly. Deal 9 damage to ALL enemies.',kw:['Sly','AoE'],img:'flick_flack'},
 {name:'Flechettes',char:'silent',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 4 damage for each Skill in your hand.',descUp:'Deal 6 damage for each Skill in your hand.',kw:['Scaling'],img:'flechettes'},
 {name:'Follow Through',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Sly. Deal 7 damage.',descUp:'Sly. Deal 11 damage.',kw:['Sly'],img:'follow_through'},
 {name:'Footwork',char:'silent',type:'Power',cost:1,rarity:'Uncommon',desc:'Gain 2 Dexterity.',descUp:'Gain 3 Dexterity.',kw:['Dexterity','Power'],img:'footwork'},
@@ -798,7 +799,7 @@ const STATIC_CARDS=[
 {name:'Fan of Knives',char:'silent',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 4 damage to ALL enemies. Add a Shiv to your hand.',kw:['AoE','Shiv'],img:'fan_of_knives'},
 {name:'Finisher',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 6 damage for each Attack played this turn.',kw:['Scaling'],img:'finisher'},
 {name:'Flanking',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Deal 12 damage. If the enemy is Vulnerable, deal 6 additional damage.',kw:['Vulnerable'],img:'flanking'},
-{name:'Flick Flack',char:'silent',type:'Skill',cost:0,rarity:'Common',desc:'Sly. Gain 3 Block.',kw:['Sly','Block'],img:'flick_flack'},
+{name:'Flick Flack',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Sly. Deal 6 damage to ALL enemies.',kw:['Sly','AoE'],img:'flick_flack'},
 {name:'Flechettes',char:'silent',type:'Attack',cost:1,rarity:'Uncommon',desc:'Deal 4 damage for each Skill in your hand.',kw:['Scaling'],img:'flechettes'},
 {name:'Follow Through',char:'silent',type:'Attack',cost:1,rarity:'Common',desc:'Sly. Deal 7 damage.',kw:['Sly'],img:'follow_through'},
 {name:'Footwork',char:'silent',type:'Power',cost:1,rarity:'Uncommon',desc:'Gain 2 Dexterity.',kw:['Dexterity','Power'],img:'footwork'},
