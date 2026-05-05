@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     const CORRECTIONS={
       'Glimmer':{desc:'Draw 4 cards. Put 1 card from your Hand on top of your Draw Pile.'},
       'Slice':{char:'silent'},
+      'Rainbow':{desc:'Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark. Exhaust.'},
       'Alignment':{stars:2},
       'Astral Pulse':{stars:3},
       'Cosmic Indifference':{stars:3},
