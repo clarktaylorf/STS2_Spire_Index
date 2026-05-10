@@ -71,6 +71,8 @@ export default async function handler(req, res) {
       'Energy Surge':{cost:2,costUp:3,rarity:'Uncommon'},
       // Convergence: API tag adjacency bug produces "Energyand Star"; correct text per untapped.gg
       'Convergence':{desc:'Next turn, gain 1 Energy and 1 Star. Retain your Hand this turn.',descUp:'Next turn, gain 2 Energy and 2 Stars. Retain your Hand this turn.'},
+      // Knockout Blow: API [stars:N] tag loses count, renders as "Star" instead of "5 Stars"
+      'Knockout Blow':{desc:'Deal 30 damage. If this kills an enemy, gain 5 Stars.',descUp:'Deal 38 damage. If this kills an enemy, gain 5 Stars.'},
     };
     const cards=list.map(c=>{
       const char=nc(c.character||c.char||c.color||'');
