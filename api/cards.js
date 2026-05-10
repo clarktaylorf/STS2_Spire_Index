@@ -67,6 +67,8 @@ export default async function handler(req, res) {
       'Meteor Shower':{stars:2},
       'Stardust':{stars:'X'},
       'Comet':{stars:5},
+      // Energy Surge: API returns cost 1, correct is 2 (upgraded 3); rarity Uncommon not Common
+      'Energy Surge':{cost:2,costUp:3,rarity:'Uncommon'},
     };
     const cards=list.map(c=>{
       const char=nc(c.character||c.char||c.color||'');
