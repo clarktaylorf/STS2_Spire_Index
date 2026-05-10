@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const pc=v=>{if(v==='X'||v===-1)return'X';if(v==null)return null;const n=parseInt(v);return isNaN(n)?v:n;};
     const COLOR_TAGS=new Set(['gold','blue','red','green','purple','white','yellow','orange','gray','grey','teal','cyan','silver','brown','black']);
     // Strip "Costs X Stars." from display descriptions; also strips energy bracket tags
-    const clean=s=>(s||'').replace(/<[^>]*>/g,'').replace(/(\[energy:\d+\]\s*)+/gi,m=>{const n=(m.match(/\[energy:\d+\]/gi)||[]).length;return n>1?n+' Energy':'Energy';}).replace(/\[\d+\]/g,'').replace(/\[stars?:\d+\]/gi,'Star').replace(/\[([^\]]*)\]/g,(_,g)=>{if(g.startsWith('/')||COLOR_TAGS.has(g.toLowerCase()))return'';return g;}).replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').replace(/\s+/g,' ').trim();
+    const clean=s=>(s||'').replace(/<[^>]*>/g,'').replace(/(\[energy:\d+\]\s*)+/gi,m=>{const n=(m.match(/\[energy:\d+\]/gi)||[]).length;return n>1?n+' Energy':'Energy';}).replace(/\[\d+\]/g,'').replace(/\[stars?:\d+\]/gi,'Star').replace(/\[([^\]]*)\]/g,(_,g)=>{if(g.startsWith('/')||COLOR_TAGS.has(g.toLowerCase()))return'';return g;}).replace(/\.?\s*[Cc]osts?\s+(?:\d+|X)\s+[Ss]tars?\.?/g,'').replace(/([a-zA-Z\d])(and|or)\b/gi,'$1 $2').replace(/\s+/g,' ').trim();
     // Parse star cost out of raw description text before cleaning
     const extractStars=s=>{const m=(s||'').match(/[Cc]osts?\s+(\d+|X)\s+[Ss]tars?/i);if(!m)return undefined;const v=m[1];return v.toLowerCase()==='x'?'X':parseInt(v);};
     const toImg=n=>(n||'').toLowerCase().replace(/['''!?]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
@@ -69,6 +69,8 @@ export default async function handler(req, res) {
       'Comet':{stars:5},
       // Energy Surge: API returns cost 1, correct is 2 (upgraded 3); rarity Uncommon not Common
       'Energy Surge':{cost:2,costUp:3,rarity:'Uncommon'},
+      // Convergence: API tag adjacency bug produces "Energyand Star"; correct text per untapped.gg
+      'Convergence':{desc:'Next turn, gain 1 Energy and 1 Star. Retain your Hand this turn.',descUp:'Next turn, gain 2 Energy and 2 Stars. Retain your Hand this turn.'},
     };
     const cards=list.map(c=>{
       const char=nc(c.character||c.char||c.color||'');
